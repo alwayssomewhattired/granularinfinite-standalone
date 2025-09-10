@@ -63,12 +63,16 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             auto* label = new SampleLabel("");
 
             // myNoteName is not refreshing its values at octave change.
-            button->setOnFileDropped([this, myNoteName, label](const juce::String& /*path*/, 
+            button->setOnFileDropped([this, myNoteName, label](const juce::String& fullPath, 
                 const juce::String& name) {
                 label->setText(name, juce::dontSendNotification);
                 juce::String refinedNote = myNoteName.dropLastCharacters(1) + juce::String(octave);
                 std::cout << refinedNote << "\n";
                 noteToSample[refinedNote] = name;
+                
+                juce::File file(fullPath);
+
+                audioProcessor.loadFile(file);
                 });
 
             addAndMakeVisible(octaveIncrement);
@@ -110,6 +114,7 @@ bool GranularinfiniteAudioProcessorEditor::keyPressed(const juce::KeyPress& key,
 
             button->setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
             button->repaint();
+            audioProcessor.startPlayback();
         }
         return true;
     }
@@ -145,6 +150,7 @@ bool GranularinfiniteAudioProcessorEditor::keyStateChanged(bool isKeyDown,
                     }
                 }
                 it = currentlyPressedKeys.erase(it);
+                audioProcessor.stopPlayback();
             }
             else
             {

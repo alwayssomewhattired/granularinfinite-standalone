@@ -2,8 +2,11 @@
 #pragma once
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <functional>
+
+
+
 class KeyButton : public juce::TextButton,
-	public juce::FileDragAndDropTarget
+				  public juce::FileDragAndDropTarget
 {
 public:
 	using FileDroppedCallback = std::function<void(const juce::String& fullPath,
@@ -13,7 +16,7 @@ public:
 		: TextButton(keyName), noteName(keyName)
 	{
 		setRepaintsOnMouseActivity(true);
-
+		//formatManager.registerBasicFormats();
 	}
 
 	void setOnFileDropped(FileDroppedCallback cb) { onFileDropped = std::move(cb); }
@@ -41,8 +44,8 @@ public:
 		auto fileName = juce::File(assignedFile).getFileName();
 		std::cout << "filename: " << fileName << "\n";
 		std::cout << "File path: " << assignedFile << "\n";
+		if (files.isEmpty()) return;
 		if (onFileDropped) onFileDropped(assignedFile, fileName);
-		// TODO: load into 'AudioFormatReader' for playback
 	}
 
 
@@ -50,5 +53,9 @@ private:
 	juce::String noteName;
 	juce::String assignedFile;
 	juce::String sampleName;
+
 	FileDroppedCallback onFileDropped;
+	//juce::AudioFormatManager formatManager;
+	//std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
+	//juce::AudioTransportSource transportSource;
 };

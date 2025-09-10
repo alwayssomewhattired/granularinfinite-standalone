@@ -34,6 +34,8 @@ public:
     void octaveUp(juce::TextButton& button);
     void octaveDown(juce::TextButton& button);
 
+    void loadFile(const juce::File& file);
+
 private:
 
     std::set<char> currentlyPressedKeys;

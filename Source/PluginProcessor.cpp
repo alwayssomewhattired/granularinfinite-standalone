@@ -22,6 +22,7 @@ GranularinfiniteAudioProcessor::GranularinfiniteAudioProcessor()
                        )
 #endif
 {
+    formatManager.registerBasicFormats();
 }
 
 GranularinfiniteAudioProcessor::~GranularinfiniteAudioProcessor()
@@ -91,16 +92,15 @@ void GranularinfiniteAudioProcessor::changeProgramName (int index, const juce::S
 }
 
 //==============================================================================
+
 void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    transportSource.prepareToPlay(samplesPerBlock, sampleRate);
 }
 
 void GranularinfiniteAudioProcessor::releaseResources()
 {
-    // When playback stops, you can use this as an opportunity to free up any
-    // spare memory, etc.
+    transportSource.releaseResources();
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -110,15 +110,10 @@ bool GranularinfiniteAudioProcessor::isBusesLayoutSupported (const BusesLayout& 
     juce::ignoreUnused (layouts);
     return true;
   #else
-    // This is the place where you check if the layout is supported.
-    // In this template code we only support mono or stereo.
-    // Some plugin hosts, such as certain GarageBand versions, will only
-    // load plugins that support stereo bus layouts.
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
      && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
         return false;
 
-    // This checks if the input layout matches the output layout
    #if ! JucePlugin_IsSynth
     if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
         return false;
@@ -135,27 +130,34 @@ void GranularinfiniteAudioProcessor::processBlock (juce::AudioBuffer<float>& buf
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
+        juce::AudioSourceChannelInfo info(&buffer, 0, buffer.getNumSamples());
+        transportSource.getNextAudioBlock(info);
+}
 
-        // ..do something to the data...
+void GranularinfiniteAudioProcessor::loadFile(const juce::File& file)
+{
+    if (auto* reader = formatManager.createReaderFor(file))
+    {
+        readerSource.reset(new juce::AudioFormatReaderSource(reader, true));
+        transportSource.setSource(readerSource.get(), 0, nullptr, reader->sampleRate);
     }
+}
+
+void GranularinfiniteAudioProcessor::startPlayback()
+{
+    if (readerSource != nullptr)
+    {
+        transportSource.setPosition(0.0);
+        transportSource.start();
+    }
+}
+
+void GranularinfiniteAudioProcessor::stopPlayback()
+{
+    transportSource.stop();
 }
 
 //==============================================================================
