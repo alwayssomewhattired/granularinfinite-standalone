@@ -36,6 +36,7 @@ public:
 
     void loadFile(const juce::File& file);
 
+
 private:
 
     std::set<char> currentlyPressedKeys;
@@ -44,6 +45,7 @@ private:
     juce::OwnedArray<NoteLabel> noteLabels;
     std::map<char, juce::String> keyToNote;
     std::map<juce::String, juce::String> noteToSample;
+
     int octave = 4;
     ButtonPalette buttonPalette;
 

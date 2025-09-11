@@ -95,13 +95,21 @@ void GranularinfiniteAudioProcessor::changeProgramName (int index, const juce::S
 
 void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    transportSource.prepareToPlay(samplesPerBlock, sampleRate);
+    for (auto& pair : samples)
+    {
+        pair.second->transportSource.prepareToPlay(samplesPerBlock, sampleRate);
+    }
+
+    isPrepared = true;
 }
 
 void GranularinfiniteAudioProcessor::releaseResources()
 {
-    transportSource.releaseResources();
-}
+    for (auto& pair : samples)
+    {
+        pair.second->transportSource.releaseResources();
+    }
+    }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
 bool GranularinfiniteAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -124,7 +132,8 @@ bool GranularinfiniteAudioProcessor::isBusesLayoutSupported (const BusesLayout& 
 }
 #endif
 
-void GranularinfiniteAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void GranularinfiniteAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
+    juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
@@ -133,31 +142,62 @@ void GranularinfiniteAudioProcessor::processBlock (juce::AudioBuffer<float>& buf
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-        juce::AudioSourceChannelInfo info(&buffer, 0, buffer.getNumSamples());
-        transportSource.getNextAudioBlock(info);
+    juce::AudioBuffer<float> tempBuffer;
+    tempBuffer.setSize(buffer.getNumChannels(), buffer.getNumSamples());
+
+    for (auto& pair : samples)
+    {
+        tempBuffer.clear();
+        juce::AudioSourceChannelInfo info(&tempBuffer, 0, buffer.getNumSamples());
+        pair.second->transportSource.getNextAudioBlock(info);
+
+        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+            buffer.addFrom(ch, 0, tempBuffer, ch, 0, buffer.getNumSamples());
+    }
 }
 
-void GranularinfiniteAudioProcessor::loadFile(const juce::File& file)
+void GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce::String& noteName)
 {
     if (auto* reader = formatManager.createReaderFor(file))
     {
-        readerSource.reset(new juce::AudioFormatReaderSource(reader, true));
-        transportSource.setSource(readerSource.get(), 0, nullptr, reader->sampleRate);
+        auto sample = std::make_unique<Sample>();
+        sample->setSourceFromReader(reader);
+        samples[noteName] = std::move(sample);
     }
 }
 
-void GranularinfiniteAudioProcessor::startPlayback()
+void GranularinfiniteAudioProcessor::startPlayback(const juce::String& note)
 {
-    if (readerSource != nullptr)
+    std::cout << "isPrepared=" << isPrepared
+        << ", samples.size=" << samples.size() << "\n";
+    for (auto& pair : samples)
+        std::cout << "Sample: " << pair.first << ", readerSource=" << (pair.second->readerSource != nullptr) << "\n";
+
+    if (!isPrepared)
     {
-        transportSource.setPosition(0.0);
-        transportSource.start();
+        std::cout << "not ready\n";
+        return;
+    }
+    auto it = samples.find(note);
+    if (it != samples.end())
+    {
+        auto& sample = it->second;
+        if (!sample->transportSource.isPlaying())
+        {
+            sample->transportSource.setPosition(0.0);
+            sample->transportSource.start();
+        }
     }
 }
 
-void GranularinfiniteAudioProcessor::stopPlayback()
+void GranularinfiniteAudioProcessor::stopPlayback(const juce::String& note)
 {
-    transportSource.stop();
+    auto it = samples.find(note);
+    if (it != samples.end())
+    {
+        auto& sample = it->second;
+        sample->transportSource.stop();
+    }
 }
 
 //==============================================================================

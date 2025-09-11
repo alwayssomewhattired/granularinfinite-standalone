@@ -72,7 +72,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
                 
                 juce::File file(fullPath);
 
-                audioProcessor.loadFile(file);
+                audioProcessor.loadFile(file, refinedNote);
                 });
 
             addAndMakeVisible(octaveIncrement);
@@ -114,7 +114,11 @@ bool GranularinfiniteAudioProcessorEditor::keyPressed(const juce::KeyPress& key,
 
             button->setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
             button->repaint();
-            audioProcessor.startPlayback();
+            auto sampleName = noteToSample[it->second];
+            if (sampleName.isNotEmpty() && audioProcessor.isPrepared)
+            {
+            audioProcessor.startPlayback(it->second);
+            }
         }
         return true;
     }
@@ -149,8 +153,9 @@ bool GranularinfiniteAudioProcessorEditor::keyStateChanged(bool isKeyDown,
                         keyButtons[(int)index]->repaint();
                     }
                 }
+                juce::String noteName = keyToNote[keyChar];
                 it = currentlyPressedKeys.erase(it);
-                audioProcessor.stopPlayback();
+                audioProcessor.stopPlayback(noteName);
             }
             else
             {
