@@ -57,8 +57,13 @@ public:
     void loadFile(const juce::File& file, const juce::String& noteName);
     void startPlayback(const juce::String& note);
     void stopPlayback(const juce::String& note);
+    void injectNoteOn(juce::MidiBuffer& midiMessages, const int& midiNote);
+    void injectNoteOff(juce::MidiBuffer& midiMessages, const int& midiNote);
+    void addMidiEvent(const juce::MidiMessage& m);
 
     bool isPrepared = false;
+    bool synthToggle = true;
+
 
 
 private:
@@ -73,8 +78,10 @@ private:
             transportSource.setSource(readerSource.get(), 0, nullptr, reader->sampleRate);
         }
     };
-
+    juce::MidiBuffer midiFifo;
+    std::mutex midiMutex;
     std::map<juce::String, std::unique_ptr<Sample>> samples;
+    juce::Synthesiser synth;
     juce::AudioFormatManager formatManager;
 
     //==============================================================================

@@ -23,6 +23,9 @@ GranularinfiniteAudioProcessor::GranularinfiniteAudioProcessor()
 #endif
 {
     formatManager.registerBasicFormats();
+    
+    for (int i = 0; i < 16; ++i)
+        synth.addVoice(new juce::SamplerVoice());
 }
 
 GranularinfiniteAudioProcessor::~GranularinfiniteAudioProcessor()
@@ -132,6 +135,27 @@ bool GranularinfiniteAudioProcessor::isBusesLayoutSupported (const BusesLayout& 
 }
 #endif
 
+void GranularinfiniteAudioProcessor::injectNoteOn(juce::MidiBuffer& midiMessages, 
+    const int& midiNote)
+{
+    // i think this juce::midimessage object needs to be timestamped
+    juce::MidiMessage m = juce::MidiMessage::noteOn(1, midiNote, (juce::uint8)127);
+    midiMessages.addEvent(m, 0);
+}
+
+void GranularinfiniteAudioProcessor::injectNoteOff(juce::MidiBuffer& midiMessages,
+    const int& midiNote)
+{
+    juce::MidiMessage m = juce::MidiMessage::noteOff(1, midiNote);
+    midiMessages.addEvent(m, 0);
+}
+
+void GranularinfiniteAudioProcessor::addMidiEvent(const juce::MidiMessage& m)
+{
+    const std::lock_guard<std::mutex> lock(midiMutex);
+    midiFifo.addEvent(m, 0);
+}
+
 void GranularinfiniteAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     juce::MidiBuffer& midiMessages)
 {
@@ -141,7 +165,19 @@ void GranularinfiniteAudioProcessor::processBlock (juce::AudioBuffer<float>& buf
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
-
+    if (synthToggle)
+    {
+        for (auto metadata : midiMessages)
+        {
+            std::cout << "WHY\n";
+            std::cout << metadata.getMessage().getDescription() << "\n";
+        }
+        const std::lock_guard<std::mutex> lock(midiMutex);
+        midiMessages.addEvents(midiFifo, 0, buffer.getNumSamples(), 0);
+        midiFifo.clear();
+        synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
+        return;
+    }
     juce::AudioBuffer<float> tempBuffer;
     tempBuffer.setSize(buffer.getNumChannels(), buffer.getNumSamples());
 
@@ -160,14 +196,36 @@ void GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce
 {
     if (auto* reader = formatManager.createReaderFor(file))
     {
-        auto sample = std::make_unique<Sample>();
-        sample->setSourceFromReader(reader);
-        samples[noteName] = std::move(sample);
+        if (!synthToggle)
+        {
+            auto sample = std::make_unique<Sample>();
+            sample->setSourceFromReader(reader);
+            samples[noteName] = std::move(sample);
+        }
+        else {
+            int rootNote = CreateNoteToMidi.at(noteName);
+            juce::BigInteger allNotes;
+            allNotes.setRange(12, 113, true);
+            // work in progress. use KeyToNote in order to get midi value with note value.
+            const int midi_note = CreateNoteToMidi[noteName];
+            auto sound = new juce::SamplerSound(noteName.toStdString(), *reader, allNotes,
+                rootNote, 0.0, 0.0, 10.0);
+            synth.addSound(sound);
+        }
+
     }
 }
 
 void GranularinfiniteAudioProcessor::startPlayback(const juce::String& note)
 {
+    // todoS
+    // make this function take a velocity control
+    if (synthToggle)
+    {
+        const int midi_note = CreateNoteToMidi[note];
+        synth.noteOn(1, midi_note, 127.0f);
+        return;
+    }
     std::cout << "isPrepared=" << isPrepared
         << ", samples.size=" << samples.size() << "\n";
     for (auto& pair : samples)
@@ -192,6 +250,12 @@ void GranularinfiniteAudioProcessor::startPlayback(const juce::String& note)
 
 void GranularinfiniteAudioProcessor::stopPlayback(const juce::String& note)
 {
+    const int midi_note = CreateNoteToMidi[note];
+
+    if (synthToggle)
+    {
+        synth.noteOff(1, midi_note, 127, false);
+    }
     auto it = samples.find(note);
     if (it != samples.end())
     {

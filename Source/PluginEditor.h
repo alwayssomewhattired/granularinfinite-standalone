@@ -34,7 +34,7 @@ public:
     void octaveUp(juce::TextButton& button);
     void octaveDown(juce::TextButton& button);
 
-    void loadFile(const juce::File& file);
+    //void loadFile(const juce::File& file);
 
 
 private:
@@ -45,7 +45,7 @@ private:
     juce::OwnedArray<NoteLabel> noteLabels;
     std::map<char, juce::String> keyToNote;
     std::map<juce::String, juce::String> noteToSample;
-
+    juce::MidiBuffer pendingMidi;
     int octave = 4;
     ButtonPalette buttonPalette;
 

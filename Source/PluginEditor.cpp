@@ -106,6 +106,26 @@ bool GranularinfiniteAudioProcessorEditor::keyPressed(const juce::KeyPress& key,
     auto it = keyToNote.find(char_key);
     if (it != keyToNote.end())
     {
+    auto it2 = currentlyPressedKeys.find(char_key);
+    if (audioProcessor.synthToggle)
+    {
+        if (it2 == currentlyPressedKeys.end())
+        {
+            const int midi_note = CreateNoteToMidi[it->second];
+            //audioProcessor.injectNoteOn(pendingMidi, midi_note);
+            // 
+            juce::MidiMessage m = juce::MidiMessage::noteOn(1, midi_note, (juce::uint8)127);
+            audioProcessor.addMidiEvent(m);
+            //m.setTimeStamp(juce::Time::getMillisecondCounterHiRes() * 0.001);
+            // 
+            // add more here
+            currentlyPressedKeys.insert(char_key);
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
         currentlyPressedKeys.insert(char_key);
         size_t index = order.find(char_key);
         if (index != std::string::npos)
