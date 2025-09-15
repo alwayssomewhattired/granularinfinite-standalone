@@ -1,21 +1,48 @@
 
-#pragma once
-#include <JuceHeader.h>
 #if JUCE_WINDOWS
+#define NOMINMAX
 #include <windows.h>
 #include <io.h>
 #include <fcntl.h>
 
-void openConsole()
+inline void openConsole()
 {
-	AllocConsole();
+    static bool consoleOpened = false;
+    if (consoleOpened)
+        return;
 
-	FILE* fp;
-	freopen_s(&fp, "CONOUT$", "w", stdout);
-	freopen_s(&fp, "CONOUT$", "w", stderr);
-	freopen_s(&fp, "CONIN", "r", stdin);
+    AllocConsole();
 
-	std::ios::sync_with_stdio();
+    FILE* fp;
+    freopen_s(&fp, "CONOUT$", "w", stdout);
+    freopen_s(&fp, "CONOUT$", "w", stderr);
+    freopen_s(&fp, "CONIN$", "r", stdin);
+
+    std::ios::sync_with_stdio();
+
+    consoleOpened = true;
 }
-
 #endif
+
+
+//#pragma once
+//#include <JuceHeader.h>
+//#if JUCE_WINDOWS
+//#define NOMINMAX
+//#include <windows.h>
+//#include <io.h>
+//#include <fcntl.h>
+//
+//void openConsole()
+//{
+//	AllocConsole();
+//
+//	FILE* fp;
+//	freopen_s(&fp, "CONOUT$", "w", stdout);
+//	freopen_s(&fp, "CONOUT$", "w", stderr);
+//	freopen_s(&fp, "CONIN", "r", stdin);
+//
+//	std::ios::sync_with_stdio();
+//}
+//
+//#endif

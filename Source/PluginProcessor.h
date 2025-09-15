@@ -57,12 +57,12 @@ public:
     void loadFile(const juce::File& file, const juce::String& noteName);
     void startPlayback(const juce::String& note);
     void stopPlayback(const juce::String& note);
-    void injectNoteOn(juce::MidiBuffer& midiMessages, const int& midiNote);
-    void injectNoteOff(juce::MidiBuffer& midiMessages, const int& midiNote);
+    //void injectNoteOn(juce::MidiBuffer& midiMessages, const int& midiNote);
+    //void injectNoteOff(juce::MidiBuffer& midiMessages, const int& midiNote);
     void addMidiEvent(const juce::MidiMessage& m);
 
     bool isPrepared = false;
-    bool synthToggle = true;
+    bool synthToggle = false;
 
 
 
@@ -83,6 +83,7 @@ private:
     std::map<juce::String, std::unique_ptr<Sample>> samples;
     juce::Synthesiser synth;
     juce::AudioFormatManager formatManager;
+    juce::AudioBuffer<float> tempBuffer;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GranularinfiniteAudioProcessor)

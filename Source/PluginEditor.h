@@ -34,8 +34,7 @@ public:
     void octaveUp(juce::TextButton& button);
     void octaveDown(juce::TextButton& button);
 
-    //void loadFile(const juce::File& file);
-
+    void synthToggleHandler(juce::TextButton& button);
 
 private:
 

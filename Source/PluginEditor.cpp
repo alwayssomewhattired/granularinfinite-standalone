@@ -12,7 +12,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
     : juce::AudioProcessorEditor(&p),
     audioProcessor(p)
 {
-    openConsole();
+
     keyToNote = CreateKeyToNote(octave); // add dynamic octave
     setWantsKeyboardFocus(true);
     addKeyListener(this);
@@ -32,7 +32,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
     {
         noteToSample[noteValue] = "";
     }
-
+    std::cout << "canon\n";
     const std::string order = "awsedftgyhujkolp;'";
     int count = 0;
     for (auto key : order)
@@ -46,7 +46,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             juce::String myNoteName = it->second;
 
 
-            // octave-buttons
+            // control-buttons
             juce::TextButton& octaveIncrement = buttonPalette.incrementButton;
             juce::TextButton& octaveDecrement = buttonPalette.decrementButton;
 
@@ -80,9 +80,11 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             addAndMakeVisible(noteLabel);
             addAndMakeVisible(button);
             addAndMakeVisible(label);
+            addAndMakeVisible(buttonPalette.synthToggleButton);
 
             octaveUp(octaveIncrement);
             octaveDown(octaveDecrement);
+            synthToggleHandler(buttonPalette.synthToggleButton);
 
             noteLabels.add(noteLabel);
             keyButtons.add(button);
@@ -101,33 +103,43 @@ GranularinfiniteAudioProcessorEditor::~GranularinfiniteAudioProcessorEditor()
 bool GranularinfiniteAudioProcessorEditor::keyPressed(const juce::KeyPress& key,
     Component* originatingComponent)
 {
+    std::cout << "jesus" << std::endl;
+
     const std::string order = "awsedftgyhujkolp;'";
     char char_key = static_cast<char>(key.getTextCharacter());
     auto it = keyToNote.find(char_key);
     if (it != keyToNote.end())
     {
     auto it2 = currentlyPressedKeys.find(char_key);
-    if (audioProcessor.synthToggle)
+    size_t index = order.find(char_key);
+    if (index != std::string::npos)
     {
-        if (it2 == currentlyPressedKeys.end())
+        auto* button = keyButtons[(int)index];
+        if (audioProcessor.synthToggle)
         {
-            const int midi_note = CreateNoteToMidi[it->second];
-            //audioProcessor.injectNoteOn(pendingMidi, midi_note);
-            // 
-            juce::MidiMessage m = juce::MidiMessage::noteOn(1, midi_note, (juce::uint8)127);
-            audioProcessor.addMidiEvent(m);
-            //m.setTimeStamp(juce::Time::getMillisecondCounterHiRes() * 0.001);
-            // 
-            // add more here
-            currentlyPressedKeys.insert(char_key);
-            return true;
-        }
-        else {
-            return false;
+            if (it2 == currentlyPressedKeys.end())
+            {
+                const int midi_note = CreateNoteToMidi[it->second];
+                //audioProcessor.injectNoteOn(pendingMidi, midi_note);
+                // 
+                juce::MidiMessage m = juce::MidiMessage::noteOn(1, midi_note, (juce::uint8)127);
+                audioProcessor.addMidiEvent(m);
+                //m.setTimeStamp(juce::Time::getMillisecondCounterHiRes() * 0.001);
+                // 
+                // add more here
+                currentlyPressedKeys.insert(char_key);
+                button->setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
+
+                return true;
+            }
+            else {
+                return false;
+            }
         }
     }
         currentlyPressedKeys.insert(char_key);
-        size_t index = order.find(char_key);
+        std::cout << "alive?\n";
+
         if (index != std::string::npos)
         {
             auto* button = keyButtons[(int)index];
@@ -135,8 +147,11 @@ bool GranularinfiniteAudioProcessorEditor::keyPressed(const juce::KeyPress& key,
             button->setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
             button->repaint();
             auto sampleName = noteToSample[it->second];
+            std::cout << "HEY\n";
             if (sampleName.isNotEmpty() && audioProcessor.isPrepared)
             {
+                std::cout << "HO\n";
+
             audioProcessor.startPlayback(it->second);
             }
         }
@@ -230,6 +245,27 @@ void GranularinfiniteAudioProcessorEditor::octaveDown(juce::TextButton& button)
         };
 }
 
+void GranularinfiniteAudioProcessorEditor::synthToggleHandler(juce::TextButton& button)
+{
+    button.onClick = [this, &button] {
+        bool isToggled = button.getToggleState();
+        std::cout << "b4" << audioProcessor.synthToggle << "\n";
+        audioProcessor.synthToggle = isToggled;
+        std::cout << "after" << audioProcessor.synthToggle << "\n";
+
+        if (isToggled)
+        {
+            button.setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
+        }
+        else {
+            button.setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
+        }
+        };
+}
+
+//==============================================================================
+
+
 void GranularinfiniteAudioProcessorEditor::paint (juce::Graphics& g)
 {
     g.fillAll(juce::Colours::black);
@@ -246,6 +282,7 @@ void GranularinfiniteAudioProcessorEditor::resized()
 
     buttonPalette.decrementButton.setBounds(x - 200, y + 400, buttonWidth, buttonHeight);
     buttonPalette.incrementButton.setBounds(x - 100, y + 400, buttonWidth, buttonHeight);
+    buttonPalette.synthToggleButton.setBounds(x, y + 400, buttonWidth, buttonHeight);
 
     for (int i = 0; i < keyButtons.size(); ++i)
     {
@@ -257,7 +294,6 @@ void GranularinfiniteAudioProcessorEditor::resized()
             keyButtons[i]->setColour(juce::TextButton::textColourOnId, juce::Colours::white);
             keyButtons[i]->setColour(juce::TextButton::textColourOffId, juce::Colours::white);
             keyButtons[i]->setColour(juce::ComboBox::outlineColourId, juce::Colours::white);
-            //keyButtons[i]->repaint();
         }
         else {
             keyButtons[i]->setBounds(x, y, buttonWidth, buttonHeight);

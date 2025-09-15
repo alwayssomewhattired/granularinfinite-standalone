@@ -12,10 +12,14 @@ public:
 
 		decrementButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
 		decrementButton.setButtonText("-");
+
+		synthToggleButton.setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
+		synthToggleButton.setButtonText("mode");
+		synthToggleButton.setClickingTogglesState(true);
 	}
 
 
 	juce::TextButton incrementButton;
 	juce::TextButton decrementButton;
-
+	juce::TextButton synthToggleButton;
 };
