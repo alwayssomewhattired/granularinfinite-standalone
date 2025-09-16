@@ -106,22 +106,16 @@ void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int sampl
     {
         pair.second->transportSource.prepareToPlay(samplesPerBlock, sampleRate);
     }
-
-    //for (auto& pair : samples)
-    //{
-    //    pair.second->tempBuffer.setSize(pair.second->transportSource.getTotalNumOutputChannels(),
-    //        samplesPerBlock + 32, false, false, true);
-    //    pair.second->bufferSize = pair.second->tempBuffer.getNumSamples();
-    //    pair.second->bufferPos = 0;
-    //}
     std::cout << sampleRate << "\n";
+    m_sampleRate = sampleRate;
     std::cout << samplesPerBlock << "\n";
+    m_blockSize = samplesPerBlock;
     synth.setCurrentPlaybackSampleRate(sampleRate);
 
     tempBuffer.setSize(getTotalNumOutputChannels(), samplesPerBlock, false, false, true);
     tempBuffer.clear();
 
-    isPrepared = true;
+    //isPrepared = true;
 }
 
 void GranularinfiniteAudioProcessor::releaseResources()
@@ -196,8 +190,6 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
         tempBuffer.setSize(outCh, numSamples, false, false, true);
     }
 
-
-
     if (synthToggle)
     {
         {
@@ -250,46 +242,6 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
     }
 }
 
-
-//void GranularinfiniteAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
-//    juce::MidiBuffer& midiMessages)
-//{
-//    juce::ScopedNoDenormals noDenormals;
-//    auto totalNumInputChannels  = getTotalNumInputChannels();
-//    auto totalNumOutputChannels = getTotalNumOutputChannels();
-//
-//    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-//        buffer.clear (i, 0, buffer.getNumSamples());
-//    if (synthToggle)
-//    {
-//        for (auto metadata : midiMessages)
-//        {
-//            std::cout << "WHY\n";
-//            std::cout << metadata.getMessage().getDescription() << "\n";
-//        }
-//        const std::lock_guard<std::mutex> lock(midiMutex);
-//        midiMessages.addEvents(midiFifo, 0, buffer.getNumSamples(), 0);
-//        midiFifo.clear();
-//        synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
-//        return;
-//    }
-//    tempBuffer.setSize(buffer.getNumChannels(), buffer.getNumSamples());
-//
-//    for (auto& pair : samples)
-//    {
-//        std::cout << "Playing? " << pair.second->transportSource.isPlaying()
-//            << " pos=" << pair.second->transportSource.getCurrentPosition() << "\n";
-//
-//        tempBuffer.clear();
-//        juce::AudioSourceChannelInfo info(&tempBuffer, 0, buffer.getNumSamples());
-//        pair.second->transportSource.getNextAudioBlock(info);
-//
-//        int numChans = std::min(buffer.getNumSamples(), tempBuffer.getNumChannels());
-//        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
-//            buffer.addFrom(ch, 0, tempBuffer, ch, 0, buffer.getNumSamples());
-//    }
-//}
-
 void GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce::String& noteName)
 {
     std::cout << "ONFILE" << std::endl;
@@ -299,7 +251,6 @@ void GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce
         {
             auto sample = std::make_unique<Sample>();
             sample->setSourceFromReader(reader);
-            //sample->transportSource.prepareToPlay(48000.0, 576);
             samples[noteName] = std::move(sample);
         }
         else {
@@ -310,6 +261,10 @@ void GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce
             auto sound = new juce::SamplerSound(noteName.toStdString(), *reader, allNotes,
                 rootNote, 0.0, 0.0, 10.0);
             synth.addSound(sound);
+
+            auto sample = std::make_unique<Sample>();
+            sample->setSourceFromReader(reader);
+            samples[noteName] = std::move(sample);
         }
 
     }
@@ -329,18 +284,24 @@ void GranularinfiniteAudioProcessor::startPlayback(const juce::String& note)
     //    << ", samples.size=" << samples.size() << "\n";
     //for (auto& pair : samples)
         //std::cout << "Sample: " << pair.first << ", readerSource=" << (pair.second->readerSource != nullptr) << "\n";
-    if (!isPrepared)
-    {
-        std::cout << "not ready\n";
-        return;
-    }
+    //if (!isPrepared)
+    //{
+    //    std::cout << "not ready\n";
+    //    return;
+    //}
     auto it = samples.find(note);
     if (it != samples.end())
     {
         auto& sample = it->second;
+        if (!sample->isPrepared)
+        {
+            sample->transportSource.prepareToPlay(48000.0, 576);
+            sample->isPrepared = true;
+        }
         if (!sample->transportSource.isPlaying())
         {
-                prepareToPlay(48000.0, 576);
+            
+            prepareToPlay(m_sampleRate, m_blockSize);
             sample->transportSource.setPosition(0.0);
             sample->transportSource.start();
         }

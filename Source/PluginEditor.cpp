@@ -50,6 +50,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             juce::TextButton& octaveIncrement = buttonPalette.incrementButton;
             juce::TextButton& octaveDecrement = buttonPalette.decrementButton;
 
+
             // note-name
             auto* noteLabel = new NoteLabel(myNoteName);
 
@@ -65,7 +66,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             // myNoteName is not refreshing its values at octave change.
             button->setOnFileDropped([this, myNoteName, label](const juce::String& fullPath, 
                 const juce::String& name) {
-                label->setText(name, juce::dontSendNotification);
+                label->setButtonText(name);
                 juce::String refinedNote = myNoteName.dropLastCharacters(1) + juce::String(octave);
                 std::cout << refinedNote << "\n";
                 noteToSample[refinedNote] = name;
@@ -85,6 +86,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             octaveUp(octaveIncrement);
             octaveDown(octaveDecrement);
             synthToggleHandler(buttonPalette.synthToggleButton);
+            sampleLabelHandler(*label);
 
             noteLabels.add(noteLabel);
             keyButtons.add(button);
@@ -103,7 +105,6 @@ GranularinfiniteAudioProcessorEditor::~GranularinfiniteAudioProcessorEditor()
 bool GranularinfiniteAudioProcessorEditor::keyPressed(const juce::KeyPress& key,
     Component* originatingComponent)
 {
-    std::cout << "jesus" << std::endl;
 
     const std::string order = "awsedftgyhujkolp;'";
     char char_key = static_cast<char>(key.getTextCharacter());
@@ -120,13 +121,9 @@ bool GranularinfiniteAudioProcessorEditor::keyPressed(const juce::KeyPress& key,
             if (it2 == currentlyPressedKeys.end())
             {
                 const int midi_note = CreateNoteToMidi[it->second];
-                //audioProcessor.injectNoteOn(pendingMidi, midi_note);
-                // 
+
                 juce::MidiMessage m = juce::MidiMessage::noteOn(1, midi_note, (juce::uint8)127);
                 audioProcessor.addMidiEvent(m);
-                //m.setTimeStamp(juce::Time::getMillisecondCounterHiRes() * 0.001);
-                // 
-                // add more here
                 currentlyPressedKeys.insert(char_key);
                 button->setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
 
@@ -138,7 +135,6 @@ bool GranularinfiniteAudioProcessorEditor::keyPressed(const juce::KeyPress& key,
         }
     }
         currentlyPressedKeys.insert(char_key);
-        std::cout << "alive?\n";
 
         if (index != std::string::npos)
         {
@@ -147,11 +143,10 @@ bool GranularinfiniteAudioProcessorEditor::keyPressed(const juce::KeyPress& key,
             button->setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
             button->repaint();
             auto sampleName = noteToSample[it->second];
-            std::cout << "HEY\n";
-            if (sampleName.isNotEmpty() && audioProcessor.isPrepared)
-            {
-                std::cout << "HO\n";
+            //if (sampleName.isNotEmpty() && audioProcessor.isPrepared)
+            if (sampleName.isNotEmpty())
 
+            {
             audioProcessor.startPlayback(it->second);
             }
         }
@@ -216,7 +211,7 @@ void GranularinfiniteAudioProcessorEditor::octaveUp(juce::TextButton& button)
                     noteLabels[i]->setText(it->second, juce::dontSendNotification);
                     if (sample_it != noteToSample.end())
                     {
-                        sampleLabels[i]->setText(sample_it->second, juce::dontSendNotification);
+                        sampleLabels[i]->setButtonText(sample_it->second);
                     }
             }
         }
@@ -238,20 +233,31 @@ void GranularinfiniteAudioProcessorEditor::octaveDown(juce::TextButton& button)
                 noteLabels[i]->setText(it->second, juce::dontSendNotification);
                 if (sample_it != noteToSample.end())
                 {
-                    sampleLabels[i]->setText(sample_it->second, juce::dontSendNotification);
+                    sampleLabels[i]->setButtonText(sample_it->second);
                 }
             }
         }
         };
 }
 
+void GranularinfiniteAudioProcessorEditor::sampleLabelHandler(SampleLabel& button)
+{
+    juce::TextButton& synthButton = buttonPalette.synthToggleButton;
+    button.onClick = [this, &button, &synthButton] {
+        bool isToggled = button.getToggleState();
+        audioProcessor.synthToggle = true;
+        synthButton.setToggleState(true, juce::dontSendNotification);
+        synthButton.setColour(juce::TextButton::buttonOnColourId, 
+            juce::Colours::green);
+        };
+    synthButton.repaint();
+}
+
 void GranularinfiniteAudioProcessorEditor::synthToggleHandler(juce::TextButton& button)
 {
     button.onClick = [this, &button] {
         bool isToggled = button.getToggleState();
-        std::cout << "b4" << audioProcessor.synthToggle << "\n";
         audioProcessor.synthToggle = isToggled;
-        std::cout << "after" << audioProcessor.synthToggle << "\n";
 
         if (isToggled)
         {

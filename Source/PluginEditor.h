@@ -35,6 +35,7 @@ public:
     void octaveDown(juce::TextButton& button);
 
     void synthToggleHandler(juce::TextButton& button);
+    void sampleLabelHandler(SampleLabel& button);
 
 private:
 

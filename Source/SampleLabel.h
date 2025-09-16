@@ -2,16 +2,30 @@
 #pragma once
 #include <juce_gui_basics/juce_gui_basics.h>
 
-class SampleLabel : public juce::Label
+class SampleLabel : public juce::TextButton
 {
 public:
 	SampleLabel(const juce::String fileName)
 	{
-		setJustificationType(juce::Justification::centred);
-		setFont(juce::Font(12.0f));
-		setColour(juce::Label::textColourId, juce::Colours::green);
-		setText(fileName, juce::dontSendNotification);
+
+		setButtonText(fileName);
+		setColour(juce::TextButton::textColourOnId, juce::Colours::green);
+		setColour(juce::TextButton::textColourOffId, juce::Colours::green);
+		setClickingTogglesState(true);
 	}
+
+	void paintButton(juce::Graphics& g, bool isMouseOver, bool isButtonDown) override
+	{
+		g.fillAll(juce::Colours::black);
+		if (isButtonDown || getToggleState())
+			g.setColour(juce::Colours::lightgreen);
+		else if (isMouseOver)
+			g.setColour(juce::Colours::lightgreen);
+		else
+			g.setColour(juce::Colours::green);
+		g.setFont(juce::Font(14.0f));
+		g.drawText(getButtonText(), getLocalBounds(), juce::Justification::centred);
+	};
 
 	~SampleLabel() override = default;
 private:

@@ -61,7 +61,7 @@ public:
     //void injectNoteOff(juce::MidiBuffer& midiMessages, const int& midiNote);
     void addMidiEvent(const juce::MidiMessage& m);
 
-    bool isPrepared = false;
+    //bool isPrepared = false;
     bool synthToggle = false;
 
 
@@ -71,6 +71,7 @@ private:
     {
         std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
         juce::AudioTransportSource transportSource;
+        bool isPrepared = false;
 
         void setSourceFromReader(juce::AudioFormatReader* reader)
         {
@@ -84,6 +85,9 @@ private:
     juce::Synthesiser synth;
     juce::AudioFormatManager formatManager;
     juce::AudioBuffer<float> tempBuffer;
+
+    double m_sampleRate = 48000.0;
+    int m_blockSize = 576;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GranularinfiniteAudioProcessor)
