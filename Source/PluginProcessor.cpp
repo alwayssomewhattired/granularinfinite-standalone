@@ -101,26 +101,21 @@ void GranularinfiniteAudioProcessor::changeProgramName (int index, const juce::S
 
 void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    std::cout << "PREPARE TO PAY" << std::endl;
     for (auto& pair : samples)
     {
         pair.second->transportSource.prepareToPlay(samplesPerBlock, sampleRate);
     }
-    std::cout << sampleRate << "\n";
     m_sampleRate = sampleRate;
-    std::cout << samplesPerBlock << "\n";
     m_blockSize = samplesPerBlock;
     synth.setCurrentPlaybackSampleRate(sampleRate);
 
     tempBuffer.setSize(getTotalNumOutputChannels(), samplesPerBlock, false, false, true);
     tempBuffer.clear();
 
-    //isPrepared = true;
 }
 
 void GranularinfiniteAudioProcessor::releaseResources()
 {
-    std::cout << "REALEASE RESOURCES\n";
     for (auto& pair : samples)
     {
         pair.second->transportSource.releaseResources();
@@ -148,20 +143,6 @@ bool GranularinfiniteAudioProcessor::isBusesLayoutSupported (const BusesLayout& 
 }
 #endif
 
-//void GranularinfiniteAudioProcessor::injectNoteOn(juce::MidiBuffer& midiMessages, 
-//    const int& midiNote)
-//{
-//    // i think this juce::midimessage object needs to be timestamped
-//    juce::MidiMessage m = juce::MidiMessage::noteOn(1, midiNote, (juce::uint8)127);
-//    midiMessages.addEvent(m, 0);
-//}
-//
-//void GranularinfiniteAudioProcessor::injectNoteOff(juce::MidiBuffer& midiMessages,
-//    const int& midiNote)
-//{
-//    juce::MidiMessage m = juce::MidiMessage::noteOff(1, midiNote);
-//    midiMessages.addEvent(m, 0);
-//}
 
 void GranularinfiniteAudioProcessor::addMidiEvent(const juce::MidiMessage& m)
 {
@@ -197,10 +178,6 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
             midiMessages.addEvents(midiFifo, 0, numSamples, 0);
             midiFifo.clear();
         }
-
-        // debug: print incoming MIDI descriptions (small volume)
-        for (auto meta : midiMessages)
-            std::cout << "MIDI: " << meta.getMessage().getDescription() << "\n";
 
         // render synth into cleared buffer
         buffer.clear();
@@ -244,28 +221,21 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
 
 void GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce::String& noteName)
 {
-    std::cout << "ONFILE" << std::endl;
     if (auto* reader = formatManager.createReaderFor(file))
     {
-        if (!synthToggle)
-        {
-            auto sample = std::make_unique<Sample>();
-            sample->setSourceFromReader(reader);
-            samples[noteName] = std::move(sample);
-        }
-        else {
-            int rootNote = CreateNoteToMidi.at(noteName);
-            juce::BigInteger allNotes;
-            allNotes.setRange(12, 113, true);
-            const int midi_note = CreateNoteToMidi[noteName];
-            auto sound = new juce::SamplerSound(noteName.toStdString(), *reader, allNotes,
-                rootNote, 0.0, 0.0, 10.0);
-            synth.addSound(sound);
+        std::cout << noteName << "yah baby " << "\n";
+        synth.clearSounds();
+        int rootNote = CreateNoteToMidi.at(noteName);
+        juce::BigInteger allNotes;
+        allNotes.setRange(0, 128, true);
+        const int midi_note = CreateNoteToMidi[noteName];
+        auto sound = new juce::SamplerSound(noteName.toStdString(), *reader, allNotes,
+            rootNote, 0.0, 0.0, 10.0);
+        synth.addSound(sound);
 
-            auto sample = std::make_unique<Sample>();
-            sample->setSourceFromReader(reader);
-            samples[noteName] = std::move(sample);
-        }
+        auto sample = std::make_unique<Sample>();
+        sample->setSourceFromReader(reader);
+        samples[noteName] = std::move(sample);
 
     }
 }
@@ -280,15 +250,7 @@ void GranularinfiniteAudioProcessor::startPlayback(const juce::String& note)
         synth.noteOn(1, midi_note, 127.0f);
         return;
     }
-    //std::cout << "isPrepared=" << isPrepared
-    //    << ", samples.size=" << samples.size() << "\n";
-    //for (auto& pair : samples)
-        //std::cout << "Sample: " << pair.first << ", readerSource=" << (pair.second->readerSource != nullptr) << "\n";
-    //if (!isPrepared)
-    //{
-    //    std::cout << "not ready\n";
-    //    return;
-    //}
+
     auto it = samples.find(note);
     if (it != samples.end())
     {

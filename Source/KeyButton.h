@@ -16,7 +16,6 @@ public:
 		: TextButton(keyName), noteName(keyName)
 	{
 		setRepaintsOnMouseActivity(true);
-		//formatManager.registerBasicFormats();
 	}
 
 	void setOnFileDropped(FileDroppedCallback cb) { onFileDropped = std::move(cb); }
@@ -42,10 +41,11 @@ public:
 		assignedFile = files[0]; // take the first file for now
 
 		auto fileName = juce::File(assignedFile).getFileName();
-		std::cout << "filename: " << fileName << "\n";
-		std::cout << "File path: " << assignedFile << "\n";
 		if (files.isEmpty()) return;
-		if (onFileDropped) onFileDropped(assignedFile, fileName);
+		if (onFileDropped) 
+		{
+			onFileDropped(assignedFile, fileName);
+		}
 	}
 
 

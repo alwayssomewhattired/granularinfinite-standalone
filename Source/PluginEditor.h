@@ -38,7 +38,9 @@ public:
     void sampleLabelHandler(SampleLabel& button);
 
 private:
+    juce::String synthNote = "G4";
 
+    std::map<juce::String, std::unique_ptr<juce::File>> noteToFile;
     std::set<char> currentlyPressedKeys;
     juce::OwnedArray<KeyButton> keyButtons;
     juce::OwnedArray<SampleLabel> sampleLabels;

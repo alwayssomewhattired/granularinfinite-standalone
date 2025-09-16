@@ -62,17 +62,17 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
 
             // sample-name
             auto* label = new SampleLabel("");
-
-            // myNoteName is not refreshing its values at octave change.
             button->setOnFileDropped([this, myNoteName, label](const juce::String& fullPath, 
                 const juce::String& name) {
-                label->setButtonText(name);
                 juce::String refinedNote = myNoteName.dropLastCharacters(1) + juce::String(octave);
-                std::cout << refinedNote << "\n";
+                label->setButtonText(name);
+                std::cout << "do we get a note? " << refinedNote << "\n";;
                 noteToSample[refinedNote] = name;
                 
                 juce::File file(fullPath);
-
+                synthNote = refinedNote;
+                //sampleLabelHandler(*label, refinedNote);
+                noteToFile[refinedNote] = std::make_unique<juce::File>(fullPath);
                 audioProcessor.loadFile(file, refinedNote);
                 });
 
@@ -86,7 +86,9 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             octaveUp(octaveIncrement);
             octaveDown(octaveDecrement);
             synthToggleHandler(buttonPalette.synthToggleButton);
+            //sampleLabelHandler(*label, refinedNote);
             sampleLabelHandler(*label);
+
 
             noteLabels.add(noteLabel);
             keyButtons.add(button);
@@ -121,7 +123,6 @@ bool GranularinfiniteAudioProcessorEditor::keyPressed(const juce::KeyPress& key,
             if (it2 == currentlyPressedKeys.end())
             {
                 const int midi_note = CreateNoteToMidi[it->second];
-
                 juce::MidiMessage m = juce::MidiMessage::noteOn(1, midi_note, (juce::uint8)127);
                 audioProcessor.addMidiEvent(m);
                 currentlyPressedKeys.insert(char_key);
@@ -242,22 +243,47 @@ void GranularinfiniteAudioProcessorEditor::octaveDown(juce::TextButton& button)
 
 void GranularinfiniteAudioProcessorEditor::sampleLabelHandler(SampleLabel& button)
 {
+    // don't rely on synth note!!!
+    // change synth note here. synth notes lcurrent value is last file dropped. not good!
+    // access filename in SampleLabels class.
+    // use filename to lookup noteName
+    // apply found noteName to synthNote.
+    const juce::String& file = noteToSample[synthNote];
     juce::TextButton& synthButton = buttonPalette.synthToggleButton;
-    button.onClick = [this, &button, &synthButton] {
+    std::cout << "this note now: " << synthNote << "\n";
+    button.onClick = [this, &button, &synthButton, &file] {
+        std::cout << "note : " << synthNote << "\n";
+
+        if (noteToFile[synthNote] != nullptr)
+        {
+            juce::File& fullFile = *noteToFile[synthNote];
+            audioProcessor.loadFile(fullFile, synthNote);
+        }
+        else {
+            std::cout << "Error with file my son\n";
+            return;
+        }
+      
         bool isToggled = button.getToggleState();
-        audioProcessor.synthToggle = true;
-        synthButton.setToggleState(true, juce::dontSendNotification);
-        synthButton.setColour(juce::TextButton::buttonOnColourId, 
-            juce::Colours::green);
+        if (isToggled)
+        { 
+            audioProcessor.synthToggle = true;
+        }
+        else {
+            audioProcessor.synthToggle = false;
+        }
+
+        //synthButton.setToggleState(true, juce::dontSendNotification);
+        //synthButton.setColour(juce::TextButton::buttonOnColourId, 
+        //    juce::Colours::green);
         };
-    synthButton.repaint();
+    //synthButton.repaint();
 }
 
 void GranularinfiniteAudioProcessorEditor::synthToggleHandler(juce::TextButton& button)
 {
     button.onClick = [this, &button] {
         bool isToggled = button.getToggleState();
-        audioProcessor.synthToggle = isToggled;
 
         if (isToggled)
         {
