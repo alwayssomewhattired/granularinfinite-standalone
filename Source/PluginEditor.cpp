@@ -30,9 +30,9 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
         "C8", "C#8", "D8", "D#8", "E8", "F8" };
     for (std::string noteValue : notes)
     {
-        noteToSample[noteValue] = "";
+        //noteToSample[noteValue] = "";
+        noteToSample.set(noteValue, "");
     }
-    std::cout << "canon\n";
     const std::string order = "awsedftgyhujkolp;'";
     int count = 0;
     for (auto key : order)
@@ -67,9 +67,11 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
                 juce::String refinedNote = myNoteName.dropLastCharacters(1) + juce::String(octave);
                 label->setButtonText(name);
                 std::cout << "do we get a note? " << refinedNote << "\n";;
-                noteToSample[refinedNote] = name;
-                
+                //noteToSample[refinedNote] = name;
+                noteToSample.set(refinedNote, name);
                 juce::File file(fullPath);
+                juce::String refinedName = file.getFileNameWithoutExtension();
+                label->file = refinedName;
                 synthNote = refinedNote;
                 //sampleLabelHandler(*label, refinedNote);
                 noteToFile[refinedNote] = std::make_unique<juce::File>(fullPath);
@@ -143,15 +145,22 @@ bool GranularinfiniteAudioProcessorEditor::keyPressed(const juce::KeyPress& key,
 
             button->setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
             button->repaint();
-            auto sampleName = noteToSample[it->second];
-            //if (sampleName.isNotEmpty() && audioProcessor.isPrepared)
-            if (sampleName.isNotEmpty())
-
+            //auto sampleName = noteToSample[it->second];
+            if (auto* sampleName = noteToSample.getValue(it->second))
             {
-            audioProcessor.startPlayback(it->second);
+                //if (sampleName.isNotEmpty())
+                if (sampleName->isNotEmpty())
+
+                {
+                    audioProcessor.startPlayback(it->second);
+                }
+                return true;
+            }
+            else {
+                std::cout << "sample failure\n";
+                return false;
             }
         }
-        return true;
     }
     return false;
 }
@@ -208,12 +217,21 @@ void GranularinfiniteAudioProcessorEditor::octaveUp(juce::TextButton& button)
             auto it = keyToNote.find(order[i]);
             if (it != keyToNote.end())
             {
-                auto sample_it = noteToSample.find(it->second);
+                //auto sample_it = noteToSample.find(it->second);
+                if (auto* sample = noteToSample.getKey(it->second))
+                {
+
                     noteLabels[i]->setText(it->second, juce::dontSendNotification);
-                    if (sample_it != noteToSample.end())
-                    {
-                        sampleLabels[i]->setButtonText(sample_it->second);
-                    }
+                    //if (sample_it != noteToSample.end())
+
+                    //sampleLabels[i]->setButtonText(sample_it->second);
+                    sampleLabels[i]->setButtonText(*sample);
+
+                }
+                else {
+                    std::cout << "noteToSample fail\n";
+                    return;
+                }
             }
         }
     };
@@ -230,11 +248,20 @@ void GranularinfiniteAudioProcessorEditor::octaveDown(juce::TextButton& button)
             auto it = keyToNote.find(order[i]);
             if (it != keyToNote.end())
             {
-                auto sample_it = noteToSample.find(it->second);
-                noteLabels[i]->setText(it->second, juce::dontSendNotification);
-                if (sample_it != noteToSample.end())
+                //auto sample_it = noteToSample.find(it->second);
+                if (auto* sample = noteToSample.getValue(it->second))
                 {
-                    sampleLabels[i]->setButtonText(sample_it->second);
+                    noteLabels[i]->setText(it->second, juce::dontSendNotification);
+                    //if (sample_it != noteToSample.end())
+                    //{
+                        //sampleLabels[i]->setButtonText(sample_it->second);
+                    sampleLabels[i]->setButtonText(*sample);
+
+                    //}
+                }
+                else {
+                    std::cout << "noteToSample fail\n";
+                    return;
                 }
             }
         }
@@ -243,41 +270,50 @@ void GranularinfiniteAudioProcessorEditor::octaveDown(juce::TextButton& button)
 
 void GranularinfiniteAudioProcessorEditor::sampleLabelHandler(SampleLabel& button)
 {
-    // don't rely on synth note!!!
-    // change synth note here. synth notes lcurrent value is last file dropped. not good!
-    // access filename in SampleLabels class.
-    // use filename to lookup noteName
-    // apply found noteName to synthNote.
-    const juce::String& file = noteToSample[synthNote];
-    juce::TextButton& synthButton = buttonPalette.synthToggleButton;
-    std::cout << "this note now: " << synthNote << "\n";
-    button.onClick = [this, &button, &synthButton, &file] {
-        std::cout << "note : " << synthNote << "\n";
 
-        if (noteToFile[synthNote] != nullptr)
+    // use filename to reverse-lookup noteName is inefficient. instead create bimap for bi-directional access.
+    // use this to get name from file object: juce::String fileName = f.getFileNameWithoutExtension();
+    // access notevalue associated with filename using bimap
+    // apply found noteName to synthNote so we can keep track of chosen file for synth mode.
+
+
+    // shit is goin down hard an heavy!
+    // i threw in a 'always true' condition because optimism and bc it works (commented out for now lol)
+      button.onClick = [this, &button] {
+          std::cout << "file: " << button.file << "\n";
+        if (auto* note = noteToSample.getKey(button.file))
         {
-            juce::File& fullFile = *noteToFile[synthNote];
-            audioProcessor.loadFile(fullFile, synthNote);
-        }
-        else {
-            std::cout << "Error with file my son\n";
-            return;
-        }
-      
-        bool isToggled = button.getToggleState();
-        if (isToggled)
-        { 
-            audioProcessor.synthToggle = true;
-        }
-        else {
-            audioProcessor.synthToggle = false;
-        }
+            std::string realStr = note->toStdString();
+            std::cout << "note in question : " << realStr << "\n";
+            for (auto& [key, value] : noteToFile)
+            {
+                std::cout << "key: " << key << "\n";
+            }
+            //if (noteToFile[realStr] != nullptr)
+            //{
+                juce::File& fullFile = *noteToFile[*note];
+                std::cout << "Sent loud and clear\n";
 
-        //synthButton.setToggleState(true, juce::dontSendNotification);
-        //synthButton.setColour(juce::TextButton::buttonOnColourId, 
-        //    juce::Colours::green);
+                audioProcessor.loadFile(fullFile, *note);
+            //}
+            //else {
+            //    std::cout << "Error with file my son\n";
+            //    return;
+            //}
+
+            bool isToggled = button.getToggleState();
+            if (isToggled)
+            {
+                audioProcessor.synthToggle = true;
+            }
+            else {
+                audioProcessor.synthToggle = false;
+            }
+            }
+    else {
+        std::cout << "noteToSample fail\n";
+    }
         };
-    //synthButton.repaint();
 }
 
 void GranularinfiniteAudioProcessorEditor::synthToggleHandler(juce::TextButton& button)
@@ -330,7 +366,7 @@ void GranularinfiniteAudioProcessorEditor::resized()
         else {
             keyButtons[i]->setBounds(x, y, buttonWidth, buttonHeight);
         }
-            sampleLabels[i]->setBounds(x, y + buttonHeight, buttonWidth, labelHeight);
+        sampleLabels[i]->setBounds(x, y + buttonHeight, buttonWidth, labelHeight);
 
         x += buttonWidth + spacing;   // move to next key
     }

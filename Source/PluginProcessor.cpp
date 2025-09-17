@@ -221,18 +221,23 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
 
 void GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce::String& noteName)
 {
+    std::cout << "my terra-cottas army! \n";
+    // currently, this 'auto* reader' stuff is crashing below.
+    // check parameters 'file' and 'noteName' to check validity.
     if (auto* reader = formatManager.createReaderFor(file))
     {
-        std::cout << noteName << "yah baby " << "\n";
         synth.clearSounds();
+        std::cout << "WE MADE IT?\n";
+        std::cout << noteName << "\n";
+        std::cout << noteName.toStdString() << "\n";
         int rootNote = CreateNoteToMidi.at(noteName);
+        std::cout << "annnnn i think noteName is the culprit we have been looking for \n";
         juce::BigInteger allNotes;
         allNotes.setRange(0, 128, true);
         const int midi_note = CreateNoteToMidi[noteName];
         auto sound = new juce::SamplerSound(noteName.toStdString(), *reader, allNotes,
             rootNote, 0.0, 0.0, 10.0);
         synth.addSound(sound);
-
         auto sample = std::make_unique<Sample>();
         sample->setSourceFromReader(reader);
         samples[noteName] = std::move(sample);

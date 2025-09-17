@@ -10,6 +10,7 @@
 #include "KeyButton.h"
 #include "NoteLabel.h"
 #include "ButtonPalette.h"
+#include "BiMap.h"
 
 //==============================================================================
 /**
@@ -46,7 +47,9 @@ private:
     juce::OwnedArray<SampleLabel> sampleLabels;
     juce::OwnedArray<NoteLabel> noteLabels;
     std::map<char, juce::String> keyToNote;
-    std::map<juce::String, juce::String> noteToSample;
+    // turn noteToSample into BiMap
+    BiMap<juce::String, juce::String> noteToSample;
+    //std::map<juce::String, juce::String> noteToSample;
     juce::MidiBuffer pendingMidi;
     int octave = 4;
     ButtonPalette buttonPalette;

@@ -7,7 +7,7 @@ class SampleLabel : public juce::TextButton
 public:
 	SampleLabel(const juce::String fileName)
 	{
-
+		file = fileName;
 		setButtonText(fileName);
 		setColour(juce::TextButton::textColourOnId, juce::Colours::green);
 		setColour(juce::TextButton::textColourOffId, juce::Colours::green);
@@ -27,8 +27,9 @@ public:
 		g.drawText(getButtonText(), getLocalBounds(), juce::Justification::centred);
 	};
 
+	juce::String file;
+
 	~SampleLabel() override = default;
 private:
-
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SampleLabel)
 };

@@ -40,7 +40,7 @@ public:
 
 		assignedFile = files[0]; // take the first file for now
 
-		auto fileName = juce::File(assignedFile).getFileName();
+		auto fileName = juce::File(assignedFile).getFileNameWithoutExtension();
 		if (files.isEmpty()) return;
 		if (onFileDropped) 
 		{
@@ -55,7 +55,5 @@ private:
 	juce::String sampleName;
 
 	FileDroppedCallback onFileDropped;
-	//juce::AudioFormatManager formatManager;
-	//std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
-	//juce::AudioTransportSource transportSource;
+
 };
