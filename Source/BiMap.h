@@ -23,7 +23,6 @@ public:
 
 
     // Lookup by value
-    //Key* getKey(const Value& v) { return &reverse[v]; }
 Value* getValue(const Key& k)
 {
     if (forward.contains(k))
@@ -42,7 +41,6 @@ Key* getKey(const Value& v)
     // Remove by value
     void removeByValue(const Value& v)
     {
-        //if (auto* k = reverse[v])
         if (reverse.contains(v))
             forward.remove(reverse[k]);
         reverse.remove(v);

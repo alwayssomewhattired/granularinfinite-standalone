@@ -221,9 +221,10 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
 
 void GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce::String& noteName)
 {
-    std::cout << "my terra-cottas army! \n";
-    // currently, this 'auto* reader' stuff is crashing below.
-    // check parameters 'file' and 'noteName' to check validity.
+
+
+    std::string realStr = noteName.toStdString();
+
     if (auto* reader = formatManager.createReaderFor(file))
     {
         synth.clearSounds();
