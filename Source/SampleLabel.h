@@ -17,7 +17,9 @@ public:
 	void paintButton(juce::Graphics& g, bool isMouseOver, bool isButtonDown) override
 	{
 		g.fillAll(juce::Colours::black);
-		if (isButtonDown || getToggleState())
+		//if (isButtonDown || getToggleState())
+		if (getToggleState())
+
 			g.setColour(juce::Colours::lightgreen);
 		else if (isMouseOver)
 			g.setColour(juce::Colours::lightgreen);

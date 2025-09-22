@@ -71,7 +71,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
                 label->file = refinedName;
                 synthNote = refinedNote;
                 noteToFile[refinedNote] = std::make_unique<juce::File>(fullPath);
-                audioProcessor.loadFile(file, refinedNote);
+                audioProcessor.loadFile(file, refinedNote, "false");
                 });
 
             addAndMakeVisible(octaveIncrement);
@@ -256,19 +256,42 @@ void GranularinfiniteAudioProcessorEditor::octaveDown(juce::TextButton& button)
 
 void GranularinfiniteAudioProcessorEditor::sampleLabelHandler(SampleLabel& button)
 {
+    // make it so only the latest value is reflected onto the button change.
       button.onClick = [this, &button] {
         if (auto* note = noteToSample.getKey(button.file))
         {
             std::string realStr = note->toStdString();
-
             juce::String jStr = realStr;
             auto it = noteToFile.find(realStr);
 
             if (it != noteToFile.end() && it->second)
             {
-                juce::File& fullFile = *(it->second);
-                audioProcessor.loadFile(fullFile, jStr);
 
+                std::cout << "toggle: " << button.getToggleState() << "\n";
+                juce::File& fullFile = *(it->second);
+                juce::String tmpFileName = fullFile.getFileNameWithoutExtension();
+                if (currentlyPressedSample != "none")
+                {
+                auto sample_it = std::find_if(sampleLabels.begin(), sampleLabels.end(), [this](SampleLabel* label)
+                    { return label->file == currentlyPressedSample; });
+                if (sample_it != sampleLabels.end())
+                {
+                    juce::String sample_value = (*sample_it)->file;
+                    std::cout << "we got this! " << (*sample_it)->file << "\n";
+                    (*sample_it)->setToggleState(false, juce::dontSendNotification);
+                    currentlyPressedSample = tmpFileName;
+                    if (sample_value == currentlyPressedSample) {
+                        std::cout << "SAME THING\n";
+                        currentlyPressedSample = "none";
+                    }
+                }
+
+                }
+                else {
+                    currentlyPressedSample = tmpFileName;
+                }
+                // no need to pass in currentlyPressedSample
+                audioProcessor.loadFile(fullFile, jStr, currentlyPressedSample);
             }
             else {
                 std::cout << "Error with file my son\n";

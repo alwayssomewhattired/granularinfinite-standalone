@@ -47,11 +47,11 @@ private:
     juce::OwnedArray<SampleLabel> sampleLabels;
     juce::OwnedArray<NoteLabel> noteLabels;
     std::map<char, juce::String> keyToNote;
-    // turn noteToSample into BiMap
     BiMap<juce::String, juce::String> noteToSample;
-    //std::map<juce::String, juce::String> noteToSample;
     juce::MidiBuffer pendingMidi;
     int octave = 4;
+    // make control to store latest sample click (store juce string)
+    juce::String currentlyPressedSample = "none";
     ButtonPalette buttonPalette;
 
     GranularinfiniteAudioProcessor& audioProcessor;

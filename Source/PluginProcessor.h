@@ -47,7 +47,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     //==============================================================================
-    void loadFile(const juce::File& file, const juce::String& noteName);
+    void loadFile(const juce::File& file, const juce::String& noteName, std::optional<juce::String> fileName = std::nullopt);
     void startPlayback(const juce::String& note);
     void stopPlayback(const juce::String& note);
     //void injectNoteOn(juce::MidiBuffer& midiMessages, const int& midiNote);

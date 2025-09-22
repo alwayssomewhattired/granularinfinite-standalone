@@ -219,20 +219,17 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
     }
 }
 
-void GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce::String& noteName)
+void GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce::String& noteName, std::optional<juce::String> fileName)
 {
 
-
+    std::cout << "file nNME: " << fileName.value_or("false") << "\n";
     std::string realStr = noteName.toStdString();
 
     if (auto* reader = formatManager.createReaderFor(file))
     {
         synth.clearSounds();
-        std::cout << "WE MADE IT?\n";
-        std::cout << noteName << "\n";
-        std::cout << noteName.toStdString() << "\n";
+
         int rootNote = CreateNoteToMidi.at(noteName);
-        std::cout << "annnnn i think noteName is the culprit we have been looking for \n";
         juce::BigInteger allNotes;
         allNotes.setRange(0, 128, true);
         const int midi_note = CreateNoteToMidi[noteName];
