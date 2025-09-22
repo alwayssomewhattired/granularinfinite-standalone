@@ -222,7 +222,6 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
 void GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce::String& noteName, std::optional<juce::String> fileName)
 {
 
-    std::cout << "file nNME: " << fileName.value_or("false") << "\n";
     std::string realStr = noteName.toStdString();
 
     if (auto* reader = formatManager.createReaderFor(file))

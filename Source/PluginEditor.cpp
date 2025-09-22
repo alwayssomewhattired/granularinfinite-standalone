@@ -28,9 +28,11 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
         "C6", "C#6", "D6", "D#6", "E6", "F6", "F#6", "G6", "G#6", "A6", "A#6", "B6",
         "C7", "C#7", "D7", "D#7", "E7", "F7", "F#7", "G7", "G#7", "A7", "A#7", "B7",
         "C8", "C#8", "D8", "D#8", "E8", "F8" };
+    // i think the problem is this is a string. it should be a juce::string!
     for (std::string noteValue : notes)
     {
         noteToSample.set(noteValue, "");
+        std::cout << noteValue << "\n";
     }
     const std::string order = "awsedftgyhujkolp;'";
     int count = 0;
@@ -205,23 +207,22 @@ void GranularinfiniteAudioProcessorEditor::octaveUp(juce::TextButton& button)
         octave = std::clamp(octave + 1, 0, 8);
         keyToNote = CreateKeyToNote(octave);
         const std::string order = "awsedftgyhujkolp;'";
+
         for (size_t i = 0; i < order.size(); i++)
         {
             auto it = keyToNote.find(order[i]);
             if (it != keyToNote.end())
             {
-                if (auto* sample = noteToSample.getKey(it->second))
+                auto* sample = noteToSample.getValue(it->second);
+                if (!sample)
                 {
-
-                    noteLabels[i]->setText(it->second, juce::dontSendNotification);
-
-                    sampleLabels[i]->setButtonText(*sample);
-
+                    sampleLabels[i]->setButtonText("");
                 }
                 else {
-                    std::cout << "noteToSample fail\n";
-                    return;
+                    juce::String raw = *sample;
+                    sampleLabels[i]->setButtonText(raw);
                 }
+            noteLabels[i]->setText(it->second, juce::dontSendNotification);
             }
         }
     };
@@ -238,17 +239,15 @@ void GranularinfiniteAudioProcessorEditor::octaveDown(juce::TextButton& button)
             auto it = keyToNote.find(order[i]);
             if (it != keyToNote.end())
             {
-                if (auto* sample = noteToSample.getValue(it->second))
-                {
-                    noteLabels[i]->setText(it->second, juce::dontSendNotification);
-
-                    sampleLabels[i]->setButtonText(*sample);
-
+                auto* sample = noteToSample.getValue(it->second);
+                if (!sample) {
+                    sampleLabels[i]->setButtonText("");
                 }
                 else {
-                    std::cout << "noteToSample fail\n";
-                    return;
+                    juce::String raw = *sample;
+                    sampleLabels[i]->setButtonText(raw);
                 }
+            noteLabels[i]->setText(it->second, juce::dontSendNotification);
             }
         }
         };
@@ -267,7 +266,6 @@ void GranularinfiniteAudioProcessorEditor::sampleLabelHandler(SampleLabel& butto
             if (it != noteToFile.end() && it->second)
             {
 
-                std::cout << "toggle: " << button.getToggleState() << "\n";
                 juce::File& fullFile = *(it->second);
                 juce::String tmpFileName = fullFile.getFileNameWithoutExtension();
                 if (currentlyPressedSample != "none")
@@ -277,11 +275,9 @@ void GranularinfiniteAudioProcessorEditor::sampleLabelHandler(SampleLabel& butto
                 if (sample_it != sampleLabels.end())
                 {
                     juce::String sample_value = (*sample_it)->file;
-                    std::cout << "we got this! " << (*sample_it)->file << "\n";
                     (*sample_it)->setToggleState(false, juce::dontSendNotification);
                     currentlyPressedSample = tmpFileName;
                     if (sample_value == currentlyPressedSample) {
-                        std::cout << "SAME THING\n";
                         currentlyPressedSample = "none";
                     }
                 }
@@ -320,9 +316,11 @@ void GranularinfiniteAudioProcessorEditor::synthToggleHandler(juce::TextButton& 
 
         if (isToggled)
         {
+            audioProcessor.grainAll = true;
             button.setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
         }
         else {
+            audioProcessor.grainAll = false;
             button.setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
         }
         };

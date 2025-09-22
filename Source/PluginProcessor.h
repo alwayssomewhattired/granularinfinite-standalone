@@ -50,12 +50,11 @@ public:
     void loadFile(const juce::File& file, const juce::String& noteName, std::optional<juce::String> fileName = std::nullopt);
     void startPlayback(const juce::String& note);
     void stopPlayback(const juce::String& note);
-    //void injectNoteOn(juce::MidiBuffer& midiMessages, const int& midiNote);
-    //void injectNoteOff(juce::MidiBuffer& midiMessages, const int& midiNote);
     void addMidiEvent(const juce::MidiMessage& m);
 
-    //bool isPrepared = false;
     bool synthToggle = false;
+    bool grainAll = false;
+
 
 
 
