@@ -32,7 +32,6 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
     for (std::string noteValue : notes)
     {
         noteToSample.set(noteValue, "");
-        std::cout << noteValue << "\n";
     }
     const std::string order = "awsedftgyhujkolp;'";
     int count = 0;

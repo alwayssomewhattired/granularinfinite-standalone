@@ -9,6 +9,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "OpenConsole.h"
+#include <juce_dsp/juce_dsp.h>
 #include <algorithm>
 
 //==============================================================================
@@ -112,6 +113,15 @@ void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int sampl
     tempBuffer.setSize(getTotalNumOutputChannels(), samplesPerBlock, false, false, true);
     tempBuffer.clear();
 
+    circularBuffer.setSize(getTotalNumOutputChannels(), maxCircularSize, false, false, true);
+    circularBuffer.clear();
+
+    hannWindow.resize(maxGrainLength);
+    juce::dsp::WindowingFunction<float>::fillWindowingTables(
+        hannWindow.data(),
+        hannWindow.size(),
+        juce::dsp::WindowingFunction<float>::hann
+    );
 }
 
 void GranularinfiniteAudioProcessor::releaseResources()
@@ -150,6 +160,111 @@ void GranularinfiniteAudioProcessor::addMidiEvent(const juce::MidiMessage& m)
     midiFifo.addEvent(m, 0);
 }
 
+void GranularinfiniteAudioProcessor::spawnGrain()
+{
+    if (circularBuffer.getNumSamples() == 0)
+        return;
+
+    Grain g;
+
+    // random start
+    g.startSample = juce::Random::getSystemRandom().nextInt(circularBuffer.getNumSamples());
+    //random length
+    g.length = juce::Random::getSystemRandom().nextInt(maxGrainLength - minGrainLength + 1) + minGrainLength;
+    g.position = 0;
+    // insert pitch stuff here...
+    grains.push_back(std::move(g));
+}
+
+void GranularinfiniteAudioProcessor::processSamplerPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples)
+{
+
+    for (auto& pair : samples)
+    {
+        auto& sample = pair.second;
+
+        tempBuffer.setSize(outCh, numSamples, false, false, true);
+        tempBuffer.clear();
+
+        juce::AudioSourceChannelInfo info(&tempBuffer, 0, numSamples);
+        sample->transportSource.getNextAudioBlock(info);
+
+        const int srcChans = tempBuffer.getNumChannels();
+        const int chansToMix = std::min(outCh, srcChans);
+
+        for (int ch = 0; ch < chansToMix; ++ch)
+            buffer.addFrom(ch, 0, tempBuffer, ch, 0, numSamples);
+
+        if (srcChans == 1 && outCh >= 2)
+            buffer.addFrom(1, 0, tempBuffer, 0, 0, numSamples);
+    }
+}
+
+void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples)
+{
+    // circularBuffer filling
+    buffer.clear();
+
+    for (auto& pair : samples)
+    {
+        auto& sample = pair.second;
+
+        tempBuffer.clear();
+        juce::AudioSourceChannelInfo info(&tempBuffer, 0, numSamples);
+        sample->transportSource.getNextAudioBlock(info);
+
+        for (int ch = 0; ch < tempBuffer.getNumChannels(); ++ch)
+        {
+            int firstPart = std::min(numSamples, circularBuffer.getNumSamples() - circularWritePos);
+            int secondPart = numSamples - firstPart;
+
+            int destCh = juce::jmin(ch, circularBuffer.getNumChannels() - 1);
+            int srcCh = juce::jmin(ch, tempBuffer.getNumChannels() - 1);
+
+            circularBuffer.copyFrom(destCh, circularWritePos, tempBuffer, srcCh, 0, firstPart);
+
+            //copy second part if wrap-around
+            if (secondPart > 0)
+                circularBuffer.copyFrom(destCh, 0, tempBuffer, srcCh, firstPart, secondPart);
+        }
+        circularWritePos = (circularWritePos + numSamples) % circularBuffer.getNumSamples();
+
+        for (int sample = 0; sample < numSamples; ++sample)
+        {
+            float out = 0.0f;
+
+            for (auto it = grains.begin(); it != grains.end(); )
+            {
+                Grain& g = *it;
+                if (g.position < g.length)
+                {
+                    int readIndex = (g.startSample + (int)(g.position * g.pitchRatio)) % circularBuffer.getNumSamples();
+                    int idx = (g.position * hannWindow.size()) / g.length;
+                    float env = hannWindow[idx];
+                    out += circularBuffer.getSample(0, readIndex) * env;
+                    ++g.position;
+                    ++it;
+                }
+                else {
+                    it = grains.erase(it);
+                }
+            }
+            for (int ch = 0; ch < outCh; ++ch)
+            {
+                buffer.addSample(ch, sample, out);
+            }
+        }
+
+        grainCounter += numSamples;
+        if (grainCounter >= grainSpacing)
+        {
+            grainCounter = 0;
+            spawnGrain();
+        }
+    }
+
+}
+
 void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     juce::MidiBuffer& midiMessages)
 {
@@ -171,6 +286,9 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
         tempBuffer.setSize(outCh, numSamples, false, false, true);
     }
 
+    //
+    // SYNTH PATH
+    //
     if (synthToggle)
     {
         {
@@ -185,37 +303,15 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
         return;
     }
 
-    // TRANSPORT PATH:
-    // Reuse tempBuffer — clear it once per sample
-    buffer.clear();
 
-    for (auto& pair : samples)
+    if (grainAll)
     {
-        auto& sample = pair.second;
-
-        // debug: check state
-        //std::cout << "Sample '" << pair.first << "' isPlaying=" << sample->transportSource.isPlaying()
-        //    << " pos=" << sample->transportSource.getCurrentPosition() << "\n";
-
-        // clear and make sure channel counts are OK
-        tempBuffer.clear();
-
-        // getNextAudioBlock will write into tempBuffer
-        juce::AudioSourceChannelInfo info(&tempBuffer, 0, numSamples);
-
-        // Protect calls with try/catch in debug builds if desired (JUCE exceptions rarely used)
-        sample->transportSource.getNextAudioBlock(info);
-
-        // mix into main buffer safely (avoid out-of-bounds if tempBuffer channels < output channels)
-        const int srcChans = tempBuffer.getNumChannels();
-        const int chansToMix = std::min(outCh, srcChans);
-
-        for (int ch = 0; ch < chansToMix; ++ch)
-            buffer.addFrom(ch, 0, tempBuffer, ch, 0, numSamples);
-
-        // if src is mono and outCh stereo, copy mono into right channel as well
-        if (srcChans == 1 && outCh >= 2)
-            buffer.addFrom(1, 0, tempBuffer, 0, 0, numSamples);
+        processGranularPath(buffer, outCh, numSamples);
+        return;
+    }
+    else {
+        processSamplerPath(buffer, outCh, numSamples);
+        return;
     }
 }
 

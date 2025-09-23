@@ -22,6 +22,9 @@ public:
    #endif
 
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+    void processSamplerPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples);
+    void processGranularPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples);
+    void spawnGrain();
 
     //==============================================================================
     juce::AudioProcessorEditor* createEditor() override;
@@ -73,13 +76,36 @@ private:
     };
     juce::MidiBuffer midiFifo;
     std::mutex midiMutex;
-    std::map<juce::String, std::unique_ptr<Sample>> samples;
     juce::Synthesiser synth;
+
+    std::map<juce::String, std::unique_ptr<Sample>> samples;
     juce::AudioFormatManager formatManager;
     juce::AudioBuffer<float> tempBuffer;
 
     double m_sampleRate = 48000.0;
     int m_blockSize = 576;
+
+    // make all grain members controllable
+
+    struct Grain
+    {
+        int startSample;
+        int position = 0;
+        int length;
+        float pitchRatio = 1.0f;
+
+        const float* envelope = nullptr;
+    };
+    std::vector<Grain> grains;
+    int grainCounter = 0;
+    int grainSpacing = 256;
+    int minGrainLength = 128;
+    int maxGrainLength = 512; 
+    int maxCircularSize = 24000; // half second
+
+    std::vector<float> hannWindow;
+    juce::AudioBuffer<float> circularBuffer;
+    int circularWritePos = 0;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GranularinfiniteAudioProcessor)
