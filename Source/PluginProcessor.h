@@ -16,6 +16,10 @@ public:
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
+
+    juce::AudioProcessorValueTreeState apvts;
+
+    static juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
     
    #ifndef JucePlugin_PreferredChannelConfigurations
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
@@ -85,7 +89,7 @@ private:
     double m_sampleRate = 48000.0;
     int m_blockSize = 576;
 
-    // make all grain members controllable
+    // make all grain members below controllable
 
     struct Grain
     {
@@ -98,7 +102,7 @@ private:
     };
     std::vector<Grain> grains;
     int grainCounter = 0;
-    int grainSpacing = 256;
+    int grainSpacing = 1;
     int minGrainLength = 128;
     int maxGrainLength = 512; 
     int maxCircularSize = 24000; // half second

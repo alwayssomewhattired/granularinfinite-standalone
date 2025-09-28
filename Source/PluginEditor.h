@@ -11,6 +11,8 @@
 #include "NoteLabel.h"
 #include "ButtonPalette.h"
 #include "BiMap.h"
+#include "CustomLookAndFeel.h"
+#include "DualThumbSlider.h"
 
 //==============================================================================
 /**
@@ -36,9 +38,16 @@ public:
     void octaveDown(juce::TextButton& button);
 
     void synthToggleHandler(juce::TextButton& button);
+    void grainLengthSliderHandler();
     void sampleLabelHandler(SampleLabel& button);
 
+
 private:
+
+    // LOOK AND FEEL
+    CustomLookAndFeel customLook;
+    DiySlider diySlider;
+
     juce::String synthNote = "G4";
 
     std::map<juce::String, std::unique_ptr<juce::File>> noteToFile;
@@ -50,9 +59,17 @@ private:
     BiMap<juce::String, juce::String> noteToSample;
     juce::MidiBuffer pendingMidi;
     int octave = 4;
-    // make control to store latest sample click (store juce string)
     juce::String currentlyPressedSample = "none";
     ButtonPalette buttonPalette;
+
+    juce::Slider* grainAmountControl;
+    DualThumbSlider grainLengthSlider;
+
+
+    using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
+
+    std::unique_ptr<SliderAttachment> grainAmountAttachment;
+    std::unique_ptr<SliderAttachment> grainMaxLength;
 
     GranularinfiniteAudioProcessor& audioProcessor;
 

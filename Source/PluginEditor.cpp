@@ -5,12 +5,14 @@
 #include "SampleLabel.h"
 #include "NoteLabel.h"
 #include "ButtonPalette.h"
+#include "DualThumbSlider.h"
 
 //==============================================================================
 GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor 
 (GranularinfiniteAudioProcessor& p)
     : juce::AudioProcessorEditor(&p),
-    audioProcessor(p)
+    audioProcessor(p),
+    grainLengthSlider(std::tuple<double, double, double>(128.0, 48000.0, 1.0))
 {
 
     keyToNote = CreateKeyToNote(octave); // add dynamic octave
@@ -49,7 +51,14 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             // control-buttons
             juce::TextButton& octaveIncrement = buttonPalette.incrementButton;
             juce::TextButton& octaveDecrement = buttonPalette.decrementButton;
-
+            //
+            // WARNING: DANGLING PTR v
+            grainAmountControl = &buttonPalette.grainAmountSlider;
+            grainAmountControl->setLookAndFeel(&customLook);
+            // WARNING: DANGLING PTR ^
+            //
+            
+            grainLengthSlider.setLookAndFeel(&diySlider);
 
             // note-name
             auto* noteLabel = new NoteLabel(myNoteName);
@@ -77,6 +86,8 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
 
             addAndMakeVisible(octaveIncrement);
             addAndMakeVisible(octaveDecrement);
+            addAndMakeVisible(*grainAmountControl);
+            addAndMakeVisible(grainLengthSlider);
             addAndMakeVisible(noteLabel);
             addAndMakeVisible(button);
             addAndMakeVisible(label);
@@ -84,6 +95,8 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
 
             octaveUp(octaveIncrement);
             octaveDown(octaveDecrement);
+            grainAmountAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainAmount", *grainAmountControl);
+           
             synthToggleHandler(buttonPalette.synthToggleButton);
             sampleLabelHandler(*label);
 
@@ -98,6 +111,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
 
 GranularinfiniteAudioProcessorEditor::~GranularinfiniteAudioProcessorEditor()
 {
+    grainAmountControl->setLookAndFeel(nullptr);
 }
 
 //==============================================================================
@@ -252,6 +266,16 @@ void GranularinfiniteAudioProcessorEditor::octaveDown(juce::TextButton& button)
         };
 }
 
+void GranularinfiniteAudioProcessorEditor::grainLengthSliderHandler()
+{
+    grainLengthSlider.onRangeChange = [this]()
+        {
+            audioProcessor.apvts.getParameter("grainMinLength")->setValueNotifyingHost((float)grainLengthSlider.getMinValue());
+            audioProcessor.apvts.getParameter("grainMaxLength")->setValueNotifyingHost((float)grainLengthSlider.getMaxValue());
+
+        };
+}
+
 void GranularinfiniteAudioProcessorEditor::sampleLabelHandler(SampleLabel& button)
 {
     // make it so only the latest value is reflected onto the button change.
@@ -344,6 +368,8 @@ void GranularinfiniteAudioProcessorEditor::resized()
 
     buttonPalette.decrementButton.setBounds(x - 200, y + 400, buttonWidth, buttonHeight);
     buttonPalette.incrementButton.setBounds(x - 100, y + 400, buttonWidth, buttonHeight);
+    buttonPalette.grainAmountSlider.setBounds(x - 200, y + 600, buttonWidth + 100, buttonHeight - 50);
+    grainLengthSlider.setBounds(x - 200, y + 650, buttonWidth + 100, buttonHeight - 50);
     buttonPalette.synthToggleButton.setBounds(x, y + 400, buttonWidth, buttonHeight);
 
     for (int i = 0; i < keyButtons.size(); ++i)

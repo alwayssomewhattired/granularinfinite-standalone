@@ -22,7 +22,8 @@ GranularinfiniteAudioProcessor::GranularinfiniteAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ),
+    apvts (*this, nullptr, "PARAMETERS", createParameters())
 #endif
 {
     openConsole();
@@ -152,6 +153,36 @@ bool GranularinfiniteAudioProcessor::isBusesLayoutSupported (const BusesLayout& 
   #endif
 }
 #endif
+
+juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcessor::createParameters()
+{
+    std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
+
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "grainAmount",
+        "GrainAmount",
+        juce::NormalisableRange<float> (1.0f, 256.0f, 1.0f),
+        1.0f
+    ));
+
+    params.push_back(std::make_unique<juce::AudioParameterInt>(
+        "grainMaxLength",
+        "GrainMaxLength",
+        128,
+        48000,
+        512
+    ));
+
+    params.push_back(std::make_unique<juce::AudioParameterInt>(
+        "grainMinLength",
+        "GrainMinLength",
+        128,
+        48000,
+        36000
+    ));
+
+    return { params.begin(), params.end() };
+}
 
 
 void GranularinfiniteAudioProcessor::addMidiEvent(const juce::MidiMessage& m)
@@ -285,7 +316,11 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
         // setSize is safe here because we only call it when shape changed
         tempBuffer.setSize(outCh, numSamples, false, false, true);
     }
-
+    // PARAMETER STUFF
+    grainSpacing = static_cast<int>(apvts.getRawParameterValue("grainAmount")->load());
+    // try doing the same here for max/min grainLength
+    minGrainLength = apvts.getRawParameterValue("grainMinLength")->load();
+    maxGrainLength = apvts.getRawParameterValue("grainMaxLength")->load();
     //
     // SYNTH PATH
     //
