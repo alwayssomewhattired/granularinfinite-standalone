@@ -102,9 +102,13 @@ private:
     };
     std::vector<Grain> grains;
     int grainCounter = 0;
+
     int grainSpacing = 1;
+    int grainAmount = 1;
     int minGrainLength = 128;
+    std::atomic<float>* minGrainLengthPtr = nullptr;
     int maxGrainLength = 512; 
+    std::atomic<float>* maxGrainLengthPtr = nullptr;
     int maxCircularSize = 24000; // half second
 
     std::vector<float> hannWindow;

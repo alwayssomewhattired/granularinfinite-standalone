@@ -14,6 +14,7 @@ public:
 
 		minValue = min;
 		maxValue = max;
+
 	}
 
 	void paint(juce::Graphics& g) override
@@ -26,8 +27,8 @@ public:
 		auto maxX = bounds.getX() + bounds.getWidth() * maxPos;
 
 		// Track
-		g.setColour(juce::Colours::black);
-		g.fillRect(bounds.reduced(0, bounds.getHeight() / 3));
+		g.setColour(juce::Colours::darkgrey);
+		g.fillRect(bounds.reduced(0, bounds.getHeight() / 2.25));
 
 		// Range highlight
 		g.setColour(juce::Colours::green);
@@ -35,8 +36,8 @@ public:
 
 		// Thumbs
 		g.setColour(juce::Colours::white);
-		g.fillEllipse(minX - 6, bounds.getCentreY() - 6, 12, 12);
-		g.fillEllipse(maxX - 6, bounds.getCentreY() - 6, 12, 12);
+		g.fillEllipse(minX, bounds.getCentreY() - 6, 12, 12);
+		g.fillEllipse(maxX - 12, bounds.getCentreY() - 6, 12, 12);
 	}
 
 	void mouseDown(const juce::MouseEvent& e) override
@@ -47,8 +48,11 @@ public:
 
 	std::function<void()> onRangeChange;
 
+	// works
 	void mouseDrag(const juce::MouseEvent& e) override
 	{
+
+
 		double newValue = proportionOfLengthToValue(e.position.x / getWidth());
 		if (draggingMin)
 			minValue = juce::jlimit(getMinimum(), maxValue, newValue);
@@ -57,8 +61,9 @@ public:
 
 		repaint();
 
-		if (onRangeChange)
+		if (onRangeChange) {
 			onRangeChange();
+		}
 	}
 
 	double getMinValue() const { return minValue; }

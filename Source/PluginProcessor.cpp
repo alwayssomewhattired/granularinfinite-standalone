@@ -1,10 +1,4 @@
-/*
-  ==============================================================================
 
-    This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
@@ -15,17 +9,22 @@
 //==============================================================================
 GranularinfiniteAudioProcessor::GranularinfiniteAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
-     : AudioProcessor (BusesProperties()
-                     #if ! JucePlugin_IsMidiEffect
-                      #if ! JucePlugin_IsSynth
-                       .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                      #endif
-                       .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
-                     #endif
-                       ),
-    apvts (*this, nullptr, "PARAMETERS", createParameters())
+    : AudioProcessor(BusesProperties()
+#if ! JucePlugin_IsMidiEffect
+#if ! JucePlugin_IsSynth
+        .withInput("Input", juce::AudioChannelSet::stereo(), true)
+#endif
+        .withOutput("Output", juce::AudioChannelSet::stereo(), true)
+#endif
+    ),
+    apvts(*this, nullptr, "PARAMETERS", createParameters())
 #endif
 {
+    minGrainLengthPtr = apvts.getRawParameterValue("grainMinLength");
+    jassert(minGrainLengthPtr != nullptr);
+    maxGrainLengthPtr = apvts.getRawParameterValue("grainMaxLength");
+    jassert(maxGrainLengthPtr != nullptr);
+
     openConsole();
     formatManager.registerBasicFormats();
     
@@ -159,6 +158,13 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
 
     params.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "grainSpacing",
+        "GrainSpacing",
+        juce::NormalisableRange<float> (1.0f, 48000.0f, 1.0f),
+        1.0f
+    ));
+
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(
         "grainAmount",
         "GrainAmount",
         juce::NormalisableRange<float> (1.0f, 256.0f, 1.0f),
@@ -191,21 +197,25 @@ void GranularinfiniteAudioProcessor::addMidiEvent(const juce::MidiMessage& m)
     midiFifo.addEvent(m, 0);
 }
 
+
 void GranularinfiniteAudioProcessor::spawnGrain()
 {
     if (circularBuffer.getNumSamples() == 0)
         return;
 
+    if ((int)grains.size() >= grainAmount)
+        return;
+
     Grain g;
 
-    // random start
     g.startSample = juce::Random::getSystemRandom().nextInt(circularBuffer.getNumSamples());
-    //random length
+
     g.length = juce::Random::getSystemRandom().nextInt(maxGrainLength - minGrainLength + 1) + minGrainLength;
     g.position = 0;
     // insert pitch stuff here...
     grains.push_back(std::move(g));
 }
+
 
 void GranularinfiniteAudioProcessor::processSamplerPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples)
 {
@@ -235,7 +245,8 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
 {
     // circularBuffer filling
     buffer.clear();
-
+    minGrainLength = *minGrainLengthPtr;
+    maxGrainLength = *maxGrainLengthPtr;
     for (auto& pair : samples)
     {
         auto& sample = pair.second;
@@ -317,8 +328,8 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
         tempBuffer.setSize(outCh, numSamples, false, false, true);
     }
     // PARAMETER STUFF
-    grainSpacing = static_cast<int>(apvts.getRawParameterValue("grainAmount")->load());
-    // try doing the same here for max/min grainLength
+    grainSpacing = static_cast<int>(apvts.getRawParameterValue("grainSpacing")->load());
+    grainAmount = static_cast<int>(apvts.getRawParameterValue("grainAmount")->load());
     minGrainLength = apvts.getRawParameterValue("grainMinLength")->load();
     maxGrainLength = apvts.getRawParameterValue("grainMaxLength")->load();
     //

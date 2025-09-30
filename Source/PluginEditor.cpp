@@ -12,13 +12,17 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
 (GranularinfiniteAudioProcessor& p)
     : juce::AudioProcessorEditor(&p),
     audioProcessor(p),
-    grainLengthSlider(std::tuple<double, double, double>(128.0, 48000.0, 1.0))
+    grainLengthSlider(std::tuple<double, double, double>(128.0, 48000.0, 1.0)),
+    grainSpacingControl(buttonPalette.grainSpacingSlider),
+    grainAmountControl(buttonPalette.grainAmountSlider)
 {
 
     keyToNote = CreateKeyToNote(octave); // add dynamic octave
     setWantsKeyboardFocus(true);
     addKeyListener(this);
     setSize(1000, 200);
+
+    grainLengthSliderHandler();
 
     // intialize noteToSamples vector 
     const std::vector<std::string> notes = { "C0", "C#0", "D0", "D#0", "E0", "F0", "F#0", "G0", "G#0", "A0", "A#0", "B0",
@@ -51,13 +55,9 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             // control-buttons
             juce::TextButton& octaveIncrement = buttonPalette.incrementButton;
             juce::TextButton& octaveDecrement = buttonPalette.decrementButton;
-            //
-            // WARNING: DANGLING PTR v
-            grainAmountControl = &buttonPalette.grainAmountSlider;
-            grainAmountControl->setLookAndFeel(&customLook);
-            // WARNING: DANGLING PTR ^
-            //
-            
+
+            grainSpacingControl.setLookAndFeel(&customLook);
+            grainAmountControl.setLookAndFeel(&customLook);
             grainLengthSlider.setLookAndFeel(&diySlider);
 
             // note-name
@@ -86,7 +86,8 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
 
             addAndMakeVisible(octaveIncrement);
             addAndMakeVisible(octaveDecrement);
-            addAndMakeVisible(*grainAmountControl);
+            addAndMakeVisible(grainSpacingControl);
+            addAndMakeVisible(grainAmountControl);
             addAndMakeVisible(grainLengthSlider);
             addAndMakeVisible(noteLabel);
             addAndMakeVisible(button);
@@ -95,7 +96,8 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
 
             octaveUp(octaveIncrement);
             octaveDown(octaveDecrement);
-            grainAmountAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainAmount", *grainAmountControl);
+            grainSpacingAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainSpacing", grainSpacingControl);
+            grainAmountAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainAmount", grainAmountControl);
            
             synthToggleHandler(buttonPalette.synthToggleButton);
             sampleLabelHandler(*label);
@@ -111,7 +113,8 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
 
 GranularinfiniteAudioProcessorEditor::~GranularinfiniteAudioProcessorEditor()
 {
-    grainAmountControl->setLookAndFeel(nullptr);
+    grainSpacingControl.setLookAndFeel(nullptr);
+    grainAmountControl.setLookAndFeel(nullptr);
 }
 
 //==============================================================================
@@ -270,9 +273,19 @@ void GranularinfiniteAudioProcessorEditor::grainLengthSliderHandler()
 {
     grainLengthSlider.onRangeChange = [this]()
         {
-            audioProcessor.apvts.getParameter("grainMinLength")->setValueNotifyingHost((float)grainLengthSlider.getMinValue());
-            audioProcessor.apvts.getParameter("grainMaxLength")->setValueNotifyingHost((float)grainLengthSlider.getMaxValue());
+            auto* minParam = audioProcessor.apvts.getParameter("grainMinLength");
+            if (auto* floatParam = dynamic_cast<juce::RangedAudioParameter*>(minParam))
+            {
+                float normalized = floatParam->convertTo0to1((float)grainLengthSlider.getMinValue());
+                floatParam->setValueNotifyingHost(normalized);
+            }
 
+            auto* maxParam = audioProcessor.apvts.getParameter("grainMaxLength");
+            if (auto* floatParam = dynamic_cast<juce::RangedAudioParameter*>(maxParam))
+            {
+                float normalized = floatParam->convertTo0to1((float)grainLengthSlider.getMaxValue());
+                floatParam->setValueNotifyingHost(normalized);
+            }
         };
 }
 
@@ -368,8 +381,9 @@ void GranularinfiniteAudioProcessorEditor::resized()
 
     buttonPalette.decrementButton.setBounds(x - 200, y + 400, buttonWidth, buttonHeight);
     buttonPalette.incrementButton.setBounds(x - 100, y + 400, buttonWidth, buttonHeight);
-    buttonPalette.grainAmountSlider.setBounds(x - 200, y + 600, buttonWidth + 100, buttonHeight - 50);
-    grainLengthSlider.setBounds(x - 200, y + 650, buttonWidth + 100, buttonHeight - 50);
+    buttonPalette.grainSpacingSlider.setBounds(x - 200, y + 600, buttonWidth + 100, buttonHeight - 50);
+    buttonPalette.grainAmountSlider.setBounds(x - 200, 650, buttonWidth + 100, buttonHeight - 50);
+    grainLengthSlider.setBounds(x - 200, y + 700, buttonWidth + 100, buttonHeight - 50);
     buttonPalette.synthToggleButton.setBounds(x, y + 400, buttonWidth, buttonHeight);
 
     for (int i = 0; i < keyButtons.size(); ++i)

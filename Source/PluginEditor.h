@@ -62,13 +62,17 @@ private:
     juce::String currentlyPressedSample = "none";
     ButtonPalette buttonPalette;
 
-    juce::Slider* grainAmountControl;
+    juce::Slider& grainSpacingControl;
+    juce::Slider& grainAmountControl;
     DualThumbSlider grainLengthSlider;
 
 
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
 
+    std::unique_ptr<SliderAttachment> grainSpacingAttachment;
     std::unique_ptr<SliderAttachment> grainAmountAttachment;
+
+    // dunno if this is still needed v
     std::unique_ptr<SliderAttachment> grainMaxLength;
 
     GranularinfiniteAudioProcessor& audioProcessor;

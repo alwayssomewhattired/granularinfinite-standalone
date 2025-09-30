@@ -17,11 +17,15 @@ public:
 		synthToggleButton.setButtonText("mode");
 		synthToggleButton.setClickingTogglesState(true);
 
+		grainSpacingSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+		grainSpacingSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
+		grainSpacingSlider.setRange(1.0, 48000.0, 1.0);
+		grainSpacingSlider.setValue(20.0);
+		
 		grainAmountSlider.setSliderStyle(juce::Slider::LinearHorizontal);
 		grainAmountSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
 		grainAmountSlider.setRange(1.0, 256.0, 1.0);
-		grainAmountSlider.setValue(20.0);
-		
+		grainAmountSlider.setValue(1.0);
 	}
 
 
@@ -29,5 +33,6 @@ public:
 	juce::TextButton decrementButton;
 	juce::TextButton synthToggleButton;
 
+	juce::Slider grainSpacingSlider;
 	juce::Slider grainAmountSlider;
 };
