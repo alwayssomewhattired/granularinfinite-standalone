@@ -26,6 +26,11 @@ public:
 		grainAmountSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
 		grainAmountSlider.setRange(1.0, 256.0, 1.0);
 		grainAmountSlider.setValue(1.0);
+
+		grainPositionSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+		grainPositionSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
+		//grainPositionSlider.setRange(1.0, 256.0, 1.0)
+		// set range and stuff when called
 	}
 
 
@@ -35,4 +40,5 @@ public:
 
 	juce::Slider grainSpacingSlider;
 	juce::Slider grainAmountSlider;
+	juce::Slider grainPositionSlider;
 };

@@ -14,7 +14,8 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
     audioProcessor(p),
     grainLengthSlider(std::tuple<double, double, double>(128.0, 48000.0, 1.0)),
     grainSpacingControl(buttonPalette.grainSpacingSlider),
-    grainAmountControl(buttonPalette.grainAmountSlider)
+    grainAmountControl(buttonPalette.grainAmountSlider),
+    grainPositionControl(buttonPalette.grainPositionSlider)
 {
 
     keyToNote = CreateKeyToNote(octave); // add dynamic octave
@@ -59,6 +60,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             grainSpacingControl.setLookAndFeel(&customLook);
             grainAmountControl.setLookAndFeel(&customLook);
             grainLengthSlider.setLookAndFeel(&diySlider);
+            grainPositionControl.setLookAndFeel(&customLook);
 
             // note-name
             auto* noteLabel = new NoteLabel(myNoteName);
@@ -89,6 +91,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             addAndMakeVisible(grainSpacingControl);
             addAndMakeVisible(grainAmountControl);
             addAndMakeVisible(grainLengthSlider);
+            addAndMakeVisible(grainPositionControl);
             addAndMakeVisible(noteLabel);
             addAndMakeVisible(button);
             addAndMakeVisible(label);
@@ -98,6 +101,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             octaveDown(octaveDecrement);
             grainSpacingAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainSpacing", grainSpacingControl);
             grainAmountAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainAmount", grainAmountControl);
+            grainPositionAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainPosition", grainPositionControl);
            
             synthToggleHandler(buttonPalette.synthToggleButton);
             sampleLabelHandler(*label);
@@ -115,6 +119,7 @@ GranularinfiniteAudioProcessorEditor::~GranularinfiniteAudioProcessorEditor()
 {
     grainSpacingControl.setLookAndFeel(nullptr);
     grainAmountControl.setLookAndFeel(nullptr);
+    grainPositionControl.setLookAndFeel(nullptr);
 }
 
 //==============================================================================

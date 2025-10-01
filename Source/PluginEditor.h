@@ -65,12 +65,14 @@ private:
     juce::Slider& grainSpacingControl;
     juce::Slider& grainAmountControl;
     DualThumbSlider grainLengthSlider;
+    juce::Slider& grainPositionControl;
 
 
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
 
     std::unique_ptr<SliderAttachment> grainSpacingAttachment;
     std::unique_ptr<SliderAttachment> grainAmountAttachment;
+    std::unique_ptr<SliderAttachment> grainPositionAttachment;
 
     // dunno if this is still needed v
     std::unique_ptr<SliderAttachment> grainMaxLength;

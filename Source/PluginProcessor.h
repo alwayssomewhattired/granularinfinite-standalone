@@ -28,7 +28,7 @@ public:
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
     void processSamplerPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples);
     void processGranularPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples);
-    void spawnGrain();
+    void spawnGrain(int64_t fileLength);
 
     //==============================================================================
     juce::AudioProcessorEditor* createEditor() override;
@@ -72,10 +72,19 @@ private:
         juce::AudioTransportSource transportSource;
         bool isPrepared = false;
 
+        std::int64_t audioFileLength = 0;
+        juce::AudioBuffer<float> fullBuffer;
+
         void setSourceFromReader(juce::AudioFormatReader* reader)
         {
             readerSource.reset(new juce::AudioFormatReaderSource(reader, true));
             transportSource.setSource(readerSource.get(), 0, nullptr, reader->sampleRate);
+
+            audioFileLength = reader->lengthInSamples;
+
+            fullBuffer.setSize((int)reader->numChannels, (int)audioFileLength);
+
+            reader->read(&fullBuffer, 0, (int)audioFileLength, 0, true, true);
         }
     };
     juce::MidiBuffer midiFifo;
@@ -112,6 +121,8 @@ private:
     int maxCircularSize = 24000; // half second
 
     std::vector<float> hannWindow;
+
+    // dunno if i need this circular anymore
     juce::AudioBuffer<float> circularBuffer;
     int circularWritePos = 0;
 

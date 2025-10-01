@@ -187,6 +187,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
         36000
     ));
 
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "grainPosition",
+        "GrainPosition",
+        0,
+        14400000,
+        0
+    ));
+
     return { params.begin(), params.end() };
 }
 
@@ -198,17 +206,17 @@ void GranularinfiniteAudioProcessor::addMidiEvent(const juce::MidiMessage& m)
 }
 
 
-void GranularinfiniteAudioProcessor::spawnGrain()
+void GranularinfiniteAudioProcessor::spawnGrain(int64_t fileLength)
 {
-    if (circularBuffer.getNumSamples() == 0)
-        return;
 
     if ((int)grains.size() >= grainAmount)
         return;
 
+
     Grain g;
 
-    g.startSample = juce::Random::getSystemRandom().nextInt(circularBuffer.getNumSamples());
+    // start sample plays a random sample
+    g.startSample = juce::Random::getSystemRandom().nextInt(fileLength - g.length);
 
     g.length = juce::Random::getSystemRandom().nextInt(maxGrainLength - minGrainLength + 1) + minGrainLength;
     g.position = 0;
@@ -243,35 +251,16 @@ void GranularinfiniteAudioProcessor::processSamplerPath(juce::AudioBuffer<float>
 
 void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples)
 {
-    // circularBuffer filling
+    // circularBuffer filling is wrong way. find out how to get the whole file!
     buffer.clear();
     minGrainLength = *minGrainLengthPtr;
     maxGrainLength = *maxGrainLengthPtr;
     for (auto& pair : samples)
     {
         auto& sample = pair.second;
+        auto& m_fullBuffer = sample->fullBuffer;
 
-        tempBuffer.clear();
-        juce::AudioSourceChannelInfo info(&tempBuffer, 0, numSamples);
-        sample->transportSource.getNextAudioBlock(info);
-
-        for (int ch = 0; ch < tempBuffer.getNumChannels(); ++ch)
-        {
-            int firstPart = std::min(numSamples, circularBuffer.getNumSamples() - circularWritePos);
-            int secondPart = numSamples - firstPart;
-
-            int destCh = juce::jmin(ch, circularBuffer.getNumChannels() - 1);
-            int srcCh = juce::jmin(ch, tempBuffer.getNumChannels() - 1);
-
-            circularBuffer.copyFrom(destCh, circularWritePos, tempBuffer, srcCh, 0, firstPart);
-
-            //copy second part if wrap-around
-            if (secondPart > 0)
-                circularBuffer.copyFrom(destCh, 0, tempBuffer, srcCh, firstPart, secondPart);
-        }
-        circularWritePos = (circularWritePos + numSamples) % circularBuffer.getNumSamples();
-
-        for (int sample = 0; sample < numSamples; ++sample)
+        for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
         {
             float out = 0.0f;
 
@@ -280,10 +269,17 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                 Grain& g = *it;
                 if (g.position < g.length)
                 {
-                    int readIndex = (g.startSample + (int)(g.position * g.pitchRatio)) % circularBuffer.getNumSamples();
+                    int readIndex = (g.startSample + (int)(g.position * g.pitchRatio));
+                    if (readIndex >= m_fullBuffer.getNumSamples())
+                    {
+                        it = grains.erase(it);
+                        continue;
+                    }
+
                     int idx = (g.position * hannWindow.size()) / g.length;
                     float env = hannWindow[idx];
-                    out += circularBuffer.getSample(0, readIndex) * env;
+                    out += m_fullBuffer.getSample(0, readIndex) * env;
+
                     ++g.position;
                     ++it;
                 }
@@ -293,7 +289,7 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
             }
             for (int ch = 0; ch < outCh; ++ch)
             {
-                buffer.addSample(ch, sample, out);
+                buffer.addSample(ch, sampleIdx, out);
             }
         }
 
@@ -301,7 +297,7 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
         if (grainCounter >= grainSpacing)
         {
             grainCounter = 0;
-            spawnGrain();
+            spawnGrain(sample->audioFileLength);
         }
     }
 
