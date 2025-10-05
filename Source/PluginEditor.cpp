@@ -8,14 +8,17 @@
 #include "DualThumbSlider.h"
 
 //==============================================================================
-GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor 
+GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
 (GranularinfiniteAudioProcessor& p)
     : juce::AudioProcessorEditor(&p),
     audioProcessor(p),
     grainLengthSlider(std::tuple<double, double, double>(128.0, 48000.0, 1.0)),
+    grainSpacingLabel(buttonPalette.grainSpacingLabel),
     grainSpacingControl(buttonPalette.grainSpacingSlider),
+    grainAmountLabel(buttonPalette.grainAmountLabel),
     grainAmountControl(buttonPalette.grainAmountSlider),
-    grainPositionControl(buttonPalette.grainPositionSlider)
+    grainPositionControl(buttonPalette.grainPositionSlider),
+    grainLengthLabel(buttonPalette.grainLengthLabel)
 {
 
     keyToNote = CreateKeyToNote(octave); // add dynamic octave
@@ -88,8 +91,11 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
 
             addAndMakeVisible(octaveIncrement);
             addAndMakeVisible(octaveDecrement);
+            addAndMakeVisible(grainSpacingLabel);
             addAndMakeVisible(grainSpacingControl);
+            addAndMakeVisible(grainAmountLabel);
             addAndMakeVisible(grainAmountControl);
+            addAndMakeVisible(grainLengthLabel);
             addAndMakeVisible(grainLengthSlider);
             addAndMakeVisible(grainPositionControl);
             addAndMakeVisible(noteLabel);
@@ -376,20 +382,61 @@ void GranularinfiniteAudioProcessorEditor::paint (juce::Graphics& g)
 }
 
 void GranularinfiniteAudioProcessorEditor::resized()
+// when you get the time, for the love of god refactor using flexbox
 {
-    int x = 300;                  // starting x position
-    int y = 100;                  // starting y position
+    int x = 300;                  
+    int y = 100;                  
     int buttonWidth = 60;
     int buttonHeight = 120;
     int labelHeight = 20;
     int spacing = 5;
 
+
+
     buttonPalette.decrementButton.setBounds(x - 200, y + 400, buttonWidth, buttonHeight);
     buttonPalette.incrementButton.setBounds(x - 100, y + 400, buttonWidth, buttonHeight);
-    buttonPalette.grainSpacingSlider.setBounds(x - 200, y + 600, buttonWidth + 100, buttonHeight - 50);
-    buttonPalette.grainAmountSlider.setBounds(x - 200, 650, buttonWidth + 100, buttonHeight - 50);
-    grainLengthSlider.setBounds(x - 200, y + 700, buttonWidth + 100, buttonHeight - 50);
     buttonPalette.synthToggleButton.setBounds(x, y + 400, buttonWidth, buttonHeight);
+
+    juce::FlexBox outer;
+    juce::FlexBox inner;
+    inner.flexDirection = juce::FlexBox::Direction::column;
+    inner.justifyContent = juce::FlexBox::JustifyContent::flexStart;
+    inner.alignItems = juce::FlexBox::AlignItems::center;
+
+    juce::Rectangle<int> controlBounds(0, 520, 400, 600);
+
+    juce::FlexItem f_grainSpacingLabel(grainSpacingLabel);
+    inner.items.add(
+        f_grainSpacingLabel
+        .withHeight(30.0f)
+        .withWidth(controlBounds.getWidth()) 
+    );
+
+    juce::FlexItem f_grainSpacingSlider(buttonPalette.grainSpacingSlider);
+    inner.items.add(
+        f_grainSpacingSlider
+        .withHeight(100.0f)
+        .withWidth(200.0f)
+    );
+
+    outer.items.add(
+        juce::FlexItem(inner)
+        .withMargin({ 100, 0, 0, 0 })
+    );
+    outer.performLayout(controlBounds);
+
+    auto innerArea = controlBounds.withTrimmedTop(100);
+    inner.performLayout(innerArea.toFloat());
+
+    // FNISHED
+    //grainSpacingLabel.setBounds(x - 200, y + 525, buttonWidth + 100, labelHeight);
+    //buttonPalette.grainSpacingSlider.setBounds(x - 200, y + 600, buttonWidth + 100, buttonHeight - 50);
+
+    // IN PROGRESS
+    //grainAmountLabel.setBounds(x - 200, y + 605, buttonWidth + 100, labelHeight);
+    //grainAmountControl.setBounds(x - 200, 650, buttonWidth + 100, buttonHeight - 50);
+    //grainLengthLabel.setBounds(x - 200, y + 700, buttonWidth + 100, buttonHeight - 50);
+    //grainLengthSlider.setBounds(x - 200, y + 700, buttonWidth + 100, buttonHeight - 50);
 
     for (int i = 0; i < keyButtons.size(); ++i)
     {

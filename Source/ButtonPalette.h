@@ -17,11 +17,21 @@ public:
 		synthToggleButton.setButtonText("mode");
 		synthToggleButton.setClickingTogglesState(true);
 
+		grainSpacingLabel.setText("grain spacing", juce::dontSendNotification);
+		grainSpacingLabel.setFont(juce::Font(16.0f, juce::Font::bold));
+		grainSpacingLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
+		grainSpacingLabel.setJustificationType(juce::Justification::centred);
+
 		grainSpacingSlider.setSliderStyle(juce::Slider::LinearHorizontal);
 		grainSpacingSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
 		grainSpacingSlider.setRange(1.0, 48000.0, 1.0);
 		grainSpacingSlider.setValue(20.0);
 		
+		grainAmountLabel.setText("grain amount", juce::dontSendNotification);
+		grainAmountLabel.setFont(juce::Font(16.0f, juce::Font::bold));
+		grainAmountLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
+		grainAmountLabel.setJustificationType(juce::Justification::centred);
+
 		grainAmountSlider.setSliderStyle(juce::Slider::LinearHorizontal);
 		grainAmountSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
 		grainAmountSlider.setRange(1.0, 256.0, 1.0);
@@ -31,6 +41,13 @@ public:
 		grainPositionSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
 		//grainPositionSlider.setRange(1.0, 256.0, 1.0)
 		// set range and stuff when called
+
+
+
+		grainLengthLabel.setText("grain length", juce::dontSendNotification);
+		grainLengthLabel.setFont(juce::Font(16.0f, juce::Font::bold));
+		grainLengthLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
+		grainLengthLabel.setJustificationType(juce::Justification::centred);
 	}
 
 
@@ -41,4 +58,8 @@ public:
 	juce::Slider grainSpacingSlider;
 	juce::Slider grainAmountSlider;
 	juce::Slider grainPositionSlider;
+
+	juce::Label grainSpacingLabel;
+	juce::Label grainAmountLabel;
+	juce::Label grainLengthLabel;
 };

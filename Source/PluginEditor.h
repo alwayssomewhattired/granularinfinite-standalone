@@ -62,9 +62,15 @@ private:
     juce::String currentlyPressedSample = "none";
     ButtonPalette buttonPalette;
 
+    juce::Label& grainSpacingLabel;
     juce::Slider& grainSpacingControl;
+
+    juce::Label& grainAmountLabel;
     juce::Slider& grainAmountControl;
+
+    juce::Label& grainLengthLabel;
     DualThumbSlider grainLengthSlider;
+
     juce::Slider& grainPositionControl;
 
 
