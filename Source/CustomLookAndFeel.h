@@ -20,8 +20,8 @@ struct DiySlider : public juce::LookAndFeel_V4
 	{
 		auto layout = LookAndFeel_V4::getSliderLayout(slider);
 
-		layout.textBoxBounds.setY(layout.textBoxBounds.getY() - 20);
-		layout.textBoxBounds.setX(layout.textBoxBounds.getX() + 40);
+		layout.textBoxBounds.setY(layout.textBoxBounds.getY() - 30);
+		layout.textBoxBounds.setX(layout.textBoxBounds.getX() + 60);
 
 		return layout;
 	}

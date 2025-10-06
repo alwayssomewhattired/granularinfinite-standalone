@@ -37,6 +37,11 @@ public:
 		grainAmountSlider.setRange(1.0, 256.0, 1.0);
 		grainAmountSlider.setValue(1.0);
 
+		grainPositionLabel.setText("grain area", juce::dontSendNotification);
+		grainPositionLabel.setFont(juce::Font(16.0f, juce::Font::bold));
+		grainPositionLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
+		grainPositionLabel.setJustificationType(juce::Justification::centred);
+
 		grainPositionSlider.setSliderStyle(juce::Slider::LinearHorizontal);
 		grainPositionSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
 		//grainPositionSlider.setRange(1.0, 256.0, 1.0)
@@ -62,4 +67,5 @@ public:
 	juce::Label grainSpacingLabel;
 	juce::Label grainAmountLabel;
 	juce::Label grainLengthLabel;
+	juce::Label grainPositionLabel;
 };

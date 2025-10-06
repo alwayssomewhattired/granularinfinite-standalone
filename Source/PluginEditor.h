@@ -71,6 +71,7 @@ private:
     juce::Label& grainLengthLabel;
     DualThumbSlider grainLengthSlider;
 
+    juce::Label& grainPositionLabel;
     juce::Slider& grainPositionControl;
 
 

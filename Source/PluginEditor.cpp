@@ -17,6 +17,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
     grainSpacingControl(buttonPalette.grainSpacingSlider),
     grainAmountLabel(buttonPalette.grainAmountLabel),
     grainAmountControl(buttonPalette.grainAmountSlider),
+    grainPositionLabel(buttonPalette.grainPositionLabel),
     grainPositionControl(buttonPalette.grainPositionSlider),
     grainLengthLabel(buttonPalette.grainLengthLabel)
 {
@@ -97,6 +98,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             addAndMakeVisible(grainAmountControl);
             addAndMakeVisible(grainLengthLabel);
             addAndMakeVisible(grainLengthSlider);
+            addAndMakeVisible(grainPositionLabel);
             addAndMakeVisible(grainPositionControl);
             addAndMakeVisible(noteLabel);
             addAndMakeVisible(button);
@@ -398,45 +400,83 @@ void GranularinfiniteAudioProcessorEditor::resized()
     buttonPalette.synthToggleButton.setBounds(x, y + 400, buttonWidth, buttonHeight);
 
     juce::FlexBox outer;
-    juce::FlexBox inner;
-    inner.flexDirection = juce::FlexBox::Direction::column;
-    inner.justifyContent = juce::FlexBox::JustifyContent::flexStart;
-    inner.alignItems = juce::FlexBox::AlignItems::center;
+    juce::FlexBox inner1;
+    juce::FlexBox inner2;
+    inner1.flexDirection = juce::FlexBox::Direction::column;
+    inner1.justifyContent = juce::FlexBox::JustifyContent::flexStart;
+    inner1.alignItems = juce::FlexBox::AlignItems::center;
+
+    inner2.flexDirection = juce::FlexBox::Direction::column;
+    inner2.justifyContent = juce::FlexBox::JustifyContent::flexStart;
+    inner2.alignItems = juce::FlexBox::AlignItems::center;
 
     juce::Rectangle<int> controlBounds(0, 520, 400, 600);
+    juce::Rectangle<int> controlBounds2(300, 520, 400, 600);
+
 
     juce::FlexItem f_grainSpacingLabel(grainSpacingLabel);
-    inner.items.add(
+    inner1.items.add(
         f_grainSpacingLabel
         .withHeight(30.0f)
         .withWidth(controlBounds.getWidth()) 
     );
 
-    juce::FlexItem f_grainSpacingSlider(buttonPalette.grainSpacingSlider);
-    inner.items.add(
+    juce::FlexItem f_grainSpacingSlider(grainSpacingControl);
+    inner1.items.add(
         f_grainSpacingSlider
         .withHeight(100.0f)
         .withWidth(200.0f)
     );
 
+    juce::FlexItem f_grainAmountLabel(grainAmountLabel);
+    inner1.items.add(
+        f_grainAmountLabel
+        .withHeight(30.0f)
+        .withWidth(controlBounds.getWidth())
+    );
+
+    juce::FlexItem f_grainAmountSlider(grainAmountControl);
+    inner1.items.add(
+        f_grainAmountSlider
+        .withHeight(100.0f)
+        .withWidth(200.0f)
+    );
+
+    juce::FlexItem f_grainLengthLabel(grainLengthLabel);
+    inner2.items.add(
+        f_grainLengthLabel
+        .withHeight(30.0f)
+        .withWidth(controlBounds.getWidth())
+    );
+
+    juce::FlexItem f_grainLengthSlider(grainLengthSlider);
+    inner2.items.add(
+        f_grainLengthSlider
+        .withHeight(100.0f)
+        .withWidth(200.0f)
+    );
+
+    juce::FlexItem f_grainPositionLabel(grainPositionLabel);
+    inner2.items.add(
+        f_grainPositionLabel
+        .withHeight(30.0f)
+        .withWidth(controlBounds.getWidth())
+    );
+
     outer.items.add(
-        juce::FlexItem(inner)
+        juce::FlexItem(inner1)
+        .withMargin({ 100, 0, 0, 0 })
+    );
+    outer.items.add(
+        juce::FlexItem(inner2)
         .withMargin({ 100, 0, 0, 0 })
     );
     outer.performLayout(controlBounds);
 
-    auto innerArea = controlBounds.withTrimmedTop(100);
-    inner.performLayout(innerArea.toFloat());
-
-    // FNISHED
-    //grainSpacingLabel.setBounds(x - 200, y + 525, buttonWidth + 100, labelHeight);
-    //buttonPalette.grainSpacingSlider.setBounds(x - 200, y + 600, buttonWidth + 100, buttonHeight - 50);
-
-    // IN PROGRESS
-    //grainAmountLabel.setBounds(x - 200, y + 605, buttonWidth + 100, labelHeight);
-    //grainAmountControl.setBounds(x - 200, 650, buttonWidth + 100, buttonHeight - 50);
-    //grainLengthLabel.setBounds(x - 200, y + 700, buttonWidth + 100, buttonHeight - 50);
-    //grainLengthSlider.setBounds(x - 200, y + 700, buttonWidth + 100, buttonHeight - 50);
+    auto inner1Area = controlBounds.withTrimmedTop(100);
+    inner1.performLayout(inner1Area.toFloat());
+    auto inner2Area = controlBounds2.withTrimmedTop(100);
+    inner2.performLayout(inner2Area.toFloat());
 
     for (int i = 0; i < keyButtons.size(); ++i)
     {
