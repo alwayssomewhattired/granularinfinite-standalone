@@ -1,6 +1,7 @@
 
 #pragma once
 #include <juce_gui_basics/juce_gui_basics.h>
+//#include "PluginProcessor.h"
 
 class ButtonPalette : public juce::Component
 {
@@ -42,13 +43,6 @@ public:
 		grainPositionLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
 		grainPositionLabel.setJustificationType(juce::Justification::centred);
 
-		grainPositionSlider.setSliderStyle(juce::Slider::LinearHorizontal);
-		grainPositionSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
-		//grainPositionSlider.setRange(1.0, 256.0, 1.0)
-		// set range and stuff when called
-
-
-
 		grainLengthLabel.setText("grain length", juce::dontSendNotification);
 		grainLengthLabel.setFont(juce::Font(16.0f, juce::Font::bold));
 		grainLengthLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
@@ -62,7 +56,6 @@ public:
 
 	juce::Slider grainSpacingSlider;
 	juce::Slider grainAmountSlider;
-	juce::Slider grainPositionSlider;
 
 	juce::Label grainSpacingLabel;
 	juce::Label grainAmountLabel;

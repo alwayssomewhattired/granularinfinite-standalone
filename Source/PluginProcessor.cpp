@@ -153,8 +153,10 @@ bool GranularinfiniteAudioProcessor::isBusesLayoutSupported (const BusesLayout& 
 }
 #endif
 
+
 juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcessor::createParameters()
 {
+
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
 
     params.push_back(std::make_unique<juce::AudioParameterFloat>(
@@ -187,15 +189,56 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
         36000
     ));
 
+    //std::function<float(float, float, float)> convertFrom0To1Func = [this](float start, float end, float normalised) {
+    //    juce::ignoreUnused(start, end);
+    //    if (m_maxFileSize == 0.0f)
+    //        return 0.0f;
+    //    return normalised * m_maxFileSize;
+    //    };
+
+    //std::function<float(float, float, float)> convertTo0To1Func = [this](float start, float end, float unnormalised) {
+    //    juce::ignoreUnused(start, end);
+    //    if (m_maxFileSize == 0.0f)
+    //        return 0.0f;
+    //    return unnormalised / m_maxFileSize;
+    //    };
+
+    auto dynamicRange = juce::NormalisableRange<float>(
+        0.0f,
+        256.0f
+    );
+
     params.push_back(std::make_unique<juce::AudioParameterFloat>(
         "grainPosition",
         "GrainPosition",
-        0,
-        14400000,
+        dynamicRange,
         0
     ));
 
     return { params.begin(), params.end() };
+}
+
+void GranularinfiniteAudioProcessor::updateMaxFileSize(float const& newMaxFileSize)
+{
+    std::cout << "m_maxFileSize: " << m_maxFileSize << "\n";
+    std::cout << "newMaxFileSize: " << newMaxFileSize << "\n";
+
+    if (m_maxFileSize < newMaxFileSize)
+        m_maxFileSize = newMaxFileSize;
+    
+    if (auto* param = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("grainPosition")))
+    {
+        
+        param->range = juce::NormalisableRange<float>(0.0f, m_maxFileSize);
+
+        // this converts the native range(user) to normalized(0-1)
+        auto clamped = juce::jlimit(0.0f, m_maxFileSize, param->get());
+        auto normalized = param->convertTo0to1(clamped);
+        param->setValueNotifyingHost(normalized);
+        param->setValueNotifyingHost(normalized); // force refresh?
+    }
+
+    sendChangeMessage();
 }
 
 
@@ -357,9 +400,14 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
     }
 }
 
+float GranularinfiniteAudioProcessor::getMaxFileSize() const
+{
+    return m_maxFileSize;
+}
+
+// make this function update the m_maxFileSize with the largest file size vvv
 void GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce::String& noteName, std::optional<juce::String> fileName)
 {
-
     std::string realStr = noteName.toStdString();
 
     if (auto* reader = formatManager.createReaderFor(file))
@@ -375,6 +423,8 @@ void GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce
         synth.addSound(sound);
         auto sample = std::make_unique<Sample>();
         sample->setSourceFromReader(reader);
+        //m_maxFileSize = sample->audioFileLength;
+        updateMaxFileSize(sample->audioFileLength);
         samples[noteName] = std::move(sample);
 
     }

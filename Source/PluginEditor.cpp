@@ -6,6 +6,7 @@
 #include "NoteLabel.h"
 #include "ButtonPalette.h"
 #include "DualThumbSlider.h"
+#include "GrainPositionControl.h"
 
 //==============================================================================
 GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
@@ -14,13 +15,15 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
     audioProcessor(p),
     grainLengthSlider(std::tuple<double, double, double>(128.0, 48000.0, 1.0)),
     grainSpacingLabel(buttonPalette.grainSpacingLabel),
-    grainSpacingControl(buttonPalette.grainSpacingSlider),
+    grainSpacingSlider(buttonPalette.grainSpacingSlider),
     grainAmountLabel(buttonPalette.grainAmountLabel),
-    grainAmountControl(buttonPalette.grainAmountSlider),
+    grainAmountSlider(buttonPalette.grainAmountSlider),
+    grainPositionSlider(GrainPositionControl(p)),
     grainPositionLabel(buttonPalette.grainPositionLabel),
-    grainPositionControl(buttonPalette.grainPositionSlider),
     grainLengthLabel(buttonPalette.grainLengthLabel)
+    
 {
+    audioProcessor.addChangeListener(this);
 
     keyToNote = CreateKeyToNote(octave); // add dynamic octave
     setWantsKeyboardFocus(true);
@@ -52,19 +55,10 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
         auto it = keyToNote.find(key);
         if (it != keyToNote.end())
         {
+            //-------keyboard------//
             char myChar = it->first;
             juce::String myKeyName = juce::String::charToString(myChar);
             juce::String myNoteName = it->second;
-
-
-            // control-buttons
-            juce::TextButton& octaveIncrement = buttonPalette.incrementButton;
-            juce::TextButton& octaveDecrement = buttonPalette.decrementButton;
-
-            grainSpacingControl.setLookAndFeel(&customLook);
-            grainAmountControl.setLookAndFeel(&customLook);
-            grainLengthSlider.setLookAndFeel(&diySlider);
-            grainPositionControl.setLookAndFeel(&customLook);
 
             // note-name
             auto* noteLabel = new NoteLabel(myNoteName);
@@ -89,17 +83,29 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
                 noteToFile[refinedNote] = std::make_unique<juce::File>(fullPath);
                 audioProcessor.loadFile(file, refinedNote, "false");
                 });
+            //------------//
+
+
+            // control-buttons
+            juce::TextButton& octaveIncrement = buttonPalette.incrementButton;
+            juce::TextButton& octaveDecrement = buttonPalette.decrementButton;
+
+            // custom looknfeel
+            grainSpacingSlider.setLookAndFeel(&customLook);
+            grainAmountSlider.setLookAndFeel(&customLook);
+            grainLengthSlider.setLookAndFeel(&diySlider);
+            grainPositionSlider.setLookAndFeel(&customLook);
 
             addAndMakeVisible(octaveIncrement);
             addAndMakeVisible(octaveDecrement);
             addAndMakeVisible(grainSpacingLabel);
-            addAndMakeVisible(grainSpacingControl);
+            addAndMakeVisible(grainSpacingSlider);
             addAndMakeVisible(grainAmountLabel);
-            addAndMakeVisible(grainAmountControl);
+            addAndMakeVisible(grainAmountSlider);
             addAndMakeVisible(grainLengthLabel);
             addAndMakeVisible(grainLengthSlider);
             addAndMakeVisible(grainPositionLabel);
-            addAndMakeVisible(grainPositionControl);
+            addAndMakeVisible(grainPositionSlider);
             addAndMakeVisible(noteLabel);
             addAndMakeVisible(button);
             addAndMakeVisible(label);
@@ -107,9 +113,9 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
 
             octaveUp(octaveIncrement);
             octaveDown(octaveDecrement);
-            grainSpacingAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainSpacing", grainSpacingControl);
-            grainAmountAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainAmount", grainAmountControl);
-            grainPositionAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainPosition", grainPositionControl);
+            grainSpacingAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainSpacing", grainSpacingSlider);
+            grainAmountAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainAmount", grainAmountSlider);
+            grainPositionAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainPosition", grainPositionSlider);
            
             synthToggleHandler(buttonPalette.synthToggleButton);
             sampleLabelHandler(*label);
@@ -125,12 +131,25 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
 
 GranularinfiniteAudioProcessorEditor::~GranularinfiniteAudioProcessorEditor()
 {
-    grainSpacingControl.setLookAndFeel(nullptr);
-    grainAmountControl.setLookAndFeel(nullptr);
-    grainPositionControl.setLookAndFeel(nullptr);
+    grainSpacingSlider.setLookAndFeel(nullptr);
+    grainAmountSlider.setLookAndFeel(nullptr);
+    grainLengthSlider.setLookAndFeel(nullptr);
+    grainPositionSlider.setLookAndFeel(nullptr);
 }
 
 //==============================================================================
+
+// this lets the audioprocessor trigger a change on the editor
+void GranularinfiniteAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcaster* source)
+{
+    // Example: check which object sent the change
+    if (source == &audioProcessor)
+    {
+        // Respond to parameter change, or update UI
+        grainPositionSlider.setRange(0, audioProcessor.getMaxFileSize());
+    }
+}
+
 
 bool GranularinfiniteAudioProcessorEditor::keyPressed(const juce::KeyPress& key,
     Component* originatingComponent)
@@ -421,7 +440,7 @@ void GranularinfiniteAudioProcessorEditor::resized()
         .withWidth(controlBounds.getWidth()) 
     );
 
-    juce::FlexItem f_grainSpacingSlider(grainSpacingControl);
+    juce::FlexItem f_grainSpacingSlider(grainSpacingSlider);
     inner1.items.add(
         f_grainSpacingSlider
         .withHeight(100.0f)
@@ -435,7 +454,7 @@ void GranularinfiniteAudioProcessorEditor::resized()
         .withWidth(controlBounds.getWidth())
     );
 
-    juce::FlexItem f_grainAmountSlider(grainAmountControl);
+    juce::FlexItem f_grainAmountSlider(grainAmountSlider);
     inner1.items.add(
         f_grainAmountSlider
         .withHeight(100.0f)
@@ -461,6 +480,13 @@ void GranularinfiniteAudioProcessorEditor::resized()
         f_grainPositionLabel
         .withHeight(30.0f)
         .withWidth(controlBounds.getWidth())
+    );
+
+    juce::FlexItem f_grainPositionSlider(grainPositionSlider);
+    inner2.items.add(
+        f_grainPositionSlider
+        .withHeight(100.f)
+        .withWidth(200.0f)
     );
 
     outer.items.add(

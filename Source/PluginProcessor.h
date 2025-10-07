@@ -6,7 +6,8 @@
 //==============================================================================
 /**
 */
-class GranularinfiniteAudioProcessor  : public juce::AudioProcessor
+class GranularinfiniteAudioProcessor  : public juce::AudioProcessor,
+                                        public juce::ChangeBroadcaster
 {
 public:
     //==============================================================================
@@ -19,7 +20,8 @@ public:
 
     juce::AudioProcessorValueTreeState apvts;
 
-    static juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
+    juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
+    //void createParametersRange(std::vector<std::unique_ptr<juce::RangedAudioParameter>>& params);
     
    #ifndef JucePlugin_PreferredChannelConfigurations
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
@@ -58,6 +60,10 @@ public:
     void startPlayback(const juce::String& note);
     void stopPlayback(const juce::String& note);
     void addMidiEvent(const juce::MidiMessage& m);
+
+    float getMaxFileSize() const;
+    void  updateMaxFileSize(float const& newMaxFileSize);
+
 
     bool synthToggle = false;
     bool grainAll = false;
@@ -98,6 +104,9 @@ private:
     double m_sampleRate = 48000.0;
     int m_blockSize = 576;
 
+    // make this dynamically hold the largest sample size
+    float m_maxFileSize = 256.0;
+
     // make all grain members below controllable
 
     struct Grain
@@ -112,6 +121,7 @@ private:
     std::vector<Grain> grains;
     int grainCounter = 0;
 
+    // controls
     int grainSpacing = 1;
     int grainAmount = 1;
     int minGrainLength = 128;
@@ -119,6 +129,7 @@ private:
     int maxGrainLength = 512; 
     std::atomic<float>* maxGrainLengthPtr = nullptr;
     int maxCircularSize = 24000; // half second
+    juce::NormalisableRange<float> m_dynamicRange;
 
     std::vector<float> hannWindow;
 

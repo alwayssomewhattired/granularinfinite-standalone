@@ -13,12 +13,13 @@
 #include "BiMap.h"
 #include "CustomLookAndFeel.h"
 #include "DualThumbSlider.h"
+#include "GrainPositionControl.h"
 
 //==============================================================================
 /**
 */
 class GranularinfiniteAudioProcessorEditor  : public juce::AudioProcessorEditor,
-    public juce::KeyListener
+    public juce::KeyListener, public juce::ChangeListener
 {
 public:
     GranularinfiniteAudioProcessorEditor(GranularinfiniteAudioProcessor& p);
@@ -40,6 +41,8 @@ public:
     void synthToggleHandler(juce::TextButton& button);
     void grainLengthSliderHandler();
     void sampleLabelHandler(SampleLabel& button);
+    void changeListenerCallback(juce::ChangeBroadcaster* source) override;
+
 
 
 private:
@@ -61,18 +64,22 @@ private:
     int octave = 4;
     juce::String currentlyPressedSample = "none";
     ButtonPalette buttonPalette;
+    // make a class specifically for the grainPositionSlider.
+    //  pass a reference of the audioProcessor object to the initializer list of the audioEditor
+    //   access m_maxFileSize from that object and use it to set the sliders range
+    //    the slider should now accurately depict values
 
     juce::Label& grainSpacingLabel;
-    juce::Slider& grainSpacingControl;
+    juce::Slider& grainSpacingSlider;
 
     juce::Label& grainAmountLabel;
-    juce::Slider& grainAmountControl;
+    juce::Slider& grainAmountSlider;
 
     juce::Label& grainLengthLabel;
     DualThumbSlider grainLengthSlider;
 
     juce::Label& grainPositionLabel;
-    juce::Slider& grainPositionControl;
+    GrainPositionControl grainPositionSlider;
 
 
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
