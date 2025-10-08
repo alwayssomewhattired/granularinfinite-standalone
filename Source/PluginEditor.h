@@ -14,6 +14,7 @@
 #include "CustomLookAndFeel.h"
 #include "DualThumbSlider.h"
 #include "GrainPositionControl.h"
+#include "WaveformDisplay.h"
 
 //==============================================================================
 /**
@@ -39,6 +40,7 @@ public:
     void octaveDown(juce::TextButton& button);
 
     void synthToggleHandler(juce::TextButton& button);
+    void waveformButtonHandler();
     void grainLengthSliderHandler();
     void sampleLabelHandler(SampleLabel& button);
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
@@ -81,6 +83,8 @@ private:
     juce::Label& grainPositionLabel;
     GrainPositionControl grainPositionSlider;
 
+    juce::TextButton& waveformButton;
+
 
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
 
@@ -90,6 +94,8 @@ private:
 
     // dunno if this is still needed v
     std::unique_ptr<SliderAttachment> grainMaxLength;
+
+    WaveformDisplay m_waveformDisplay;
 
     GranularinfiniteAudioProcessor& audioProcessor;
 

@@ -189,20 +189,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
         36000
     ));
 
-    //std::function<float(float, float, float)> convertFrom0To1Func = [this](float start, float end, float normalised) {
-    //    juce::ignoreUnused(start, end);
-    //    if (m_maxFileSize == 0.0f)
-    //        return 0.0f;
-    //    return normalised * m_maxFileSize;
-    //    };
-
-    //std::function<float(float, float, float)> convertTo0To1Func = [this](float start, float end, float unnormalised) {
-    //    juce::ignoreUnused(start, end);
-    //    if (m_maxFileSize == 0.0f)
-    //        return 0.0f;
-    //    return unnormalised / m_maxFileSize;
-    //    };
-
     auto dynamicRange = juce::NormalisableRange<float>(
         0.0f,
         256.0f
@@ -258,10 +244,16 @@ void GranularinfiniteAudioProcessor::spawnGrain(int64_t fileLength)
 
     Grain g;
 
-    // start sample plays a random sample
-    g.startSample = juce::Random::getSystemRandom().nextInt(fileLength - g.length);
-
     g.length = juce::Random::getSystemRandom().nextInt(maxGrainLength - minGrainLength + 1) + minGrainLength;
+
+    // start sample plays a random sample
+    maxGrainLength = apvts.getRawParameterValue("grainMaxLength")->load();
+
+    const float grainArea = m_maxFileSize - apvts.getRawParameterValue("grainPosition")->load();
+    g.startSample = juce::Random::getSystemRandom().nextInt(grainArea - g.length);
+    std::cout << "start: " << g.startSample << "\n";
+
+
     g.position = 0;
     // insert pitch stuff here...
     grains.push_back(std::move(g));
@@ -400,9 +392,19 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
     }
 }
 
+//////////////////////////////////  GETTERS /////////////////////////////////////////////////////////
+
 float GranularinfiniteAudioProcessor::getMaxFileSize() const
 {
     return m_maxFileSize;
+}
+
+juce::AudioBuffer<float>& GranularinfiniteAudioProcessor::getSampleBuffer() const
+{
+    auto& it = samples.begin();
+
+    if (it != samples.end())
+        return it->second->fullBuffer;
 }
 
 // make this function update the m_maxFileSize with the largest file size vvv

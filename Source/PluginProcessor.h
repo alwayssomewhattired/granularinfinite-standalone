@@ -64,6 +64,7 @@ public:
     float getMaxFileSize() const;
     void  updateMaxFileSize(float const& newMaxFileSize);
 
+    juce::AudioBuffer<float>& getSampleBuffer() const;
 
     bool synthToggle = false;
     bool grainAll = false;
@@ -105,7 +106,7 @@ private:
     int m_blockSize = 576;
 
     // make this dynamically hold the largest sample size
-    float m_maxFileSize = 256.0;
+    float m_maxFileSize = 0.0;
 
     // make all grain members below controllable
 

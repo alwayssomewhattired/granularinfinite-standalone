@@ -20,16 +20,19 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
     grainAmountSlider(buttonPalette.grainAmountSlider),
     grainPositionSlider(GrainPositionControl(p)),
     grainPositionLabel(buttonPalette.grainPositionLabel),
-    grainLengthLabel(buttonPalette.grainLengthLabel)
+    grainLengthLabel(buttonPalette.grainLengthLabel),
+    waveformButton(buttonPalette.waveformButton)
     
 {
     audioProcessor.addChangeListener(this);
 
-    keyToNote = CreateKeyToNote(octave); // add dynamic octave
+    keyToNote = CreateKeyToNote(octave);
     setWantsKeyboardFocus(true);
     addKeyListener(this);
     setSize(1000, 200);
 
+    // handler lambda initialization
+    waveformButtonHandler();
     grainLengthSliderHandler();
 
     // intialize noteToSamples vector 
@@ -90,6 +93,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             juce::TextButton& octaveIncrement = buttonPalette.incrementButton;
             juce::TextButton& octaveDecrement = buttonPalette.decrementButton;
 
+
             // custom looknfeel
             grainSpacingSlider.setLookAndFeel(&customLook);
             grainAmountSlider.setLookAndFeel(&customLook);
@@ -110,6 +114,9 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             addAndMakeVisible(button);
             addAndMakeVisible(label);
             addAndMakeVisible(buttonPalette.synthToggleButton);
+            addAndMakeVisible(waveformButton);
+            addAndMakeVisible(m_waveformDisplay);
+
 
             octaveUp(octaveIncrement);
             octaveDown(octaveDecrement);
@@ -394,6 +401,14 @@ void GranularinfiniteAudioProcessorEditor::synthToggleHandler(juce::TextButton& 
         };
 }
 
+void GranularinfiniteAudioProcessorEditor::waveformButtonHandler()
+{
+    waveformButton.onClick = [this] {
+        
+        m_waveformDisplay.setBuffer(audioProcessor.getSampleBuffer());
+        };
+};
+
 //==============================================================================
 
 
@@ -417,6 +432,8 @@ void GranularinfiniteAudioProcessorEditor::resized()
     buttonPalette.decrementButton.setBounds(x - 200, y + 400, buttonWidth, buttonHeight);
     buttonPalette.incrementButton.setBounds(x - 100, y + 400, buttonWidth, buttonHeight);
     buttonPalette.synthToggleButton.setBounds(x, y + 400, buttonWidth, buttonHeight);
+    waveformButton.setBounds(x + 100, y + 400, buttonWidth, buttonHeight);
+    m_waveformDisplay.setBounds(500, 275, 600, 200);
 
     juce::FlexBox outer;
     juce::FlexBox inner1;

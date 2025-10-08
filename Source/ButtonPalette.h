@@ -18,6 +18,10 @@ public:
 		synthToggleButton.setButtonText("mode");
 		synthToggleButton.setClickingTogglesState(true);
 
+		waveformButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
+		waveformButton.setButtonText("waveform");
+		waveformButton.setClickingTogglesState(true);
+
 		grainSpacingLabel.setText("grain spacing", juce::dontSendNotification);
 		grainSpacingLabel.setFont(juce::Font(16.0f, juce::Font::bold));
 		grainSpacingLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
@@ -53,6 +57,7 @@ public:
 	juce::TextButton incrementButton;
 	juce::TextButton decrementButton;
 	juce::TextButton synthToggleButton;
+	juce::TextButton waveformButton;
 
 	juce::Slider grainSpacingSlider;
 	juce::Slider grainAmountSlider;
