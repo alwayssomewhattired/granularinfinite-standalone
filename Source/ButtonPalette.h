@@ -1,7 +1,6 @@
 
 #pragma once
 #include <juce_gui_basics/juce_gui_basics.h>
-//#include "PluginProcessor.h"
 
 class ButtonPalette : public juce::Component
 {
@@ -21,6 +20,9 @@ public:
 		waveformButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
 		waveformButton.setButtonText("waveform");
 		waveformButton.setClickingTogglesState(true);
+		waveformButton.onClick = [this]() {
+			if (onToggleWaveform) onToggleWaveform(waveformButton.getToggleState());
+			};
 
 		grainSpacingLabel.setText("grain spacing", juce::dontSendNotification);
 		grainSpacingLabel.setFont(juce::Font(16.0f, juce::Font::bold));
@@ -51,13 +53,51 @@ public:
 		grainLengthLabel.setFont(juce::Font(16.0f, juce::Font::bold));
 		grainLengthLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
 		grainLengthLabel.setJustificationType(juce::Justification::centred);
+
 	}
+
+		std::function<void(bool)> onToggleWaveform;
+		std::function<void()> onWaveformButtonAdded;
+
+	void addWaveformButton(const juce::String& fileName, std::function<void()> onClick)
+	{
+		auto button = std::make_unique<juce::TextButton>(fileName);
+		button->setColour(juce::TextButton::buttonColourId, juce::Colours::green);
+		button->setButtonText("waveform");
+		button->setClickingTogglesState(true);
+		button->onClick = std::move(onClick);
+		addAndMakeVisible(*button);
+		waveformButtons[fileName] = std::move(button);
+		if (onWaveformButtonAdded) {
+			onWaveformButtonAdded();
+		}
+		std::cout << "do you knnow? \n";
+	}
+
+	//void ButtonPalette::resized()
+	//{
+	//	int x = 300;
+	//	int y = 100;
+	//	int buttonWidth = 60;
+	//	int buttonHeight = 120;
+	//	int labelHeight = 20;
+
+	//	auto area = getLocalBounds();
+	//	for (auto& pair : waveformButtons)
+	//	{
+	//		std::cout << "within resized \n";
+	//		pair.second->setBounds(x + 100, y + 400, buttonWidth, labelHeight);
+	//	}
+	//}
+
 
 
 	juce::TextButton incrementButton;
 	juce::TextButton decrementButton;
 	juce::TextButton synthToggleButton;
 	juce::TextButton waveformButton;
+	// file-name to waveformButton
+	std::map<juce::String, std::unique_ptr<juce::TextButton>> waveformButtons;
 
 	juce::Slider grainSpacingSlider;
 	juce::Slider grainAmountSlider;

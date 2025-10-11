@@ -2,6 +2,7 @@
 #pragma once
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <functional>
+#include "PluginEditor.h"
 
 
 
@@ -22,7 +23,11 @@ public:
 
 	juce::String getNoteName() const { return noteName; }
 
+	// the filename including directory
 	juce::String getAssignedFile() const { return assignedFile; }
+
+	// the trimmed filename
+	juce::String getTrimmedFileName() const { return trimmedFileName; }
 
 
 	bool isInterestedInFileDrag(const juce::StringArray& files) override
@@ -41,10 +46,16 @@ public:
 		assignedFile = files[0]; // take the first file for now
 
 		auto fileName = juce::File(assignedFile).getFileNameWithoutExtension();
+		trimmedFileName = fileName;
 		if (files.isEmpty()) return;
 		if (onFileDropped) 
 		{
 			onFileDropped(assignedFile, fileName);
+			// in here
+			// use fileName to create + add button to map in buttonPalette.
+			// make sure to attach lambda to onClick property of every button
+			//audioEditor.waveformButtonHandler();
+			//buttonPalette.addWaveformButton(fileName);
 		}
 	}
 
@@ -52,7 +63,12 @@ public:
 private:
 	juce::String noteName;
 	juce::String assignedFile;
+	juce::String trimmedFileName;
 	juce::String sampleName;
+
+	// buttonPalette from editor
+	//ButtonPalette& buttonPalette;
+	//GranularinfiniteAudioProcessorEditor& audioEditor;
 
 	FileDroppedCallback onFileDropped;
 

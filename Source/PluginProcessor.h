@@ -98,6 +98,7 @@ private:
     std::mutex midiMutex;
     juce::Synthesiser synth;
 
+    // file-name to Sample object
     std::map<juce::String, std::unique_ptr<Sample>> samples;
     juce::AudioFormatManager formatManager;
     juce::AudioBuffer<float> tempBuffer;

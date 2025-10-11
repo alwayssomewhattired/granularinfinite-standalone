@@ -32,7 +32,6 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
     setSize(1000, 200);
 
     // handler lambda initialization
-    waveformButtonHandler();
     grainLengthSliderHandler();
 
     // intialize noteToSamples vector 
@@ -85,9 +84,13 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
                 synthNote = refinedNote;
                 noteToFile[refinedNote] = std::make_unique<juce::File>(fullPath);
                 audioProcessor.loadFile(file, refinedNote, "false");
+                buttonPalette.addWaveformButton(refinedName, [this, refinedName]()
+                    {
+                        // When the waveform button is clicked:
+                        m_waveformDisplay.setBuffer(audioProcessor.getSampleBuffer());
+                    });
                 });
             //------------//
-
 
             // control-buttons
             juce::TextButton& octaveIncrement = buttonPalette.incrementButton;
@@ -100,6 +103,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             grainLengthSlider.setLookAndFeel(&diySlider);
             grainPositionSlider.setLookAndFeel(&customLook);
 
+            addAndMakeVisible(buttonPalette);
             addAndMakeVisible(octaveIncrement);
             addAndMakeVisible(octaveDecrement);
             addAndMakeVisible(grainSpacingLabel);
@@ -114,8 +118,20 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             addAndMakeVisible(button);
             addAndMakeVisible(label);
             addAndMakeVisible(buttonPalette.synthToggleButton);
-            addAndMakeVisible(waveformButton);
             addAndMakeVisible(m_waveformDisplay);
+
+            // callbacks
+            buttonPalette.onToggleWaveform = [this](bool enabled) {
+                if (enabled)
+                    m_waveformDisplay.setBuffer(audioProcessor.getSampleBuffer());
+                else
+                    // clear waveform display
+                    std::cout << "please make this clear \n";
+                };
+
+            buttonPalette.onWaveformButtonAdded = [this]() {
+                resized();
+                };
 
 
             octaveUp(octaveIncrement);
@@ -126,7 +142,6 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
            
             synthToggleHandler(buttonPalette.synthToggleButton);
             sampleLabelHandler(*label);
-
 
             noteLabels.add(noteLabel);
             keyButtons.add(button);
@@ -156,7 +171,6 @@ void GranularinfiniteAudioProcessorEditor::changeListenerCallback(juce::ChangeBr
         grainPositionSlider.setRange(0, audioProcessor.getMaxFileSize());
     }
 }
-
 
 bool GranularinfiniteAudioProcessorEditor::keyPressed(const juce::KeyPress& key,
     Component* originatingComponent)
@@ -401,14 +415,6 @@ void GranularinfiniteAudioProcessorEditor::synthToggleHandler(juce::TextButton& 
         };
 }
 
-void GranularinfiniteAudioProcessorEditor::waveformButtonHandler()
-{
-    waveformButton.onClick = [this] {
-        
-        m_waveformDisplay.setBuffer(audioProcessor.getSampleBuffer());
-        };
-};
-
 //==============================================================================
 
 
@@ -428,11 +434,10 @@ void GranularinfiniteAudioProcessorEditor::resized()
     int spacing = 5;
 
 
-
+    buttonPalette.setBounds(getLocalBounds());
     buttonPalette.decrementButton.setBounds(x - 200, y + 400, buttonWidth, buttonHeight);
     buttonPalette.incrementButton.setBounds(x - 100, y + 400, buttonWidth, buttonHeight);
     buttonPalette.synthToggleButton.setBounds(x, y + 400, buttonWidth, buttonHeight);
-    waveformButton.setBounds(x + 100, y + 400, buttonWidth, buttonHeight);
     m_waveformDisplay.setBounds(500, 275, 600, 200);
 
     juce::FlexBox outer;
@@ -536,6 +541,12 @@ void GranularinfiniteAudioProcessorEditor::resized()
             keyButtons[i]->setBounds(x, y, buttonWidth, buttonHeight);
         }
         sampleLabels[i]->setBounds(x, y + buttonHeight, buttonWidth, labelHeight);
+        const auto& noteName = keyButtons[i]->getTrimmedFileName();
+        if (auto it = buttonPalette.waveformButtons.find(noteName);
+            it != buttonPalette.waveformButtons.end() && it->second)
+        {
+            it->second->setBounds(x, y + buttonHeight + labelHeight + 10, buttonWidth, labelHeight);
+        }
 
         x += buttonWidth + spacing;   // move to next key
     }

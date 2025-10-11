@@ -40,11 +40,10 @@ public:
     void octaveDown(juce::TextButton& button);
 
     void synthToggleHandler(juce::TextButton& button);
-    void waveformButtonHandler();
+    //void waveformButtonHandler();
     void grainLengthSliderHandler();
     void sampleLabelHandler(SampleLabel& button);
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
-
 
 
 private:
@@ -65,6 +64,7 @@ private:
     juce::MidiBuffer pendingMidi;
     int octave = 4;
     juce::String currentlyPressedSample = "none";
+
     ButtonPalette buttonPalette;
     // make a class specifically for the grainPositionSlider.
     //  pass a reference of the audioProcessor object to the initializer list of the audioEditor

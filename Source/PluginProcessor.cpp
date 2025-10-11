@@ -425,10 +425,9 @@ void GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce
         synth.addSound(sound);
         auto sample = std::make_unique<Sample>();
         sample->setSourceFromReader(reader);
-        //m_maxFileSize = sample->audioFileLength;
         updateMaxFileSize(sample->audioFileLength);
         samples[noteName] = std::move(sample);
-
+        // trigger callback to 
     }
 }
 
