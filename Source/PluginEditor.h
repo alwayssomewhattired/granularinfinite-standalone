@@ -40,7 +40,6 @@ public:
     void octaveDown(juce::TextButton& button);
 
     void synthToggleHandler(juce::TextButton& button);
-    //void waveformButtonHandler();
     void grainLengthSliderHandler();
     void sampleLabelHandler(SampleLabel& button);
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
@@ -83,7 +82,7 @@ private:
     juce::Label& grainPositionLabel;
     GrainPositionControl grainPositionSlider;
 
-    juce::TextButton& waveformButton;
+    //juce::TextButton& waveformButton;
 
 
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;

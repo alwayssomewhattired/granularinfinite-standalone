@@ -17,12 +17,9 @@ public:
 		synthToggleButton.setButtonText("mode");
 		synthToggleButton.setClickingTogglesState(true);
 
-		waveformButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
-		waveformButton.setButtonText("waveform");
-		waveformButton.setClickingTogglesState(true);
-		waveformButton.onClick = [this]() {
-			if (onToggleWaveform) onToggleWaveform(waveformButton.getToggleState());
-			};
+		//waveformButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
+		//waveformButton.setButtonText("waveform");
+		//waveformButton.setClickingTogglesState(true);
 
 		grainSpacingLabel.setText("grain spacing", juce::dontSendNotification);
 		grainSpacingLabel.setFont(juce::Font(16.0f, juce::Font::bold));
@@ -56,16 +53,20 @@ public:
 
 	}
 
-		std::function<void(bool)> onToggleWaveform;
 		std::function<void()> onWaveformButtonAdded;
 
-	void addWaveformButton(const juce::String& fileName, std::function<void()> onClick)
+	void addWaveformButton(const juce::String& fileName, std::function<void(juce::TextButton&)> onClick)
 	{
 		auto button = std::make_unique<juce::TextButton>(fileName);
 		button->setColour(juce::TextButton::buttonColourId, juce::Colours::green);
 		button->setButtonText("waveform");
 		button->setClickingTogglesState(true);
-		button->onClick = std::move(onClick);
+
+		auto* btnptr = button.get();
+
+		button->onClick = [onClick, btnptr]() {
+			onClick(*btnptr);
+			};
 		addAndMakeVisible(*button);
 		waveformButtons[fileName] = std::move(button);
 		if (onWaveformButtonAdded) {
@@ -74,21 +75,7 @@ public:
 		std::cout << "do you knnow? \n";
 	}
 
-	//void ButtonPalette::resized()
-	//{
-	//	int x = 300;
-	//	int y = 100;
-	//	int buttonWidth = 60;
-	//	int buttonHeight = 120;
-	//	int labelHeight = 20;
 
-	//	auto area = getLocalBounds();
-	//	for (auto& pair : waveformButtons)
-	//	{
-	//		std::cout << "within resized \n";
-	//		pair.second->setBounds(x + 100, y + 400, buttonWidth, labelHeight);
-	//	}
-	//}
 
 
 
@@ -96,6 +83,7 @@ public:
 	juce::TextButton decrementButton;
 	juce::TextButton synthToggleButton;
 	juce::TextButton waveformButton;
+
 	// file-name to waveformButton
 	std::map<juce::String, std::unique_ptr<juce::TextButton>> waveformButtons;
 

@@ -20,8 +20,8 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
     grainAmountSlider(buttonPalette.grainAmountSlider),
     grainPositionSlider(GrainPositionControl(p)),
     grainPositionLabel(buttonPalette.grainPositionLabel),
-    grainLengthLabel(buttonPalette.grainLengthLabel),
-    waveformButton(buttonPalette.waveformButton)
+    grainLengthLabel(buttonPalette.grainLengthLabel)
+    //waveformButton(buttonPalette.waveformButton)
     
 {
     audioProcessor.addChangeListener(this);
@@ -84,10 +84,18 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
                 synthNote = refinedNote;
                 noteToFile[refinedNote] = std::make_unique<juce::File>(fullPath);
                 audioProcessor.loadFile(file, refinedNote, "false");
-                buttonPalette.addWaveformButton(refinedName, [this, refinedName]()
+
+                buttonPalette.addWaveformButton(refinedName, [this, refinedName](juce::TextButton& button)
                     {
-                        // When the waveform button is clicked:
-                        m_waveformDisplay.setBuffer(audioProcessor.getSampleBuffer());
+                        if (button.getToggleState()) 
+                        {
+                            std::cout << "did we make it? \n";
+                            m_waveformDisplay.setBuffer(audioProcessor.getSampleBuffer(refinedName));
+                            std::cout << "got it \n";
+                        }
+                        else {
+                            m_waveformDisplay.clear();
+                        }
                     });
                 });
             //------------//
@@ -121,13 +129,13 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             addAndMakeVisible(m_waveformDisplay);
 
             // callbacks
-            buttonPalette.onToggleWaveform = [this](bool enabled) {
-                if (enabled)
-                    m_waveformDisplay.setBuffer(audioProcessor.getSampleBuffer());
-                else
-                    // clear waveform display
-                    std::cout << "please make this clear \n";
-                };
+            //buttonPalette.onToggleWaveform = [this](bool enabled) {
+            //    if (enabled)
+            //        m_waveformDisplay.setBuffer(audioProcessor.getSampleBuffer());
+            //    else
+            //        // clear waveform display
+            //        std::cout << "please make this clear \n";
+            //    };
 
             buttonPalette.onWaveformButtonAdded = [this]() {
                 resized();

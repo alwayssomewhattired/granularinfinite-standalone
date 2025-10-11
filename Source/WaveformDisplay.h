@@ -11,7 +11,20 @@ public:
 
     void setBuffer(const juce::AudioBuffer<float>& audioBuffer)
     {
+        if (audioBuffer.getNumChannels() == 0 || audioBuffer.getNumSamples() == 0)
+        {
+            buffer.setSize(0, 0);
+            repaint();
+            return;
+        }
         buffer.makeCopyOf(audioBuffer);
+        repaint();
+    }
+
+    void clear()
+    {
+        // clear buffer here please
+        buffer.setSize(0, 0, false, false, false);
         repaint();
     }
 

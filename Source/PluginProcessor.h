@@ -64,7 +64,7 @@ public:
     float getMaxFileSize() const;
     void  updateMaxFileSize(float const& newMaxFileSize);
 
-    juce::AudioBuffer<float>& getSampleBuffer() const;
+    juce::AudioBuffer<float>& getSampleBuffer(const juce::String& fileName) const;
 
     bool synthToggle = false;
     bool grainAll = false;
