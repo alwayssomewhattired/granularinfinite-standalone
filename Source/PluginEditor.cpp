@@ -32,6 +32,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
 
     // handler lambda initialization
     grainLengthSliderHandler();
+    grainPositionSliderHandler();
 
     // intialize noteToSamples vector 
     const std::vector<std::string> notes = { "C0", "C#0", "D0", "D#0", "E0", "F0", "F#0", "G0", "G#0", "A0", "A#0", "B0",
@@ -136,15 +137,6 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             addAndMakeVisible(buttonPalette.synthToggleButton);
             addAndMakeVisible(m_waveformDisplay);
 
-            // callbacks
-            //buttonPalette.onToggleWaveform = [this](bool enabled) {
-            //    if (enabled)
-            //        m_waveformDisplay.setBuffer(audioProcessor.getSampleBuffer());
-            //    else
-            //        // clear waveform display
-            //        std::cout << "please make this clear \n";
-            //    };
-
             buttonPalette.onWaveformButtonAdded = [this]() {
                 resized();
                 };
@@ -184,7 +176,7 @@ void GranularinfiniteAudioProcessorEditor::changeListenerCallback(juce::ChangeBr
     if (source == &audioProcessor)
     {
         // Respond to parameter change, or update UI
-        grainPositionSlider.setRange(0, audioProcessor.getMaxFileSize());
+        //grainPositionSlider.setRange(0.0, (double)audioProcessor.getMaxFileSize(), 1.0);
     }
 }
 
@@ -355,6 +347,15 @@ void GranularinfiniteAudioProcessorEditor::grainLengthSliderHandler()
                 float normalized = floatParam->convertTo0to1((float)grainLengthSlider.getMaxValue());
                 floatParam->setValueNotifyingHost(normalized);
             }
+        };
+}
+
+void::GranularinfiniteAudioProcessorEditor::grainPositionSliderHandler()
+{
+    grainPositionSlider.onValueChange = [this]()
+        {
+            float grainArea = grainPositionSlider.getValue();
+            m_waveformDisplay.setGrainArea(grainArea);
         };
 }
 

@@ -191,7 +191,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
 
     auto dynamicRange = juce::NormalisableRange<float>(
         0.0f,
-        256.0f
+        600.0f
     );
 
     params.push_back(std::make_unique<juce::AudioParameterFloat>(
