@@ -206,12 +206,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
 
 void GranularinfiniteAudioProcessor::updateMaxFileSize(float const& newMaxFileSize)
 {
-    std::cout << "m_maxFileSize: " << m_maxFileSize << "\n";
-    std::cout << "newMaxFileSize: " << newMaxFileSize << "\n";
 
     if (m_maxFileSize < newMaxFileSize)
         m_maxFileSize = newMaxFileSize;
-    
+    // I don't believe we need the rest of this down below...
     if (auto* param = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("grainPosition")))
     {
         
@@ -249,9 +247,8 @@ void GranularinfiniteAudioProcessor::spawnGrain(int64_t fileLength)
     // start sample plays a random sample
     maxGrainLength = apvts.getRawParameterValue("grainMaxLength")->load();
 
-    const float grainArea = m_maxFileSize - apvts.getRawParameterValue("grainPosition")->load();
-    g.startSample = juce::Random::getSystemRandom().nextInt(grainArea - g.length);
-    std::cout << "start: " << g.startSample << "\n";
+    const float grainArea = (apvts.getRawParameterValue("grainPosition")->load() / 600.0f) * m_maxFileSize;
+    g.startSample = juce::Random::getSystemRandom().nextInt(std::abs(grainArea - g.length));
 
 
     g.position = 0;
