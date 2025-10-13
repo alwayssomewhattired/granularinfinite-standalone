@@ -399,12 +399,10 @@ float GranularinfiniteAudioProcessor::getMaxFileSize() const
     return m_maxFileSize;
 
 }
-
-juce::AudioBuffer<float>& GranularinfiniteAudioProcessor::getSampleBuffer(const juce::String& fileName) const
+// takes notename and returns the  audio buffer
+juce::AudioBuffer<float>& GranularinfiniteAudioProcessor::getSampleBuffer(const juce::String& noteName) const
 {
-    auto it = samples.find(fileName);
-    std::cout << it->first << "\n";
-    // figure out why iterator is invalid 
+    auto it = samples.find(noteName);
     if (it != samples.end())
     {
         return it->second->fullBuffer;

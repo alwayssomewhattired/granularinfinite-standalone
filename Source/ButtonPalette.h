@@ -5,7 +5,7 @@
 class ButtonPalette : public juce::Component
 {
 public:
-	ButtonPalette()
+	ButtonPalette() : waveformState()
 	{
 		incrementButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
 		incrementButton.setButtonText("+");
@@ -16,10 +16,6 @@ public:
 		synthToggleButton.setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
 		synthToggleButton.setButtonText("mode");
 		synthToggleButton.setClickingTogglesState(true);
-
-		//waveformButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
-		//waveformButton.setButtonText("waveform");
-		//waveformButton.setClickingTogglesState(true);
 
 		grainSpacingLabel.setText("grain spacing", juce::dontSendNotification);
 		grainSpacingLabel.setFont(juce::Font(16.0f, juce::Font::bold));
@@ -53,12 +49,12 @@ public:
 
 	}
 
-		std::function<void()> onWaveformButtonAdded;
+	std::function<void()> onWaveformButtonAdded;
 
 	void addWaveformButton(const juce::String& fileName, std::function<void(juce::TextButton&)> onClick)
 	{
-		auto button = std::make_unique<juce::TextButton>(fileName);
-		button->setColour(juce::TextButton::buttonColourId, juce::Colours::green);
+		auto button = std::make_unique<juce::TextButton>();
+		button->setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
 		button->setButtonText("waveform");
 		button->setClickingTogglesState(true);
 
@@ -76,8 +72,8 @@ public:
 	}
 
 
-
-
+	// file-name of current waveform button pressed. (warning: not a reference. be careful)
+	juce::String waveformState;
 
 	juce::TextButton incrementButton;
 	juce::TextButton decrementButton;

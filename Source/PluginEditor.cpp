@@ -21,7 +21,6 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
     grainPositionSlider(GrainPositionControl(p)),
     grainPositionLabel(buttonPalette.grainPositionLabel),
     grainLengthLabel(buttonPalette.grainLengthLabel)
-    //waveformButton(buttonPalette.waveformButton)
     
 {
     audioProcessor.addChangeListener(this);
@@ -85,15 +84,24 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
                 noteToFile[refinedNote] = std::make_unique<juce::File>(fullPath);
                 audioProcessor.loadFile(file, refinedNote, "false");
 
-                buttonPalette.addWaveformButton(refinedName, [this, refinedName](juce::TextButton& button)
+                buttonPalette.addWaveformButton(refinedName, [this, refinedNote, refinedName](juce::TextButton& button)
                     {
+                        juce::String& state = buttonPalette.waveformState;
                         if (button.getToggleState()) 
                         {
-                            std::cout << "did we make it? \n";
-                            m_waveformDisplay.setBuffer(audioProcessor.getSampleBuffer(refinedName));
-                            std::cout << "got it \n";
+                            if (state.isNotEmpty())
+                            {
+                                if (auto it = buttonPalette.waveformButtons.find(state); it != buttonPalette.waveformButtons.end())
+                                {
+                                    it->second->setToggleState(false, juce::dontSendNotification);
+                                }
+                            }
+                            state = refinedName;
+                            m_waveformDisplay.setBuffer(audioProcessor.getSampleBuffer(refinedNote));
+                            button.setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
                         }
                         else {
+                            state = juce::String();
                             m_waveformDisplay.clear();
                         }
                     });
