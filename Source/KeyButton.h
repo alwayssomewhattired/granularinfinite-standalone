@@ -51,11 +51,6 @@ public:
 		if (onFileDropped) 
 		{
 			onFileDropped(assignedFile, fileName);
-			// in here
-			// use fileName to create + add button to map in buttonPalette.
-			// make sure to attach lambda to onClick property of every button
-			//audioEditor.waveformButtonHandler();
-			//buttonPalette.addWaveformButton(fileName);
 		}
 	}
 
@@ -65,10 +60,6 @@ private:
 	juce::String assignedFile;
 	juce::String trimmedFileName;
 	juce::String sampleName;
-
-	// buttonPalette from editor
-	//ButtonPalette& buttonPalette;
-	//GranularinfiniteAudioProcessorEditor& audioEditor;
 
 	FileDroppedCallback onFileDropped;
 

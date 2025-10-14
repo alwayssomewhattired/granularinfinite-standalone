@@ -202,6 +202,7 @@ bool GranularinfiniteAudioProcessorEditor::keyPressed(const juce::KeyPress& key,
                 juce::MidiMessage m = juce::MidiMessage::noteOn(1, midi_note, (juce::uint8)127);
                 audioProcessor.addMidiEvent(m);
                 currentlyPressedKeys.insert(char_key);
+
                 button->setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
 
                 return true;

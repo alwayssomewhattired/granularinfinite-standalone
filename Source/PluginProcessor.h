@@ -67,12 +67,17 @@ public:
     juce::AudioBuffer<float>& getSampleBuffer(const juce::String& fileName) const;
 
     bool synthToggle = false;
+
+    // granular toggle flag
     bool grainAll = false;
 
 
 
-
 private:
+    
+    // flag for if key pressed
+    bool m_keyPressed = false;
+
     struct Sample
     {
         std::unique_ptr<juce::AudioFormatReaderSource> readerSource;

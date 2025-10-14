@@ -4,6 +4,7 @@
 #include "PluginEditor.h"
 #include "OpenConsole.h"
 #include <juce_dsp/juce_dsp.h>
+#include <juce_events/juce_events.h>
 #include <algorithm>
 
 //==============================================================================
@@ -283,7 +284,6 @@ void GranularinfiniteAudioProcessor::processSamplerPath(juce::AudioBuffer<float>
 
 void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples)
 {
-    // circularBuffer filling is wrong way. find out how to get the whole file!
     buffer.clear();
     minGrainLength = *minGrainLengthPtr;
     maxGrainLength = *maxGrainLengthPtr;
@@ -360,9 +360,8 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
     grainAmount = static_cast<int>(apvts.getRawParameterValue("grainAmount")->load());
     minGrainLength = apvts.getRawParameterValue("grainMinLength")->load();
     maxGrainLength = apvts.getRawParameterValue("grainMaxLength")->load();
-    //
+
     // SYNTH PATH
-    //
     if (synthToggle)
     {
         {
@@ -380,11 +379,13 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
 
     if (grainAll)
     {
-        processGranularPath(buffer, outCh, numSamples);
+        if (m_keyPressed)
+            processGranularPath(buffer, outCh, numSamples);
         return;
     }
     else {
-        processSamplerPath(buffer, outCh, numSamples);
+        if (m_keyPressed)
+            processSamplerPath(buffer, outCh, numSamples);
         return;
     }
 }
@@ -435,6 +436,7 @@ void GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce
 
 void GranularinfiniteAudioProcessor::startPlayback(const juce::String& note)
 {
+    m_keyPressed = true;
     // todoS
     // make this function take a velocity control
     if (synthToggle)
@@ -465,18 +467,25 @@ void GranularinfiniteAudioProcessor::startPlayback(const juce::String& note)
 
 void GranularinfiniteAudioProcessor::stopPlayback(const juce::String& note)
 {
+    m_keyPressed = false;
     const int midi_note = CreateNoteToMidi[note];
 
     if (synthToggle)
     {
         synth.noteOff(1, midi_note, 127, false);
     }
+
     auto it = samples.find(note);
     if (it != samples.end())
     {
         auto& sample = it->second;
-        sample->transportSource.stop();
+
+        std::thread([samplePtr = sample.get()] {
+            if (samplePtr)
+                samplePtr->transportSource.stop();
+            }).detach();
     }
+
 }
 
 //==============================================================================
