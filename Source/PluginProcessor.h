@@ -56,7 +56,6 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     //==============================================================================
-    void loadFile(const juce::File& file, const juce::String& noteName, std::optional<juce::String> fileName = std::nullopt);
     void startPlayback(const juce::String& note);
     void stopPlayback(const juce::String& note);
     void addMidiEvent(const juce::MidiMessage& m);
@@ -70,13 +69,6 @@ public:
 
     // granular toggle flag
     bool grainAll = false;
-
-
-
-private:
-    
-    // flag for if key pressed
-    bool m_keyPressed = false;
 
     struct Sample
     {
@@ -99,12 +91,21 @@ private:
             reader->read(&fullBuffer, 0, (int)audioFileLength, 0, true, true);
         }
     };
+
+    Sample* loadFile(const juce::File& file, const juce::String& noteName, std::optional<juce::String> fileName = std::nullopt);
+
+private:
+    
+    // flag for if key pressed
+    bool m_keyPressed = false;
+
     juce::MidiBuffer midiFifo;
     std::mutex midiMutex;
     juce::Synthesiser synth;
 
     // file-name to Sample object
     std::map<juce::String, std::unique_ptr<Sample>> samples;
+
     juce::AudioFormatManager formatManager;
     juce::AudioBuffer<float> tempBuffer;
 

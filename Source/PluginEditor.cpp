@@ -29,6 +29,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
     setWantsKeyboardFocus(true);
     addKeyListener(this);
     setSize(1000, 200);
+    startTimerHz(60);
 
     // handler lambda initialization
     grainLengthSliderHandler();
@@ -83,10 +84,11 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
                 label->file = refinedName;
                 synthNote = refinedNote;
                 noteToFile[refinedNote] = std::make_unique<juce::File>(fullPath);
-                audioProcessor.loadFile(file, refinedNote, "false");
+                GranularinfiniteAudioProcessor::Sample* samplePtr = audioProcessor.loadFile(file, refinedNote, "false");
 
-                buttonPalette.addWaveformButton(refinedName, [this, refinedNote, refinedName](juce::TextButton& button)
+                buttonPalette.addWaveformButton(refinedName, [this, refinedNote, refinedName, samplePtr](juce::TextButton& button)
                     {
+
                         juce::String& state = buttonPalette.waveformState;
                         if (button.getToggleState()) 
                         {
@@ -99,6 +101,11 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
                             }
                             state = refinedName;
                             m_waveformDisplay.setBuffer(audioProcessor.getSampleBuffer(refinedNote));
+                            m_waveformDisplay.setSample(samplePtr);
+
+                            // pass in samplePtr and do logic within that 
+                            // this is all wrong. useless sample ptr.
+                            m_waveformDisplay.setPlayheadPosition();
                             button.setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
                         }
                         else {
@@ -108,6 +115,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
                     });
                 });
             //------------//
+
 
             // control-buttons
             juce::TextButton& octaveIncrement = buttonPalette.incrementButton;
@@ -351,13 +359,26 @@ void GranularinfiniteAudioProcessorEditor::grainLengthSliderHandler()
         };
 }
 
-void::GranularinfiniteAudioProcessorEditor::grainPositionSliderHandler()
+void GranularinfiniteAudioProcessorEditor::grainPositionSliderHandler()
 {
     grainPositionSlider.onValueChange = [this]()
         {
             float grainArea = grainPositionSlider.getValue();
             m_waveformDisplay.setGrainArea(grainArea);
         };
+}
+
+void GranularinfiniteAudioProcessorEditor::timerCallback()
+{
+    playheadPositionHandler();
+}
+
+void GranularinfiniteAudioProcessorEditor::playheadPositionHandler()
+{
+    // call this 60/s using timer
+    const juce::AudioBuffer<float> buffer = m_waveformDisplay.getBuffer();
+    m_waveformDisplay.setPlayheadPosition();
+
 }
 
 void GranularinfiniteAudioProcessorEditor::sampleLabelHandler(SampleLabel& button)

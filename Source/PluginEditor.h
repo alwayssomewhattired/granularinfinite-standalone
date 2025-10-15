@@ -20,7 +20,7 @@
 /**
 */
 class GranularinfiniteAudioProcessorEditor  : public juce::AudioProcessorEditor,
-    public juce::KeyListener, public juce::ChangeListener
+    public juce::KeyListener, public juce::ChangeListener, private juce::Timer
 {
 public:
     GranularinfiniteAudioProcessorEditor(GranularinfiniteAudioProcessor& p);
@@ -42,6 +42,7 @@ public:
     void synthToggleHandler(juce::TextButton& button);
     void grainLengthSliderHandler();
     void grainPositionSliderHandler();
+    void playheadPositionHandler();
     void sampleLabelHandler(SampleLabel& button);
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
 
@@ -64,6 +65,8 @@ private:
     juce::MidiBuffer pendingMidi;
     int octave = 4;
     juce::String currentlyPressedSample = "none";
+
+    void timerCallback() override;
 
     ButtonPalette buttonPalette;
     // make a class specifically for the grainPositionSlider.

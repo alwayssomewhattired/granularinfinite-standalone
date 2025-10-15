@@ -411,7 +411,7 @@ juce::AudioBuffer<float>& GranularinfiniteAudioProcessor::getSampleBuffer(const 
 }
 
 // make this function update the m_maxFileSize with the largest file size vvv
-void GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce::String& noteName, std::optional<juce::String> fileName)
+GranularinfiniteAudioProcessor::Sample* GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce::String& noteName, std::optional<juce::String> fileName)
 {
     std::string realStr = noteName.toStdString();
 
@@ -429,8 +429,10 @@ void GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce
         auto sample = std::make_unique<Sample>();
         sample->setSourceFromReader(reader);
         updateMaxFileSize(sample->audioFileLength);
+
+        auto* samplePtr = sample.get();
         samples[noteName] = std::move(sample);
-        // trigger callback to 
+        return samplePtr;
     }
 }
 
