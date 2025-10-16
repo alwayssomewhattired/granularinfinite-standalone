@@ -6,7 +6,7 @@
 class WaveformDisplay : public juce::Component
 {
 public:
-    WaveformDisplay() = default;
+    WaveformDisplay() : m_sample(nullptr){}
 
     void setBuffer(const juce::AudioBuffer<float>& audioBuffer)
     {
@@ -22,10 +22,7 @@ public:
 
     void setSample(GranularinfiniteAudioProcessor::Sample* sample)
     {
-        // so we set sample here and it runs.
-        // check if sample is anything. we might be passing a nullptr. fix this
         m_sample = sample;
-        std::cout << "set sample \n";
     }
 
     juce::AudioBuffer<float>& getBuffer()
@@ -43,11 +40,10 @@ public:
 
     void setPlayheadPosition()
     {
-        // problem now is m_sample is always empty. even when sample is loaded.
         if (!m_sample)
-            // for some very strange reason, I need to print something to the console in order to prevent crash... so weird... anyway, don't remove this
-            std::cout << "working? \n";
+        {
             return;
+        }
         double curr = m_sample->transportSource.getCurrentPosition();
         double total = m_sample->transportSource.getLengthInSeconds();
 
@@ -55,8 +51,9 @@ public:
         if (total > 0.0f) 
             posNormalized = static_cast<float>(curr / total);
 
-        float height = m_grainAreaRect.getHeight();
-        float width = m_grainAreaRect.getWidth();
+        auto bounds = getLocalBounds();
+        float width = bounds.getWidth();
+        float height = bounds.getHeight();
 
         float x = (float)m_grainAreaRect.getX() + posNormalized * width;
         float y = (float)m_grainAreaRect.getY();
@@ -88,11 +85,10 @@ public:
         // grain-area rectangle
         g.setColour(juce::Colours::grey.withAlpha(0.6f));
         g.fillRect(m_grainAreaRect);
-        std::cout << "paint tues \n";
+
         // playhead position
         if (m_sample)
         {
-        std::cout << "paint mon \m";
         g.setColour(juce::Colours::white);
         g.fillRect(m_playheadPosition);
         }

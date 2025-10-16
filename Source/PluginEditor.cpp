@@ -375,10 +375,8 @@ void GranularinfiniteAudioProcessorEditor::timerCallback()
 
 void GranularinfiniteAudioProcessorEditor::playheadPositionHandler()
 {
-    // call this 60/s using timer
     const juce::AudioBuffer<float> buffer = m_waveformDisplay.getBuffer();
     m_waveformDisplay.setPlayheadPosition();
-
 }
 
 void GranularinfiniteAudioProcessorEditor::sampleLabelHandler(SampleLabel& button)
