@@ -3,6 +3,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "OpenConsole.h"
+#include "SamplerInfinite.h"
 #include <juce_dsp/juce_dsp.h>
 #include <juce_events/juce_events.h>
 #include <algorithm>
@@ -18,7 +19,8 @@ GranularinfiniteAudioProcessor::GranularinfiniteAudioProcessor()
         .withOutput("Output", juce::AudioChannelSet::stereo(), true)
 #endif
     ),
-    apvts(*this, nullptr, "PARAMETERS", createParameters())
+    apvts(*this, nullptr, "PARAMETERS", createParameters()),
+    spotifyAuthToken()
 #endif
 {
     minGrainLengthPtr = apvts.getRawParameterValue("grainMinLength");
@@ -35,6 +37,10 @@ GranularinfiniteAudioProcessor::GranularinfiniteAudioProcessor()
 
 GranularinfiniteAudioProcessor::~GranularinfiniteAudioProcessor()
 {
+    spotifyFetcher->stopFetching();
+
+    // possibly make this a thing? dunno bc i already have 'stopFetching' method. prolly don't need this
+    //spotifyFetcher->reset();
 }
 
 //==============================================================================
@@ -111,6 +117,7 @@ void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int sampl
     m_blockSize = samplesPerBlock;
     synth.setCurrentPlaybackSampleRate(sampleRate);
 
+    // i beleive temp buffer and circular buffer can GTFO
     tempBuffer.setSize(getTotalNumOutputChannels(), samplesPerBlock, false, false, true);
     tempBuffer.clear();
 
@@ -123,6 +130,17 @@ void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int sampl
         hannWindow.size(),
         juce::dsp::WindowingFunction<float>::hann
     );
+
+    spotifyFetcher = std::make_unique<SamplerInfinite>(spotifyAuthToken);
+
+    spotifyFetcher->onSongsFetched = [this](const juce::StringArray& songs)
+        {
+            for (auto& s : songs)
+                std::cout << "song: " << s << "\n";
+        };
+
+    // trigger this via button click
+    spotifyFetcher->startFetching();
 }
 
 void GranularinfiniteAudioProcessor::releaseResources()

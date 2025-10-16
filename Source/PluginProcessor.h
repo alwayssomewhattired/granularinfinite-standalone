@@ -2,6 +2,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "SamplerInfinite.h"
 
 //==============================================================================
 /**
@@ -95,6 +96,11 @@ public:
     Sample* loadFile(const juce::File& file, const juce::String& noteName, std::optional<juce::String> fileName = std::nullopt);
 
 private:
+    juce::String spotifyAuthToken;
+
+    // samplerinfinite
+    std::unique_ptr<SamplerInfinite> spotifyFetcher;
+
     
     // flag for if key pressed
     bool m_keyPressed = false;
