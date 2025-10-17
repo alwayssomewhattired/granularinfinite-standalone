@@ -3,6 +3,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "OpenConsole.h"
+#include "SpotifyAuthenticator.h"
 #include "SamplerInfinite.h"
 #include <juce_dsp/juce_dsp.h>
 #include <juce_events/juce_events.h>
@@ -130,6 +131,11 @@ void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int sampl
         hannWindow.size(),
         juce::dsp::WindowingFunction<float>::hann
     );
+
+    // spotify token grabber
+    SpotifyAuthenticator auth("8df0570e51ae419baf4a7e2845a43cb4", "5aae9f994086437696de02533fd96ebd", "https://localhost:8888/callback");
+    auth.startAuthentication();
+    spotifyAuthToken = auth.getAccessToken();
 
     spotifyFetcher = std::make_unique<SamplerInfinite>(spotifyAuthToken);
 

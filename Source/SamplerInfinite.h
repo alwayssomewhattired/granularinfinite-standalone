@@ -50,7 +50,7 @@ public:
 		// obviously make url dynamic. currently hardcoded for top 10 songs
 		juce::URL url("https://api.spotify.com/v1/me/top/tracks?limit=10");
 
-		juce::String extraHeaders = "Authorization: Bearer" + authToken + "\r\nAccept: application / json\r\n";
+		juce::String extraHeaders = "Authorization: Bearer " + authToken + "\r\nAccept: application / json\r\n";
 
 		auto stream = url.createInputStream(false, nullptr, nullptr, extraHeaders, 10000);
 
