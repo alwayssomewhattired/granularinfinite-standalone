@@ -43,56 +43,78 @@ private:
 		juce::String url =
 			"https://accounts.spotify.com/authorize"
 			"?client_id=" + clientId +
-			"&response_type=code"
-			"&redirect_uri=" + juce::URL::encode(redirectUri) +
-			"&scope=" + juce::URL::encode("user-top-read");
+			"&response_type=code" +
+			"&redirect_uri=" + juce::URL::addEscapeChars(redirectUri, true) +
+			"&scope=" + juce::URL::addEscapeChars("user-top-read", true);
 
-		juce::URL::launchInDefaultBrowser(url);
+		juce::URL(url).launchInDefaultBrowser();
 
 		juce::StreamingSocket server;
-		server.createListener(8888, "127.0.0.1");
+		if (!server.createListener(8888, "0.0.0.0"))
+		{
+			std::cout << "Could not bind to 127.0.0.1:8888 \n";
+			return;
+		}
+		else
+		{
+			std::cout << "Listening on 127.0.0.1:8888...\n";
+		}
 
 		juce::String code;
-
 		while (!threadShouldExit() && code.isEmpty())
 		{
-			if (server.waitUntilReady(true, 1000))
-			{
-				juce::StreamingSocket client;
-				server.accept(client);
+			std::cout << "in first condition \n";
+			std::unique_ptr<juce::StreamingSocket> client(server.waitForNextConnection());
+			if (client == nullptr)
+				continue;
 
 				juce::MemoryBlock buffer;
 				buffer.setSize(8192);
-				int bytesRead = client.read(buffer.getData(), (int)buffer.getSize(), true);
-				juce::String request = juce::String::fromUTF8((const char*)buffer.getData(), bytesRead);
+				int bytesRead = client->read(buffer.getData(), (int)buffer.getSize(), true);
 
-				auto match = request.indexOf(" ", match);
-				if (match >= 0)
+				if (bytesRead > 0)
 				{
-					auto end = request.indexOf(" ", match);
-					code = juce::URL::decode(request.substring(match + 5, end));
+					juce::String request = juce::String::fromUTF8((const char*)buffer.getData(), bytesRead);
 
-					juce::String response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body><h2>You can close this window</h2></body></html>";
-					client.write(response.toRawUTF8(), (int)response.getNumBytesAsUTF8());
+					int start = request.indexOf("GET /?code=");
+					if (start >= 0)
+					{
+						int end = request.indexOfChar('&', start);
+						juce::String codeParam = request.substring(start + 10, end);
+						code = codeParam.upToFirstOccurrenceOf("&", false, false);
+
+						juce::String response = 
+							"HTTP/1.1 200 OK\r\n"
+							"Content-Type: text/html\r\n\r\n"
+							"<html><body><h2>You can close this window</h2></body></html>";
+
+						client->write(response.toRawUTF8(), (int)response.getNumBytesAsUTF8());
+						}
+					}
+				client->close();
 				}
-			}
-		}
-		if (code.isEmpty())
+		if (!code.isEmpty())
 		{
+			std::cout << "in second condition \n";
+
 			juce::URL tokenUrl("https://accounts.spotify.com/api/token");
 
 			juce::String body = 
 				"grant_type=authorization_code"
 				"&code=" + code +
-				"&redirect_uri=" + juce::URL::encode(redirectUri) +
+				"&redirect_uri=" + juce::URL::addEscapeChars(redirectUri, true) +
 				"&client_id=" + clientId +
 				"&client_secret=" + clientSecret;
 
+			tokenUrl = tokenUrl.withPOSTData(body);
+
 			juce::String headers = "Content-Type: application/x-www-form-urlencoded";
 
-			auto stream = tokenUrl.createInputStream(
-				false, nullptr, nullptr, headers, 10000, body.toRawUTF8(), (int)body.getNumBytesAsUTF8()
-			);
+			juce::URL::InputStreamOptions options(juce::URL::ParameterHandling::inPostData);
+			options.withConnectionTimeoutMs(10000);
+			options.withExtraHeaders(headers);
+
+			std::unique_ptr<juce::InputStream> stream(tokenUrl.createInputStream(options));
 
 			if (stream != nullptr)
 			{
@@ -103,6 +125,14 @@ private:
 					accessToken = json["access_token"].toString();
 					std::cout << "Access token: " << accessToken << "\n";
 				}
+				else 
+				{
+					std::cout << "Token response: " << response << "\n";
+				}
+			}
+			else 
+			{
+				std::cerr << "Failed to create input stream. \n";
 			}
 		}
 	}
