@@ -21,6 +21,7 @@ GranularinfiniteAudioProcessor::GranularinfiniteAudioProcessor()
 #endif
     ),
     apvts(*this, nullptr, "PARAMETERS", createParameters()),
+    auth(),
     spotifyAuthToken()
 #endif
 {
@@ -34,6 +35,7 @@ GranularinfiniteAudioProcessor::GranularinfiniteAudioProcessor()
     
     for (int i = 0; i < 16; ++i)
         synth.addVoice(new juce::SamplerVoice());
+
 }
 
 GranularinfiniteAudioProcessor::~GranularinfiniteAudioProcessor()
@@ -133,10 +135,11 @@ void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int sampl
     );
 
     // spotify token grabber
-    SpotifyAuthenticator auth("8df0570e51ae419baf4a7e2845a43cb4", "5aae9f994086437696de02533fd96ebd", "http://127.0.0.1:8888/callback");
+    //SpotifyAuthenticator auth;
+    auth.init("8df0570e51ae419baf4a7e2845a43cb4", "5aae9f994086437696de02533fd96ebd", "http://127.0.0.1:8888/callback");
     auth.startAuthentication();
     spotifyAuthToken = auth.getAccessToken();
-
+    std::cout << spotifyAuthToken << "\n";
 
     // spotify fetching currently on hold until authenticator is fixed
     //spotifyFetcher = std::make_unique<SamplerInfinite>(spotifyAuthToken);

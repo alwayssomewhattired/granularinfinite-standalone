@@ -3,6 +3,7 @@
 
 #include <JuceHeader.h>
 #include "SamplerInfinite.h"
+#include "SpotifyAuthenticator.h"
 
 //==============================================================================
 /**
@@ -96,6 +97,7 @@ public:
     Sample* loadFile(const juce::File& file, const juce::String& noteName, std::optional<juce::String> fileName = std::nullopt);
 
 private:
+    SpotifyAuthenticator auth;
     juce::String spotifyAuthToken;
 
     // samplerinfinite
