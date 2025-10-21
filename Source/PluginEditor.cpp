@@ -28,7 +28,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
     keyToNote = CreateKeyToNote(octave);
     setWantsKeyboardFocus(true);
     addKeyListener(this);
-    setSize(1000, 200);
+    setSize(1900, 1000);
     startTimerHz(60);
 
     // handler lambda initialization
@@ -161,10 +161,11 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
 
             noteLabels.add(noteLabel);
             keyButtons.add(button);
+            std::cout << keyButtons.size() << "\n";
             sampleLabels.add(label);
         }
     }
-
+    resized();
 }
 
 GranularinfiniteAudioProcessorEditor::~GranularinfiniteAudioProcessorEditor()
@@ -191,7 +192,6 @@ void GranularinfiniteAudioProcessorEditor::changeListenerCallback(juce::ChangeBr
 bool GranularinfiniteAudioProcessorEditor::keyPressed(const juce::KeyPress& key,
     Component* originatingComponent)
 {
-
     const std::string order = "awsedftgyhujkolp;'";
     char char_key = static_cast<char>(key.getTextCharacter());
     auto it = keyToNote.find(char_key);
@@ -463,6 +463,9 @@ void GranularinfiniteAudioProcessorEditor::paint (juce::Graphics& g)
 void GranularinfiniteAudioProcessorEditor::resized()
 // when you get the time, for the love of god refactor using flexbox
 {
+    //std::cout << "edit\n";
+    //setSize(1000, 2000);
+
     int x = 300;                  
     int y = 100;                  
     int buttonWidth = 60;
@@ -562,9 +565,10 @@ void GranularinfiniteAudioProcessorEditor::resized()
     inner1.performLayout(inner1Area.toFloat());
     auto inner2Area = controlBounds2.withTrimmedTop(100);
     inner2.performLayout(inner2Area.toFloat());
-
+    std::cout << "b4hand\n";
     for (int i = 0; i < keyButtons.size(); ++i)
     {
+        std::cout << "got a live one\n";
         noteLabels[i]->setBounds(x, y - 50, buttonWidth, labelHeight);
         if (i == 1 || i == 3 || i == 6 || i == 8 || i == 10 || i == 13 || i == 15)
         {

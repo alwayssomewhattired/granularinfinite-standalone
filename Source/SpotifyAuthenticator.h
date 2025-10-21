@@ -19,6 +19,12 @@ public:
 		stopThread(2000);
 	}
 
+	juce::String waitAndGetToken() {
+		std::unique_lock<std::mutex> lock(mutex);
+		cv.wait(lock, [this]() { return done; });
+		return accessToken;
+	}
+
 	void init(const juce::String& clientID, const juce::String& clientSecreT, const juce::String& redirectUrI)
 	{
 		clientId = clientID;
@@ -30,11 +36,6 @@ public:
 	{
 		if (!isThreadRunning())
 			startThread();
-	}
-
-	juce::String getAccessToken() const
-	{
-		return accessToken;
 	}
 
 private:
@@ -186,8 +187,11 @@ private:
 				juce::var json = juce::JSON::parse(response);
 				if (json.isObject() && json.hasProperty("access_token"))
 				{
+					std::lock_guard<std::mutex> lock(mutex);
 					accessToken = json["access_token"].toString();
 					std::cout << "Access token: " << accessToken << "\n";
+					done = true;
+					cv.notify_one();
 				}
 				else
 				{
@@ -200,4 +204,9 @@ private:
 			}
 		}
 	}
+
+	std::mutex mutex;
+	std::condition_variable cv;
+	bool done = false;
+
 };

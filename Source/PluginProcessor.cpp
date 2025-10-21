@@ -134,24 +134,25 @@ void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int sampl
         juce::dsp::WindowingFunction<float>::hann
     );
 
-    // spotify token grabber
-    //SpotifyAuthenticator auth;
+    // trigger this via button click in the future
+    ////spotify token grabber
+    SpotifyAuthenticator auth;
     auth.init("8df0570e51ae419baf4a7e2845a43cb4", "5aae9f994086437696de02533fd96ebd", "http://127.0.0.1:8888/callback");
     auth.startAuthentication();
-    spotifyAuthToken = auth.getAccessToken();
+    spotifyAuthToken = auth.waitAndGetToken();
     std::cout << spotifyAuthToken << "\n";
 
-    // spotify fetching currently on hold until authenticator is fixed
-    //spotifyFetcher = std::make_unique<SamplerInfinite>(spotifyAuthToken);
+    spotifyFetcher = std::make_unique<SamplerInfinite>(spotifyAuthToken);
 
-    //spotifyFetcher->onSongsFetched = [this](const juce::StringArray& songs)
-    //    {
-    //        for (auto& s : songs)
-    //            std::cout << "song: " << s << "\n";
-    //    };
+    spotifyFetcher->onSongsFetched = [this](const juce::StringArray& songs)
+        {
+            for (auto& s : songs)
+                std::cout << "song: " << s << "\n";
+        };
 
-    //// trigger this via button click
-    //spotifyFetcher->startFetching();
+    //// trigger this via button click in the future
+    spotifyFetcher->startFetching();
+    std::cout << "all done\n";
 }
 
 void GranularinfiniteAudioProcessor::releaseResources()
