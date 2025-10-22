@@ -7,7 +7,6 @@
 #include "ButtonPalette.h"
 #include "DualThumbSlider.h"
 #include "GrainPositionControl.h"
-#include "EmbeddedWeb.h"
 
 //==============================================================================
 GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
@@ -26,10 +25,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
     
 {
     //spotify authentication
-    m_browserWindow = std::make_unique<BrowserWindow>();
-    addAndMakeVisible(m_browserWindow.get());
-    m_browserWindow->setVisible(false);
-    m_auth = std::make_unique<SpotifyAuthenticator>(m_browserWindow.get());
+    m_auth = std::make_unique<SpotifyAuthenticator>();
 
     audioProcessor.addChangeListener(this);
 
@@ -364,14 +360,9 @@ void GranularinfiniteAudioProcessorEditor::spotifyButtonHandler()
         //SpotifyAuthenticator auth;
         m_auth->init("8df0570e51ae419baf4a7e2845a43cb4", "5aae9f994086437696de02533fd96ebd", "http://127.0.0.1:8888/callback");
         //m_auth->startAuthentication();
-        m_auth->startAuthentication([this](const juce::String& token)
-            {
-                spotifyAuthToken = token;
-                if (m_browserWindow)
-                    std::cout << "closing window\n";
-                    m_browserWindow->closeBrowser();
-            });
-        //spotifyAuthToken = m_auth->waitAndGetToken();
+        m_auth->startAuthentication();
+        spotifyAuthToken = m_auth->waitAndGetToken();
+
         std::cout << spotifyAuthToken << "\n";
 
         spotifyFetcher = std::make_unique<SamplerInfinite>(spotifyAuthToken);
@@ -525,10 +516,7 @@ void GranularinfiniteAudioProcessorEditor::resized()
     buttonPalette.setBounds(getLocalBounds());
     buttonPalette.decrementButton.setBounds(x - 200, y + 400, buttonWidth, buttonHeight);
     buttonPalette.incrementButton.setBounds(x - 100, y + 400, buttonWidth, buttonHeight);
-    if (m_browserWindow == nullptr)
-        std::cout << "uh oh\n";
-    m_browserWindow->setVisible(true);
-    m_browserWindow->setBounds(1200, y + 400, 400, 200);
+
     m_spotifyButton.setBounds(1700, y + 400, 80, 80);
     buttonPalette.synthToggleButton.setBounds(x, y + 400, buttonWidth, buttonHeight);
     m_waveformDisplay.setBounds(1500, 275, 600, 200);

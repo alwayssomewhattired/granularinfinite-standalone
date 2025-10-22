@@ -15,7 +15,6 @@
 #include "DualThumbSlider.h"
 #include "GrainPositionControl.h"
 #include "WaveformDisplay.h"
-#include "EmbeddedWeb.h"
 
 //==============================================================================
 /**
@@ -77,7 +76,6 @@ private:
     //    the slider should now accurately depict values
 
     juce::TextButton& m_spotifyButton;
-    std::unique_ptr<BrowserWindow> m_browserWindow;
 
     std::unique_ptr<SpotifyAuthenticator> m_auth;
     juce::String spotifyAuthToken;

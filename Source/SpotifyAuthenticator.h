@@ -3,14 +3,12 @@
 #include <juce_core/juce_core.h>
 #include <juce_events/juce_events.h>
 #include <juce_cryptography/juce_cryptography.h>
-#include "EmbeddedWeb.h"
 
 class SpotifyAuthenticator : juce::Thread
 {
 public:
-	SpotifyAuthenticator(BrowserWindow* browserPtr)
-		: juce::Thread("SpotifyAuthThread"),
-		m_browser(browserPtr)
+	SpotifyAuthenticator()
+		: juce::Thread("SpotifyAuthThread")
 	{
 	}
 
@@ -32,22 +30,12 @@ public:
 		clientId = clientID;
 		clientSecret = clientSecreT;
 		redirectUri = redirectUrI;
-		std::cout << "innit?\n";
 	}
 
-	//void startAuthentication()
-	//{
-	//	if (!isThreadRunning())
-	//		startThread();
-	//}
-
-	void startAuthentication(std::function<void(const juce::String&)> onTokenReceived)
+	void startAuthentication()
 	{
 		if (!isThreadRunning())
-		{
-			callback = onTokenReceived;
 			startThread();
-		}
 	}
 
 private:
@@ -56,8 +44,6 @@ private:
 	juce::String redirectUri;
 	juce::String accessToken;
 
-	BrowserWindow* m_browser;
-	std::function<void(const juce::String&)> callback;
 
 	void run() override
 	{
@@ -68,13 +54,8 @@ private:
 			"&redirect_uri=" + juce::URL::addEscapeChars(redirectUri, true) +
 			"&scope=" + juce::URL::addEscapeChars("user-top-read", true);
 
-		juce::MessageManager::callAsync([this, url] {
-			if (m_browser)
-			{
-				std::cout << "we are setting the browser \n";
-				m_browser->setBrowser(url);
-			}
-			});
+		juce::URL(url).launchInDefaultBrowser();
+
 		juce::StreamingSocket server;
 		if (!server.createListener(8888, "0.0.0.0"))
 		{
@@ -207,8 +188,6 @@ private:
 					std::lock_guard<std::mutex> lock(mutex);
 					accessToken = json["access_token"].toString();
 					std::cout << "Access token: " << accessToken << "\n";
-					if (callback)
-						juce::MessageManager::callAsync([cb = callback, this] { cb(accessToken); });
 					done = true;
 					cv.notify_one();
 				}
