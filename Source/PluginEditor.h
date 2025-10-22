@@ -15,6 +15,7 @@
 #include "DualThumbSlider.h"
 #include "GrainPositionControl.h"
 #include "WaveformDisplay.h"
+#include "EmbeddedWeb.h"
 
 //==============================================================================
 /**
@@ -38,6 +39,7 @@ public:
 
     void octaveUp(juce::TextButton& button);
     void octaveDown(juce::TextButton& button);
+    void spotifyButtonHandler();
 
     void synthToggleHandler(juce::TextButton& button);
     void grainLengthSliderHandler();
@@ -74,6 +76,15 @@ private:
     //   access m_maxFileSize from that object and use it to set the sliders range
     //    the slider should now accurately depict values
 
+    juce::TextButton& m_spotifyButton;
+    std::unique_ptr<BrowserWindow> m_browserWindow;
+
+    std::unique_ptr<SpotifyAuthenticator> m_auth;
+    juce::String spotifyAuthToken;
+
+    // samplerinfinite
+    std::unique_ptr<SamplerInfinite> spotifyFetcher;
+
     juce::Label& grainSpacingLabel;
     juce::Slider& grainSpacingSlider;
 
@@ -85,6 +96,7 @@ private:
 
     juce::Label& grainPositionLabel;
     GrainPositionControl grainPositionSlider;
+
 
 
 

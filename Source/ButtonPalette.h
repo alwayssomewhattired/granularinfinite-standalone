@@ -47,6 +47,10 @@ public:
 		grainLengthLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
 		grainLengthLabel.setJustificationType(juce::Justification::centred);
 
+		// make a button for spotify events vvv
+		spotifyButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
+		spotifyButton.setButtonText("spotify");
+
 	}
 
 	std::function<void()> onWaveformButtonAdded;
@@ -79,6 +83,7 @@ public:
 	juce::TextButton decrementButton;
 	juce::TextButton synthToggleButton;
 	juce::TextButton waveformButton;
+	juce::TextButton spotifyButton;
 
 	// file-name to waveformButton
 	std::map<juce::String, std::unique_ptr<juce::TextButton>> waveformButtons;

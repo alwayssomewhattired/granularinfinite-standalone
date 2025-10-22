@@ -7,6 +7,7 @@
 #include "ButtonPalette.h"
 #include "DualThumbSlider.h"
 #include "GrainPositionControl.h"
+#include "EmbeddedWeb.h"
 
 //==============================================================================
 GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
@@ -20,9 +21,16 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
     grainAmountSlider(buttonPalette.grainAmountSlider),
     grainPositionSlider(GrainPositionControl(p)),
     grainPositionLabel(buttonPalette.grainPositionLabel),
-    grainLengthLabel(buttonPalette.grainLengthLabel)
+    grainLengthLabel(buttonPalette.grainLengthLabel),
+    m_spotifyButton(buttonPalette.spotifyButton)
     
 {
+    //spotify authentication
+    m_browserWindow = std::make_unique<BrowserWindow>();
+    addAndMakeVisible(m_browserWindow.get());
+    m_browserWindow->setVisible(false);
+    m_auth = std::make_unique<SpotifyAuthenticator>(m_browserWindow.get());
+
     audioProcessor.addChangeListener(this);
 
     keyToNote = CreateKeyToNote(octave);
@@ -52,6 +60,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
     }
     const std::string order = "awsedftgyhujkolp;'";
     int count = 0;
+
     for (auto key : order)
     {
         if (keyToNote.find(key) != keyToNote.end()) count++;
@@ -131,6 +140,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             addAndMakeVisible(buttonPalette);
             addAndMakeVisible(octaveIncrement);
             addAndMakeVisible(octaveDecrement);
+            addAndMakeVisible(m_spotifyButton);
             addAndMakeVisible(grainSpacingLabel);
             addAndMakeVisible(grainSpacingSlider);
             addAndMakeVisible(grainAmountLabel);
@@ -152,6 +162,8 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
 
             octaveUp(octaveIncrement);
             octaveDown(octaveDecrement);
+            spotifyButtonHandler();
+
             grainSpacingAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainSpacing", grainSpacingSlider);
             grainAmountAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainAmount", grainAmountSlider);
             grainPositionAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainPosition", grainPositionSlider);
@@ -166,6 +178,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
         }
     }
     resized();
+
 }
 
 GranularinfiniteAudioProcessorEditor::~GranularinfiniteAudioProcessorEditor()
@@ -174,6 +187,8 @@ GranularinfiniteAudioProcessorEditor::~GranularinfiniteAudioProcessorEditor()
     grainAmountSlider.setLookAndFeel(nullptr);
     grainLengthSlider.setLookAndFeel(nullptr);
     grainPositionSlider.setLookAndFeel(nullptr);
+    spotifyFetcher->stopFetching();
+
 }
 
 //==============================================================================
@@ -339,6 +354,40 @@ void GranularinfiniteAudioProcessorEditor::octaveDown(juce::TextButton& button)
         };
 }
 
+void GranularinfiniteAudioProcessorEditor::spotifyButtonHandler()
+{
+    // trigger this via button click in the future
+////spotify token grabber
+    m_spotifyButton.onClick = [this] {
+        std::cout << "IsMessageThread? " << juce::MessageManager::getInstance()->isThisTheMessageThread() << std::endl;
+
+        //SpotifyAuthenticator auth;
+        m_auth->init("8df0570e51ae419baf4a7e2845a43cb4", "5aae9f994086437696de02533fd96ebd", "http://127.0.0.1:8888/callback");
+        //m_auth->startAuthentication();
+        m_auth->startAuthentication([this](const juce::String& token)
+            {
+                spotifyAuthToken = token;
+                if (m_browserWindow)
+                    std::cout << "closing window\n";
+                    m_browserWindow->closeBrowser();
+            });
+        //spotifyAuthToken = m_auth->waitAndGetToken();
+        std::cout << spotifyAuthToken << "\n";
+
+        spotifyFetcher = std::make_unique<SamplerInfinite>(spotifyAuthToken);
+
+        spotifyFetcher->onSongsFetched = [this](const juce::StringArray& songs)
+            {
+                for (auto& s : songs)
+                    std::cout << "song: " << s << "\n";
+            };
+
+        //// trigger this via button click in the future
+        spotifyFetcher->startFetching();
+        std::cout << "all done\n";
+    };
+}
+
 void GranularinfiniteAudioProcessorEditor::grainLengthSliderHandler()
 {
     grainLengthSlider.onRangeChange = [this]()
@@ -463,8 +512,7 @@ void GranularinfiniteAudioProcessorEditor::paint (juce::Graphics& g)
 void GranularinfiniteAudioProcessorEditor::resized()
 // when you get the time, for the love of god refactor using flexbox
 {
-    //std::cout << "edit\n";
-    //setSize(1000, 2000);
+
 
     int x = 300;                  
     int y = 100;                  
@@ -477,8 +525,13 @@ void GranularinfiniteAudioProcessorEditor::resized()
     buttonPalette.setBounds(getLocalBounds());
     buttonPalette.decrementButton.setBounds(x - 200, y + 400, buttonWidth, buttonHeight);
     buttonPalette.incrementButton.setBounds(x - 100, y + 400, buttonWidth, buttonHeight);
+    if (m_browserWindow == nullptr)
+        std::cout << "uh oh\n";
+    m_browserWindow->setVisible(true);
+    m_browserWindow->setBounds(1200, y + 400, 400, 200);
+    m_spotifyButton.setBounds(1700, y + 400, 80, 80);
     buttonPalette.synthToggleButton.setBounds(x, y + 400, buttonWidth, buttonHeight);
-    m_waveformDisplay.setBounds(500, 275, 600, 200);
+    m_waveformDisplay.setBounds(1500, 275, 600, 200);
 
     juce::FlexBox outer;
     juce::FlexBox inner1;
@@ -565,10 +618,8 @@ void GranularinfiniteAudioProcessorEditor::resized()
     inner1.performLayout(inner1Area.toFloat());
     auto inner2Area = controlBounds2.withTrimmedTop(100);
     inner2.performLayout(inner2Area.toFloat());
-    std::cout << "b4hand\n";
     for (int i = 0; i < keyButtons.size(); ++i)
     {
-        std::cout << "got a live one\n";
         noteLabels[i]->setBounds(x, y - 50, buttonWidth, labelHeight);
         if (i == 1 || i == 3 || i == 6 || i == 8 || i == 10 || i == 13 || i == 15)
         {

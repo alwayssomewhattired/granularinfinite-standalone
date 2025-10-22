@@ -97,11 +97,11 @@ public:
     Sample* loadFile(const juce::File& file, const juce::String& noteName, std::optional<juce::String> fileName = std::nullopt);
 
 private:
-    SpotifyAuthenticator auth;
-    juce::String spotifyAuthToken;
+    //SpotifyAuthenticator auth;
+    //juce::String spotifyAuthToken;
 
-    // samplerinfinite
-    std::unique_ptr<SamplerInfinite> spotifyFetcher;
+    //// samplerinfinite
+    //std::unique_ptr<SamplerInfinite> spotifyFetcher;
 
     
     // flag for if key pressed

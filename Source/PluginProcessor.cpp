@@ -20,9 +20,9 @@ GranularinfiniteAudioProcessor::GranularinfiniteAudioProcessor()
         .withOutput("Output", juce::AudioChannelSet::stereo(), true)
 #endif
     ),
-    apvts(*this, nullptr, "PARAMETERS", createParameters()),
-    auth(),
-    spotifyAuthToken()
+    apvts(*this, nullptr, "PARAMETERS", createParameters())
+    //auth(),
+    //spotifyAuthToken()
 #endif
 {
     minGrainLengthPtr = apvts.getRawParameterValue("grainMinLength");
@@ -40,7 +40,7 @@ GranularinfiniteAudioProcessor::GranularinfiniteAudioProcessor()
 
 GranularinfiniteAudioProcessor::~GranularinfiniteAudioProcessor()
 {
-    spotifyFetcher->stopFetching();
+    //spotifyFetcher->stopFetching();
 
     // possibly make this a thing? dunno bc i already have 'stopFetching' method. prolly don't need this
     //spotifyFetcher->reset();
@@ -134,25 +134,26 @@ void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int sampl
         juce::dsp::WindowingFunction<float>::hann
     );
 
-    // trigger this via button click in the future
-    ////spotify token grabber
-    SpotifyAuthenticator auth;
-    auth.init("8df0570e51ae419baf4a7e2845a43cb4", "5aae9f994086437696de02533fd96ebd", "http://127.0.0.1:8888/callback");
-    auth.startAuthentication();
-    spotifyAuthToken = auth.waitAndGetToken();
-    std::cout << spotifyAuthToken << "\n";
-
-    spotifyFetcher = std::make_unique<SamplerInfinite>(spotifyAuthToken);
-
-    spotifyFetcher->onSongsFetched = [this](const juce::StringArray& songs)
-        {
-            for (auto& s : songs)
-                std::cout << "song: " << s << "\n";
-        };
 
     //// trigger this via button click in the future
-    spotifyFetcher->startFetching();
-    std::cout << "all done\n";
+    //////spotify token grabber
+    //SpotifyAuthenticator auth;
+    //auth.init("8df0570e51ae419baf4a7e2845a43cb4", "5aae9f994086437696de02533fd96ebd", "http://127.0.0.1:8888/callback");
+    //auth.startAuthentication();
+    //spotifyAuthToken = auth.waitAndGetToken();
+    //std::cout << spotifyAuthToken << "\n";
+
+    //spotifyFetcher = std::make_unique<SamplerInfinite>(spotifyAuthToken);
+
+    //spotifyFetcher->onSongsFetched = [this](const juce::StringArray& songs)
+    //    {
+    //        for (auto& s : songs)
+    //            std::cout << "song: " << s << "\n";
+    //    };
+
+    ////// trigger this via button click in the future
+    //spotifyFetcher->startFetching();
+    //std::cout << "all done\n";
 }
 
 void GranularinfiniteAudioProcessor::releaseResources()
