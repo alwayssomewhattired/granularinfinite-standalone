@@ -60,7 +60,6 @@ public:
 		if (stream != nullptr)
 		{
 			response = stream->readEntireStreamAsString();
-			std::cout << "response: " << response << "\n";
 		}
 		else
 		{

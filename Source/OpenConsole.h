@@ -4,6 +4,8 @@
 #include <windows.h>
 #include <io.h>
 #include <fcntl.h>
+#include <pybind11/embed.h>
+namespace py = pybind11;
 
 inline void openConsole()
 {

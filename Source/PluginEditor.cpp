@@ -7,6 +7,7 @@
 #include "ButtonPalette.h"
 #include "DualThumbSlider.h"
 #include "GrainPositionControl.h"
+#include "PythonSoulseek.h"
 
 //==============================================================================
 GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
@@ -352,10 +353,24 @@ void GranularinfiniteAudioProcessorEditor::octaveDown(juce::TextButton& button)
 
 void GranularinfiniteAudioProcessorEditor::spotifyButtonHandler()
 {
-    // trigger this via button click in the future
+
+    //initialisePython();
+
+    //py::module sys = py::module::import("sys");
+
+    //struct StdoutRedirector : py::object
+    //{
+    //    void write(const std::string& s) { std::cout << s; }
+    //    void flush() {}
+    //};
+
+    //static StdoutRedirector redirector;
+
+    //sys.attr("stdout") = redirector;
+    //sys.attr("stderr") = redirector;
+
 ////spotify token grabber
     m_spotifyButton.onClick = [this] {
-        std::cout << "IsMessageThread? " << juce::MessageManager::getInstance()->isThisTheMessageThread() << std::endl;
 
         //SpotifyAuthenticator auth;
         m_auth->init("8df0570e51ae419baf4a7e2845a43cb4", "5aae9f994086437696de02533fd96ebd", "http://127.0.0.1:8888/callback");
@@ -363,16 +378,23 @@ void GranularinfiniteAudioProcessorEditor::spotifyButtonHandler()
         m_auth->startAuthentication();
         spotifyAuthToken = m_auth->waitAndGetToken();
 
-        std::cout << spotifyAuthToken << "\n";
-
         spotifyFetcher = std::make_unique<SamplerInfinite>(spotifyAuthToken);
 
         spotifyFetcher->onSongsFetched = [this](const juce::StringArray& songs)
             {
-                for (auto& s : songs)
-                    std::cout << "song: " << s << "\n";
-            };
+                if (songs.isEmpty())
+                {
+                    std::cout << "Received nothing from Spotify...\n";
+                    return;
+                }
 
+                std::thread([songs]()
+                    {
+                        py::gil_scoped_acquire acquire;
+                        auto result = runPythonFunction(songs[2]);
+                        std::cout << "this is the result: " << result.toStdString() << "\n";
+                    }).detach();
+            };
         //// trigger this via button click in the future
         spotifyFetcher->startFetching();
         std::cout << "all done\n";
