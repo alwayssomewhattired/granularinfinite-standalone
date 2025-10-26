@@ -14,7 +14,6 @@ public:
 
 	~SpotifyAuthenticator() override
 	{
-		std::cout << "spotify authenticator destroyed \n";
 		signalThreadShouldExit();
 		stopThread(2000);
 	}
@@ -62,10 +61,7 @@ private:
 			std::cout << "Could not bind to 127.0.0.1:8888 \n";
 			return;
 		}
-		else
-		{
-			std::cout << "Listening on 127.0.0.1:8888...\n";
-		}
+
 		juce::String code;
 		while (!threadShouldExit() && code.isEmpty())
 		{
@@ -139,8 +135,6 @@ private:
 		}
 		if (!code.isEmpty())
 		{
-			std::cout << "Exchanching code for access token...\n";
-
 			juce::URL tokenUrl("https://accounts.spotify.com/api/token");
 
 			juce::String body =
@@ -156,15 +150,6 @@ private:
 
 			juce::String headers = "Content-Type: application/x-www-form-urlencoded\r\n";
 
-
-
-			std::cout << "---- POST REQUEST ----\n";
-			std::cout << "URL: " << tokenUrl.toString(true) << "\n";
-			std::cout << "Headers:\n" << headers << "\n";
-			std::cout << "Body:\n" << body << "\n";
-			std::cout << "--------------------\n";
-
-
 			tokenUrl = tokenUrl.withPOSTData(body);
 
 
@@ -176,9 +161,6 @@ private:
 			// this sends post request
 			std::unique_ptr<juce::InputStream> stream(tokenUrl.createInputStream(options));
 
-			std::cout << "Auth header: Authorization: Basic " << base64Auth << " end" << "\n";
-			std::cout << "Code sent: " << code << " end-of-code" << "\n";
-
 			if (stream != nullptr)
 			{
 				juce::String response = stream->readEntireStreamAsString();
@@ -187,13 +169,8 @@ private:
 				{
 					std::lock_guard<std::mutex> lock(mutex);
 					accessToken = json["access_token"].toString();
-					std::cout << "Access token: " << accessToken << "\n";
 					done = true;
 					cv.notify_one();
-				}
-				else
-				{
-					std::cout << "Token response: " << response << "\n";
 				}
 			}
 			else

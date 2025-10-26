@@ -7,11 +7,18 @@ client = slskd_api.SlskdClient(
 	api_key="E+qXeEVNuSOB1kHL6qmxWdOjdszZ5Po26BsO+8sE1s0=",
 	url_base="/"
 )
+# IMPORTANT
+# RUN THIS SCRIPT IN VS CODE
+# IN ORDER TO FIND WHAT THE RESULTS (DICTS) CONTAIN 
+# CANNOT PRINT TO CONSOLE
+# TOO DIFFICULT. 
+# JUST USE VSCODE
+# OR ACTUALLY....
+# YEAH NO JUST USE VSCODE
 
 def download_song(song_name):
+	print("tally-ho knobknocker!")
 	search = client.searches.search_text(song_name)
-	print(search)
-	print("and there you have it")
 	search_uuid = search["uuid"]
 
 	while True:
@@ -25,4 +32,11 @@ def download_song(song_name):
 
 	result = responses.items[0]
 	download = client.transfers.enqueue(result.user, result.path)
-	return f"Download started (ID = {download.id})"
+
+	while True:
+		state = client.transfers.state(download["id"])
+		if state["status"] == "completed":
+			break
+		time.sleep(1)
+
+	return f"Downloaded to: {state["local_path"]})"

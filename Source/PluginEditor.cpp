@@ -25,6 +25,8 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
     m_spotifyButton(buttonPalette.spotifyButton)
     
 {
+    openConsole();
+
     //spotify authentication
     m_auth = std::make_unique<SpotifyAuthenticator>();
 
@@ -353,28 +355,9 @@ void GranularinfiniteAudioProcessorEditor::octaveDown(juce::TextButton& button)
 
 void GranularinfiniteAudioProcessorEditor::spotifyButtonHandler()
 {
-
-    //initialisePython();
-
-    //py::module sys = py::module::import("sys");
-
-    //struct StdoutRedirector : py::object
-    //{
-    //    void write(const std::string& s) { std::cout << s; }
-    //    void flush() {}
-    //};
-
-    //static StdoutRedirector redirector;
-
-    //sys.attr("stdout") = redirector;
-    //sys.attr("stderr") = redirector;
-
-////spotify token grabber
     m_spotifyButton.onClick = [this] {
 
-        //SpotifyAuthenticator auth;
         m_auth->init("8df0570e51ae419baf4a7e2845a43cb4", "5aae9f994086437696de02533fd96ebd", "http://127.0.0.1:8888/callback");
-        //m_auth->startAuthentication();
         m_auth->startAuthentication();
         spotifyAuthToken = m_auth->waitAndGetToken();
 
@@ -390,10 +373,32 @@ void GranularinfiniteAudioProcessorEditor::spotifyButtonHandler()
 
                 std::thread([songs]()
                     {
+                        static std::unique_ptr<py::scoped_interpreter> guard;
+                        if (!guard) {
+                            guard = std::make_unique<py::scoped_interpreter>();
+                            // hold the GIL while initializing
+                            py::gil_scoped_acquire g;
+                            PyEval_InitThreads();
+                        }
+                        std::cout << "getting this song: " << songs[2].toStdString() << "\n";
                         py::gil_scoped_acquire acquire;
+                        py::module sys = py::module::import("sys");
+                        sys.attr("path").attr("append")("C:/Users/zacha/Desktop/granularinfinite/Source");
+
+                        //struct CoutRedirect : py::object {
+                        //    void write(const std::string& s) { std::cout << s; }
+                        //    void flush() {}
+                        //};
+                        //static CoutRedirect redirector;
+                        //sys.attr("stdout") = redirector;
+                        //sys.attr("stderr") = redirector;
+
+
+                        std::cout << "after gil\n";
                         auto result = runPythonFunction(songs[2]);
                         std::cout << "this is the result: " << result.toStdString() << "\n";
                     }).detach();
+
             };
         //// trigger this via button click in the future
         spotifyFetcher->startFetching();

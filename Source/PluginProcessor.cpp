@@ -31,23 +31,6 @@ GranularinfiniteAudioProcessor::GranularinfiniteAudioProcessor()
     maxGrainLengthPtr = apvts.getRawParameterValue("grainMaxLength");
     jassert(maxGrainLengthPtr != nullptr);
 
-    openConsole();
-
-    initialisePython();
-
-    py::module sys = py::module::import("sys");
-
-    struct StdoutRedirector : py::object
-    {
-        void write(const std::string& s) { std::cout << s; }
-        void flush() {}
-    };
-
-    static StdoutRedirector redirector;
-
-    sys.attr("stdout") = redirector;
-    sys.attr("stderr") = redirector;
-
     formatManager.registerBasicFormats();
     
     for (int i = 0; i < 16; ++i)
