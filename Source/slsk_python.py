@@ -1,42 +1,50 @@
 
-
 import slskd_api, time
+
+# currently grabs first choice from searches.
+# downloads the file onto the host machine
+# 'incomplete' directory of slskd_volume
+# is where the audio get stored
+
 
 client = slskd_api.SlskdClient(
 	host="http://localhost:5030",
 	api_key="E+qXeEVNuSOB1kHL6qmxWdOjdszZ5Po26BsO+8sE1s0=",
 	url_base="/"
 )
-# IMPORTANT
-# RUN THIS SCRIPT IN VS CODE
-# IN ORDER TO FIND WHAT THE RESULTS (DICTS) CONTAIN 
-# CANNOT PRINT TO CONSOLE
-# TOO DIFFICULT. 
-# JUST USE VSCODE
-# OR ACTUALLY....
-# YEAH NO JUST USE VSCODE
 
 def download_song(song_name):
 	print("tally-ho knobknocker!")
 	search = client.searches.search_text(song_name)
-	search_uuid = search["uuid"]
+	print(search)
+	search_id = search["id"]
 
 	while True:
-		if client.searches.state(search_uuid).status == "completed":
+		state = client.searches.state(search_id)
+		if state.get("isComplete") or state.get("state") == "Complete":
 			break
 		time.sleep(1)
 
-	responses = client.searches.search_responses(search_uuid)
-	if not responses.items:
+	responses = client.searches.search_responses(search_id)
+	response = responses[0]
+	print(response)
+	if len(responses) == 0:
 		return "No results"
+	response_username = response["username"]
+	print(response_username)
 
-	result = responses.items[0]
-	download = client.transfers.enqueue(result.user, result.path)
+	client.transfers.enqueue(response_username, response["files"])
 
 	while True:
-		state = client.transfers.state(download["id"])
-		if state["status"] == "completed":
+		download_info = client.transfers.get_downloads(response_username)
+		print("download info: " + str(download_info))
+		download_state = str(download_info['directories'][0]['files'][0]['state'])
+		print(download_state)
+		if download_state == "Completed, Succeeded":
+			break
+		elif download_state == "Completed, Errored":
+			print("Error occurred. Exiting...")
 			break
 		time.sleep(1)
 
-	return f"Downloaded to: {state["local_path"]})"
+	return "BOOM MUTHAFUCKAH!"
