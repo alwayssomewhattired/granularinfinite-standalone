@@ -8,6 +8,10 @@
 #include "DualThumbSlider.h"
 #include "GrainPositionControl.h"
 #include "PythonSoulseek.h"
+#include "SpotifyBrowser.h"
+#include "SpotifyList.h"
+#include "SpotifyAPI.h"
+
 
 //==============================================================================
 GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
@@ -140,6 +144,8 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             addAndMakeVisible(octaveIncrement);
             addAndMakeVisible(octaveDecrement);
             addAndMakeVisible(m_spotifyButton);
+            addAndMakeVisible(m_spotifyBrowser);
+            addAndMakeVisible(m_spotifyList);
             addAndMakeVisible(grainSpacingLabel);
             addAndMakeVisible(grainSpacingSlider);
             addAndMakeVisible(grainAmountLabel);
@@ -361,6 +367,8 @@ void GranularinfiniteAudioProcessorEditor::spotifyButtonHandler()
         m_auth->startAuthentication();
         spotifyAuthToken = m_auth->waitAndGetToken();
 
+        m_spotifyAPI.setAccessToken(spotifyAuthToken);
+
         spotifyFetcher = std::make_unique<SamplerInfinite>(spotifyAuthToken);
 
         spotifyFetcher->onSongsFetched = [this](const juce::StringArray& songs)
@@ -545,6 +553,8 @@ void GranularinfiniteAudioProcessorEditor::resized()
     buttonPalette.incrementButton.setBounds(x - 100, y + 400, buttonWidth, buttonHeight);
 
     m_spotifyButton.setBounds(1700, y + 400, 80, 80);
+    m_spotifyBrowser.setBounds(1500, y + 400, 200, 200);
+    m_spotifyList.setBounds(1500, y + 500, 400, 400);
     buttonPalette.synthToggleButton.setBounds(x, y + 400, buttonWidth, buttonHeight);
     m_waveformDisplay.setBounds(1500, 275, 600, 200);
 

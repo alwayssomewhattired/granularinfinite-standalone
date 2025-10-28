@@ -24,6 +24,11 @@ public:
 		return accessToken;
 	}
 
+	juce::String getToken()
+	{
+		return accessToken;
+	}
+
 	void init(const juce::String& clientID, const juce::String& clientSecreT, const juce::String& redirectUrI)
 	{
 		clientId = clientID;

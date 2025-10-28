@@ -15,6 +15,9 @@
 #include "DualThumbSlider.h"
 #include "GrainPositionControl.h"
 #include "WaveformDisplay.h"
+#include "SpotifyBrowser.h"
+#include "SpotifyList.h"
+#include "SpotifyAPI.h"
 
 //==============================================================================
 /**
@@ -79,6 +82,16 @@ private:
 
     std::unique_ptr<SpotifyAuthenticator> m_auth;
     juce::String spotifyAuthToken;
+
+    // results for spotify
+    SpotifyList m_spotifyList;
+
+    // text searcher for spotify
+    SpotifyBrowser m_spotifyBrowser;
+
+    SpotifyAPI m_spotifyAPI;
+
+
 
     // samplerinfinite
     std::unique_ptr<SamplerInfinite> spotifyFetcher;
