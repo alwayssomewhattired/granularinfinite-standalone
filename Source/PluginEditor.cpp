@@ -26,7 +26,8 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
     grainPositionSlider(GrainPositionControl(p)),
     grainPositionLabel(buttonPalette.grainPositionLabel),
     grainLengthLabel(buttonPalette.grainLengthLabel),
-    m_spotifyButton(buttonPalette.spotifyButton)
+    m_spotifyButton(buttonPalette.spotifyButton),
+    m_sourceDownloadButton(buttonPalette.sourceDownloadButton)
     
 {
     openConsole();
@@ -144,8 +145,8 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             addAndMakeVisible(octaveIncrement);
             addAndMakeVisible(octaveDecrement);
             addAndMakeVisible(m_spotifyButton);
+            addAndMakeVisible(m_sourceDownloadButton);
             addAndMakeVisible(m_spotifyBrowser);
-            addAndMakeVisible(m_spotifyList);
             addAndMakeVisible(grainSpacingLabel);
             addAndMakeVisible(grainSpacingSlider);
             addAndMakeVisible(grainAmountLabel);
@@ -168,6 +169,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
             octaveUp(octaveIncrement);
             octaveDown(octaveDecrement);
             spotifyButtonHandler();
+            sourceDownloadHandler();
 
             grainSpacingAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainSpacing", grainSpacingSlider);
             grainAmountAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainAmount", grainAmountSlider);
@@ -365,11 +367,17 @@ void GranularinfiniteAudioProcessorEditor::spotifyButtonHandler()
 
         m_auth->init("8df0570e51ae419baf4a7e2845a43cb4", "5aae9f994086437696de02533fd96ebd", "http://127.0.0.1:8888/callback");
         m_auth->startAuthentication();
-        spotifyAuthToken = m_auth->waitAndGetToken();
+        m_spotifyAuthToken = m_auth->waitAndGetToken();
+        std::cout << "the real token: " << m_spotifyAuthToken << "\n";
+        m_spotifyAPI.setAccessToken(m_spotifyAuthToken);
+        std::cout << "finisehd and authenticated\n";
+    };
+}
 
-        m_spotifyAPI.setAccessToken(spotifyAuthToken);
-
-        spotifyFetcher = std::make_unique<SamplerInfinite>(spotifyAuthToken);
+void GranularinfiniteAudioProcessorEditor::sourceDownloadHandler()
+{
+    m_sourceDownloadButton.onClick = [this] {
+        spotifyFetcher = std::make_unique<SamplerInfinite>(m_spotifyAuthToken);
 
         spotifyFetcher->onSongsFetched = [this](const juce::StringArray& songs)
             {
@@ -384,7 +392,6 @@ void GranularinfiniteAudioProcessorEditor::spotifyButtonHandler()
                         static std::unique_ptr<py::scoped_interpreter> guard;
                         if (!guard) {
                             guard = std::make_unique<py::scoped_interpreter>();
-                            // hold the GIL while initializing
                             py::gil_scoped_acquire g;
                             PyEval_InitThreads();
                         }
@@ -393,16 +400,6 @@ void GranularinfiniteAudioProcessorEditor::spotifyButtonHandler()
                         py::module sys = py::module::import("sys");
                         sys.attr("path").attr("append")("C:/Users/zacha/Desktop/granularinfinite/Source");
 
-                        //struct CoutRedirect : py::object {
-                        //    void write(const std::string& s) { std::cout << s; }
-                        //    void flush() {}
-                        //};
-                        //static CoutRedirect redirector;
-                        //sys.attr("stdout") = redirector;
-                        //sys.attr("stderr") = redirector;
-
-
-                        std::cout << "after gil\n";
                         auto result = runPythonFunction(songs[2]);
                         std::cout << "this is the result: " << result.toStdString() << "\n";
                     }).detach();
@@ -411,7 +408,7 @@ void GranularinfiniteAudioProcessorEditor::spotifyButtonHandler()
         //// trigger this via button click in the future
         spotifyFetcher->startFetching();
         std::cout << "all done\n";
-    };
+        };
 }
 
 void GranularinfiniteAudioProcessorEditor::grainLengthSliderHandler()
@@ -553,8 +550,8 @@ void GranularinfiniteAudioProcessorEditor::resized()
     buttonPalette.incrementButton.setBounds(x - 100, y + 400, buttonWidth, buttonHeight);
 
     m_spotifyButton.setBounds(1700, y + 400, 80, 80);
+    m_sourceDownloadButton.setBounds(1800, y + 400, 80, 80);
     m_spotifyBrowser.setBounds(1500, y + 400, 200, 200);
-    m_spotifyList.setBounds(1500, y + 500, 400, 400);
     buttonPalette.synthToggleButton.setBounds(x, y + 400, buttonWidth, buttonHeight);
     m_waveformDisplay.setBounds(1500, 275, 600, 200);
 

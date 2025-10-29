@@ -8,7 +8,7 @@ class SpotifyBrowser : public juce::Component,
 	public juce::TextEditor::Listener
 {
 public:
-	SpotifyBrowser()
+	SpotifyBrowser(SpotifyAPI& api) : m_api(api)
 	{
 		searchBox.setTextToShowWhenEmpty("Search artists...", juce::Colours::green);
 		searchBox.addListener(this);
@@ -20,7 +20,7 @@ public:
 
 		artistList.onItemSelected = [this](const SpotifyItem& artist)
 			{
-				api.getArtistsAlbum(artist.id, [this](const juce::Array<SpotifyItem>& albums)
+				m_api.getArtistsAlbum(artist.id, [this](const juce::Array<SpotifyItem>& albums)
 					{
 						juce::MessageManager::callAsync([this, albums]() {
 							albumList.updateItems(albums);
@@ -31,7 +31,7 @@ public:
 
 		albumList.onItemSelected = [this](const SpotifyItem& album)
 			{
-				api.getAlbumTracks(album.id, [this](const juce::Array<SpotifyItem>& tracks)
+				m_api.getAlbumTracks(album.id, [this](const juce::Array<SpotifyItem>& tracks)
 					{
 						juce::MessageManager::callAsync([this, tracks]() {
 							trackList.updateItems(tracks);
@@ -55,7 +55,7 @@ public:
 	void textEditorReturnKeyPressed(juce::TextEditor& editor) override
 	{
 		auto query = editor.getText();
-		api.searchArtists(query, [this](const juce::Array<SpotifyItem>& artists)
+		m_api.searchArtists(query, [this](const juce::Array<SpotifyItem>& artists)
 			{
 				juce::MessageManager::callAsync([this, artists]() {
 					artistList.updateItems(artists);
@@ -72,5 +72,5 @@ private:
 	SpotifyList trackList{ "Tracks" };
 
 	// handles HTTP requests
-	SpotifyAPI api;
+	SpotifyAPI& m_api;
 };

@@ -2,6 +2,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "SpotifyBrowser.h"
+#include "SpotifyList.h"
 
 class SpotifyAPI
 {
@@ -10,11 +11,12 @@ public:
 
 	void setAccessToken(const juce::String& token)
 	{
-		m_accessToken = token;
+		m_accessToken = std::make_unique<juce::String>(token);
 	}
 
-	void searchArtists(const juce::String& query, std::function<void(juce::Array<SpotifyItem>)> callback)
+	void searchArtists(const juce::String& query, std::function<void(juce::Array<SpotifyItem>&)> callback)
 	{
+		std::cout << "query: " << query.toStdString() << "\n";
 		auto url = "https://api.spotify.com/v1/search?q=" + juce::URL::addEscapeChars(query, true)
 			+ "&type=artist&limit=20";
 
@@ -27,10 +29,11 @@ public:
 					results.add({ artist["id"].toString(), artist["name"].toString() });
 				callback(results);
 			}
+
 			});
 	}
 
-	void getArtistsAlbum(const juce::String& artistId, std::function<void(juce::Array<SpotifyItem>)> callback)
+	void getArtistsAlbum(const juce::String& artistId, std::function<void(juce::Array<SpotifyItem>&)> callback)
 	{
 		auto url = "https://api.spotify.com/v1/artists/" + artistId + "/albums?limit=20";
 		fetch(url, [callback](auto json) {
@@ -45,7 +48,7 @@ public:
 			});
 	}
 
-	void getAlbumTracks(const juce::String& albumId, std::function<void(juce::Array<SpotifyItem>)> callback)
+	void getAlbumTracks(const juce::String& albumId, std::function<void(juce::Array<SpotifyItem>&)> callback)
 	{
 		auto url = "https://api.spotify.com/v1/albums/" + albumId + "/tracks";
 		fetch(url, [callback](auto json) {
@@ -61,30 +64,22 @@ public:
 	}
 
 private:
-	juce::String m_accessToken;
+	std::unique_ptr<juce::String> m_accessToken;
 
 		void fetch(const juce::String& url, std::function<void(juce::var)> callback)
 	{
 			juce::URL request(url);
-			juce::String authHeader = "Bearer " + m_accessToken;
+			juce::String authHeader = "Authorization: Bearer " + *m_accessToken + "\r\n";
 
-			auto* thread = new std::thread([=]() {
-				std::unique_ptr<juce::WebInputStream> stream;
+			auto* thread = new std::thread([authHeader, request, callback, this]() {
 
-				try
-				{
-					stream = std::make_unique<juce::WebInputStream>(request, true);
-					stream->withExtraHeaders("Authorization: " + authHeader);
-					stream->withConnectionTimeout(5000);
-					stream->connect(nullptr);
-				}
-				catch (...)
-				{
-					std::cout << "SpotifyAPI: exception during HTTP request\n";
-					return;
-				}
+				juce::URL::InputStreamOptions options = juce::URL::InputStreamOptions(juce::URL::ParameterHandling::inAddress)
+					.withConnectionTimeoutMs(5000)
+					.withExtraHeaders(authHeader);
 
-				if (stream != nullptr && stream->isError() == false)
+				std::unique_ptr<juce::InputStream> stream(request.createInputStream(options));
+
+				if (stream != nullptr)
 				{
 					auto jsonText = stream->readEntireStreamAsString();
 					auto json = juce::JSON::parse(jsonText);

@@ -42,6 +42,7 @@ public:
     void octaveUp(juce::TextButton& button);
     void octaveDown(juce::TextButton& button);
     void spotifyButtonHandler();
+    void sourceDownloadHandler();
 
     void synthToggleHandler(juce::TextButton& button);
     void grainLengthSliderHandler();
@@ -79,18 +80,19 @@ private:
     //    the slider should now accurately depict values
 
     juce::TextButton& m_spotifyButton;
+    juce::TextButton& m_sourceDownloadButton;
 
     std::unique_ptr<SpotifyAuthenticator> m_auth;
-    juce::String spotifyAuthToken;
+    juce::String m_spotifyAuthToken;
 
     // results for spotify
-    SpotifyList m_spotifyList;
+    //SpotifyList m_spotifyList;
 
-    // text searcher for spotify
-    SpotifyBrowser m_spotifyBrowser;
 
     SpotifyAPI m_spotifyAPI;
 
+    // text searcher for spotify
+    SpotifyBrowser m_spotifyBrowser{ m_spotifyAPI };
 
 
     // samplerinfinite

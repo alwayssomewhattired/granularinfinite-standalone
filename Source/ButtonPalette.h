@@ -51,6 +51,9 @@ public:
 		spotifyButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
 		spotifyButton.setButtonText("spotify");
 
+
+		sourceDownloadButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
+		sourceDownloadButton.setButtonText("download");
 	}
 
 	std::function<void()> onWaveformButtonAdded;
@@ -84,6 +87,7 @@ public:
 	juce::TextButton synthToggleButton;
 	juce::TextButton waveformButton;
 	juce::TextButton spotifyButton;
+	juce::TextButton sourceDownloadButton;
 
 	// file-name to waveformButton
 	std::map<juce::String, std::unique_ptr<juce::TextButton>> waveformButtons;

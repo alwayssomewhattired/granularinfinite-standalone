@@ -12,10 +12,12 @@ class SpotifyList : public juce::Component,
 	public juce::ListBoxModel
 {
 public:
-	SpotifyList(juce::String& title) : m_title(title)
+	SpotifyList(const juce::String& title) : m_title(title)
 	{
+		SpotifyItem item{ "null", m_title };
 		addAndMakeVisible(listBox);
 		listBox.setModel(this);
+		items.insert(0, item);
 	}
 
 	std::function<void(const SpotifyItem&)> onItemSelected;
@@ -56,6 +58,6 @@ public:
 private:
 	juce::ListBox listBox;
 	juce::Array<SpotifyItem> items;
-	juce::String& m_title;
+	const juce::String& m_title;
 };
 
