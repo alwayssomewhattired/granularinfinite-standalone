@@ -2,8 +2,6 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "SamplerInfinite.h"
-#include "SpotifyAuthenticator.h"
 
 //==============================================================================
 /**

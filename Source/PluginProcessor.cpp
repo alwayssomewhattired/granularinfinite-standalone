@@ -3,9 +3,11 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "OpenConsole.h"
-#include "SpotifyAuthenticator.h"
-#include "SamplerInfinite.h"
-#include "PythonSoulseek.h"
+#include "KeyButton.h"
+#include "KeyToNote.h"
+//#include "SpotifyAuthenticator.h"
+//#include "SamplerInfinite.h"
+//#include "PythonSoulseek.h"
 #include <juce_dsp/juce_dsp.h>
 #include <juce_events/juce_events.h>
 #include <algorithm>

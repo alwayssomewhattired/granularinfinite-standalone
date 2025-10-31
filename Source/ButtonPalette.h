@@ -7,6 +7,10 @@ class ButtonPalette : public juce::Component
 public:
 	ButtonPalette() : waveformState()
 	{
+		componentButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
+		componentButton.setButtonText("switch");
+		componentButton.setClickingTogglesState(true);
+
 		incrementButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
 		incrementButton.setButtonText("+");
 
@@ -82,6 +86,7 @@ public:
 	// file-name of current waveform button pressed. (warning: not a reference. be careful)
 	juce::String waveformState;
 
+	juce::TextButton componentButton;
 	juce::TextButton incrementButton;
 	juce::TextButton decrementButton;
 	juce::TextButton synthToggleButton;

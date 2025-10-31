@@ -5,19 +5,6 @@ namespace py = pybind11;
 
 static bool pythonStarted = false;
 
-//void initialisePython()
-//{
-//	if (!pythonStarted)
-//	{
-//		std::cout << "python initializing\n";
-//		py::initialize_interpreter();
-//
-//		py::module sys = py::module::import("sys");
-//		sys.attr("path").attr("append")("C:/Users/zacha/Desktop/granularinfinite/Source");
-//		pythonStarted = true;
-//	}
-//}
-
 juce::String runPythonFunction(const juce::String& songName)
 {
 	try {

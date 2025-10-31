@@ -1,101 +1,68 @@
 
 #pragma once
-#include <juce_core/juce_core.h>
-#include <juce_events/juce_events.h>
 
-class SamplerInfinite : private juce::Thread
+#include <JuceHeader.h>
+#include <juce_gui_extra/juce_gui_extra.h>
+#include "PluginProcessor.h"
+#include "ButtonPalette.h"
+#include "SpotifyBrowser.h"
+#include "SpotifyList.h"
+#include "SpotifyAPI.h"
+#include "SpotifyFetcher.h"
+#include "SpotifyAuthenticator.h"
+
+
+//==============================================================================
+/**
+*/
+class SamplerInfinite : public juce::Component
 {
 public:
-	SamplerInfinite(const juce::String& token)
-		: juce::Thread("SpotifyAPIFetcher"),
-		authToken(token)
-	{
-	}
+    SamplerInfinite(GranularinfiniteAudioProcessor& p);
 
-	~SamplerInfinite() override
-	{
-		signalThreadShouldExit();
-		stopThread(2000);
-	}
+    ~SamplerInfinite() override;
 
-	// Starts the background thread
-	void startFetching()
-	{
-		if (!isThreadRunning())
-			startThread();
-	}
-
-	// Stops the background thread
-	void stopFetching()
-	{
-		signalThreadShouldExit();
-	}
-
-	// the main thread loop
-	void run() override
-	{
-		// make this triggered by button click vvv
-		while (!threadShouldExit())
-		{
-			fetchSongNames();
-			wait(60000); // temporary, 60 second wait
-		}
-	}
-
-	// callback function that plugin can assign
-	std::function<void(const juce::StringArray&)> onSongsFetched;
-
-	void fetchSongNames()
-	{
-		// obviously make url dynamic. currently hardcoded for top 10 songs
-		juce::URL url("https://api.spotify.com/v1/me/top/tracks?limit=10");
-
-		juce::String extraHeaders = "Authorization: Bearer " + authToken + "\r\nAccept: application / json\r\n";
-
-		auto stream = url.createInputStream(false, nullptr, nullptr, extraHeaders, 10000);
+    //==============================================================================
 
 
-		juce::String response;
+    void paint(juce::Graphics&) override;
+    void resized() override;
 
-		if (stream != nullptr)
-		{
-			response = stream->readEntireStreamAsString();
-		}
-		else
-		{
-			std::cout << "failed to connect... \n";
-			return;
-		}
+    void spotifyButtonHandler();
+    void sourceDownloadHandler();
 
 
-		if (response.isNotEmpty())
-		{
-			juce::var json = juce::JSON::parse(response);
-
-			if (json.isObject())
-			{
-				juce::StringArray names;
-				auto items = json["items"];
-
-				if (items.isArray())
-				{
-					for (auto& item : *items.getArray())
-					{
-						if (item.isObject())
-						{
-							names.add(item["name"].toString());
-						}
-					}
-
-					if (onSongsFetched)
-						onSongsFetched(names);
-				}
-			}
-		}
-	}
 
 private:
 
-	// token for spotify api access
-	juce::String authToken;
+
+
+    ButtonPalette buttonPalette;
+    // make a class specifically for the grainPositionSlider.
+    //  pass a reference of the audioProcessor object to the initializer list of the audioEditor
+    //   access m_maxFileSize from that object and use it to set the sliders range
+    //    the slider should now accurately depict values
+
+    juce::TextButton& m_spotifyButton;
+    juce::TextButton& m_sourceDownloadButton;
+
+    std::unique_ptr<SpotifyAuthenticator> m_auth;
+    juce::String m_spotifyAuthToken;
+
+    // results for spotify
+    //SpotifyList m_spotifyList;
+
+
+    SpotifyAPI m_spotifyAPI;
+
+    // text searcher for spotify
+    SpotifyBrowser m_spotifyBrowser{ m_spotifyAPI };
+
+
+    // samplerinfinite
+    std::unique_ptr<SpotifyFetcher> spotifyFetcher;
+
+    GranularinfiniteAudioProcessor& audioProcessor;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SamplerInfinite)
 };
