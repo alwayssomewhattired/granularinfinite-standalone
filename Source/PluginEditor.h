@@ -32,7 +32,8 @@ private:
 
     // using a pointer fixed this issue
     std::unique_ptr<GranularInfinite> granularPage;
-    SamplerInfinite samplerPage{ audioProcessor };
+    //SamplerInfinite samplerPage{ audioProcessor };
+    std::unique_ptr<SamplerInfinite> samplerPage;
 
     ButtonPalette buttonPalette;
 

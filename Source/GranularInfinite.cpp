@@ -1,3 +1,4 @@
+#pragma once
 
 #include "PluginEditor.h"
 #include "PluginProcessor.h"
@@ -12,9 +13,10 @@
 
 
 //==============================================================================
-GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p)
+GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPalette& bp)
     :
     audioProcessor(p),
+    buttonPalette(bp),
     grainLengthSlider(std::tuple<double, double, double>(128.0, 48000.0, 1.0)),
     grainSpacingLabel(buttonPalette.grainSpacingLabel),
     grainSpacingSlider(buttonPalette.grainSpacingSlider),
@@ -124,7 +126,12 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p)
 
             // control-buttons
 
-            juce::TextButton& componentButton = buttonPalette.componentButton;
+            //componentButton = buttonPalette.componentButton;
+            componentButton.setButtonText(buttonPalette.componentButton.getButtonText());
+            componentButton.setColour(
+                juce::TextButton::buttonColourId,
+                buttonPalette.componentButton.findColour(juce::TextButton::buttonColourId)
+            );
 
             juce::TextButton& octaveIncrement = buttonPalette.incrementButton;
             juce::TextButton& octaveDecrement = buttonPalette.decrementButton;
@@ -159,14 +166,11 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p)
             buttonPalette.onWaveformButtonAdded = [this]() {
                 resized();
                 };
-
-            //auto& button = buttonPalette.componentButton;
-            buttonPalette.componentButton.onClick = [this, &button]() {
-                if (buttonPalette.componentButton.getToggleState())
-                {
+            
+            componentButton.onClick = [this]() {
+                    // (basically means 'if set'...)
                     if (onComponentButtonClicked)
                         onComponentButtonClicked();
-                }
                 };
 
 
@@ -210,17 +214,17 @@ void GranularInfinite::changeListenerCallback(juce::ChangeBroadcaster* source)
     }
 }
 
-void GranularInfinite::componentButtonHandler()
-{
-    auto& button = buttonPalette.componentButton;
-    button.onClick = [this, &button]() {
-        if (button.getToggleState())
-        {
-            if (onComponentButtonClicked)
-                onComponentButtonClicked();
-        }
-    };
-}
+//void GranularInfinite::componentButtonHandler()
+//{
+//    auto& button = buttonPalette.componentButton;
+//    button.onClick = [this, &button]() {
+//        if (button.getToggleState())
+//        {
+//            if (onComponentButtonClicked)
+//                onComponentButtonClicked();
+//        }
+//    };
+//}
 
 bool GranularInfinite::keyPressed(const juce::KeyPress& key,
     Component* originatingComponent)
@@ -511,6 +515,7 @@ void GranularInfinite::resized()
     buttonPalette.setBounds(getLocalBounds());
 
     buttonPalette.componentButton.setBounds(1600, y + 400, 80, 80);
+    componentButton.setBounds(1600, y + 400, 80, 80);
 
     buttonPalette.decrementButton.setBounds(x - 200, y + 400, buttonWidth, buttonHeight);
     buttonPalette.incrementButton.setBounds(x - 100, y + 400, buttonWidth, buttonHeight);

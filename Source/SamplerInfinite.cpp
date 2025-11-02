@@ -1,3 +1,4 @@
+#pragma once
 
 #include "SamplerInfinite.h"
 #include "ButtonPalette.h"
@@ -14,8 +15,9 @@ namespace py = pybind11;
 
 
 //==============================================================================
-SamplerInfinite::SamplerInfinite(GranularinfiniteAudioProcessor& p)
+SamplerInfinite::SamplerInfinite(GranularinfiniteAudioProcessor& p, ButtonPalette& bp)
     : audioProcessor(p),
+    buttonPalette(bp),
     m_spotifyButton(buttonPalette.spotifyButton),
     m_sourceDownloadButton(buttonPalette.sourceDownloadButton)
 
@@ -27,15 +29,30 @@ SamplerInfinite::SamplerInfinite(GranularinfiniteAudioProcessor& p)
     // find out if needed 
     setSize(1900, 1000);
 
+    //juce::TextButton& componentButton = buttonPalette.componentButton;
+
+    componentButton.setButtonText(buttonPalette.componentButton.getButtonText());
+    componentButton.setColour(
+        juce::TextButton::buttonColourId,
+        buttonPalette.componentButton.findColour(juce::TextButton::buttonColourId)
+    );
 
     addAndMakeVisible(buttonPalette);
+    addAndMakeVisible(componentButton);
     addAndMakeVisible(m_spotifyButton);
     addAndMakeVisible(m_sourceDownloadButton);
     addAndMakeVisible(m_spotifyBrowser);
 
 
+
+
     spotifyButtonHandler();
     sourceDownloadHandler();
+
+    componentButton.onClick = [this]() {
+            if (onSamplerComponentButtonClicked)
+                onSamplerComponentButtonClicked();
+        };
 
 }
 
@@ -93,7 +110,6 @@ void SamplerInfinite::sourceDownloadHandler()
             };
         //// trigger this via button click in the future
         spotifyFetcher->startFetching();
-        std::cout << "all done\n";
         };
 }
 
@@ -108,7 +124,6 @@ void SamplerInfinite::resized()
 // when you get the time, for the love of god refactor using flexbox
 {
 
-
     int x = 300;
     int y = 100;
     int buttonWidth = 60;
@@ -118,7 +133,8 @@ void SamplerInfinite::resized()
 
 
     buttonPalette.setBounds(getLocalBounds());
+    componentButton.setBounds(1600, y + 400, 80, 80);
     m_spotifyBrowser.setBounds(400, y, 1000, 800);
     m_spotifyButton.setBounds(200, y + 400, 80, 80);
-    m_sourceDownloadButton.setBounds(1600, y + 400, 80, 80);
+    m_sourceDownloadButton.setBounds(1500, y + 400, 80, 80);
 }

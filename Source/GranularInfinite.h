@@ -28,7 +28,7 @@ class GranularinfiniteAudioProcessor;
 class GranularInfinite : public juce::Component, public juce::KeyListener, public juce::ChangeListener, private juce::Timer
 {
 public:
-    GranularInfinite(GranularinfiniteAudioProcessor& p);
+    GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPalette& bp);
 
     ~GranularInfinite() override;
 
@@ -46,7 +46,7 @@ public:
     void octaveDown(juce::TextButton& button);
 
     std::function<void()> onComponentButtonClicked;
-    void componentButtonHandler();
+    //void componentButtonHandler();
 
     void spotifyButtonHandler();
     void sourceDownloadHandler();
@@ -80,11 +80,13 @@ private:
 
     void timerCallback() override;
 
-    ButtonPalette buttonPalette;
+    ButtonPalette& buttonPalette;
     // make a class specifically for the grainPositionSlider.
     //  pass a reference of the audioProcessor object to the initializer list of the audioEditor
     //   access m_maxFileSize from that object and use it to set the sliders range
     //    the slider should now accurately depict values
+
+    juce::TextButton componentButton;
 
     juce::Label& grainSpacingLabel;
     juce::Slider& grainSpacingSlider;

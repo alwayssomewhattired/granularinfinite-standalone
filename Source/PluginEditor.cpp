@@ -14,17 +14,23 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
 
 {
     openConsole();
-    granularPage = std::make_unique<GranularInfinite>(audioProcessor);
+    granularPage = std::make_unique<GranularInfinite>(audioProcessor, buttonPalette);
+    samplerPage = std::make_unique<SamplerInfinite>(audioProcessor, buttonPalette);
     setSize(1900, 1000);
 
     addAndMakeVisible(*granularPage);
-    addAndMakeVisible(samplerPage);
-
-    samplerPage.setVisible(false);
+    addAndMakeVisible(*samplerPage);
+    samplerPage->setVisible(false);
 
     granularPage->onComponentButtonClicked = [this]() {
         granularPage->setVisible(false);
-        samplerPage.setVisible(true);
+        samplerPage->setVisible(true);
+        };
+
+    samplerPage->onSamplerComponentButtonClicked = [this]() {
+        std::cout << "r we in?\n";
+        samplerPage->setVisible(false);
+        granularPage->setVisible(true);
         };
 
 }
@@ -66,6 +72,6 @@ void GranularinfiniteAudioProcessorEditor::resized()
     if (granularPage == nullptr)
         std::cout << "your null!!!\n";
     granularPage->setBounds(getLocalBounds());
-    samplerPage.setBounds(getLocalBounds());
+    samplerPage->setBounds(getLocalBounds());
 }
 

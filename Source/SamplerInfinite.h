@@ -18,7 +18,7 @@
 class SamplerInfinite : public juce::Component
 {
 public:
-    SamplerInfinite(GranularinfiniteAudioProcessor& p);
+    SamplerInfinite(GranularinfiniteAudioProcessor& p, ButtonPalette& bp);
 
     ~SamplerInfinite() override;
 
@@ -28,6 +28,8 @@ public:
     void paint(juce::Graphics&) override;
     void resized() override;
 
+    std::function<void()> onSamplerComponentButtonClicked;
+    //void componentButtonHandler();
     void spotifyButtonHandler();
     void sourceDownloadHandler();
 
@@ -37,11 +39,13 @@ private:
 
 
 
-    ButtonPalette buttonPalette;
+    ButtonPalette& buttonPalette;
     // make a class specifically for the grainPositionSlider.
     //  pass a reference of the audioProcessor object to the initializer list of the audioEditor
     //   access m_maxFileSize from that object and use it to set the sliders range
     //    the slider should now accurately depict values
+
+    juce::TextButton componentButton;
 
     juce::TextButton& m_spotifyButton;
     juce::TextButton& m_sourceDownloadButton;

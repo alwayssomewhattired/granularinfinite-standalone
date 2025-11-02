@@ -87,6 +87,7 @@ public:
 	juce::String waveformState;
 
 	juce::TextButton componentButton;
+
 	juce::TextButton incrementButton;
 	juce::TextButton decrementButton;
 	juce::TextButton synthToggleButton;
