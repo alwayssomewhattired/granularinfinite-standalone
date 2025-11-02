@@ -38,6 +38,14 @@ public:
 						});
 					});
 			};
+		trackList.onItemSelected = [this](const SpotifyItem& track)
+			{
+				selectedMap[track.name] = track.id;
+				// make editor repaint
+				if (auto* parent = getParentComponent())
+					parent->repaint();
+
+			};
 	}
 
 	void resized() override
@@ -65,11 +73,21 @@ public:
 			});
 	}
 
+	std::map<juce::String, juce::String>& getSelectedMap()
+	{
+		return selectedMap;
+	}
+
+	std::function<void()> onTrackClicked;
+
+
 private:
 	juce::TextEditor searchBox;
-	SpotifyList artistList{ "Artists" };
-	SpotifyList albumList{ "Albums" };
-	SpotifyList trackList{ "Tracks" };
+	SpotifyList artistList{ "artists" };
+	SpotifyList albumList{ "albums" };
+	SpotifyList trackList{ "tracks" };
+
+	std::map<juce::String, juce::String> selectedMap;
 
 	// handles HTTP requests
 	SpotifyAPI& m_api;

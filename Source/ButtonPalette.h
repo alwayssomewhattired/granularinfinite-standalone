@@ -55,7 +55,6 @@ public:
 		spotifyButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
 		spotifyButton.setButtonText("spotify");
 
-
 		sourceDownloadButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
 		sourceDownloadButton.setButtonText("download");
 	}
@@ -79,7 +78,6 @@ public:
 		if (onWaveformButtonAdded) {
 			onWaveformButtonAdded();
 		}
-		std::cout << "do you knnow? \n";
 	}
 
 

@@ -29,15 +29,14 @@ public:
     void resized() override;
 
     std::function<void()> onSamplerComponentButtonClicked;
-    //void componentButtonHandler();
+
+
     void spotifyButtonHandler();
     void sourceDownloadHandler();
 
 
 
 private:
-
-
 
     ButtonPalette& buttonPalette;
     // make a class specifically for the grainPositionSlider.
@@ -62,6 +61,8 @@ private:
     // text searcher for spotify
     SpotifyBrowser m_spotifyBrowser{ m_spotifyAPI };
 
+    // selected song(s)
+    juce::Rectangle<int> m_selected{ 1150, 110, 300, 780 };
 
     // samplerinfinite
     std::unique_ptr<SpotifyFetcher> spotifyFetcher;

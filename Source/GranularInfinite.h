@@ -46,7 +46,6 @@ public:
     void octaveDown(juce::TextButton& button);
 
     std::function<void()> onComponentButtonClicked;
-    //void componentButtonHandler();
 
     void spotifyButtonHandler();
     void sourceDownloadHandler();

@@ -20,7 +20,6 @@ SamplerInfinite::SamplerInfinite(GranularinfiniteAudioProcessor& p, ButtonPalett
     buttonPalette(bp),
     m_spotifyButton(buttonPalette.spotifyButton),
     m_sourceDownloadButton(buttonPalette.sourceDownloadButton)
-
 {
 
     //spotify authentication
@@ -43,15 +42,16 @@ SamplerInfinite::SamplerInfinite(GranularinfiniteAudioProcessor& p, ButtonPalett
     addAndMakeVisible(m_sourceDownloadButton);
     addAndMakeVisible(m_spotifyBrowser);
 
-
-
-
     spotifyButtonHandler();
     sourceDownloadHandler();
 
     componentButton.onClick = [this]() {
             if (onSamplerComponentButtonClicked)
                 onSamplerComponentButtonClicked();
+        };
+
+    m_spotifyBrowser.onTrackClicked = [this]() {
+        repaint();
         };
 
 }
@@ -71,9 +71,7 @@ void SamplerInfinite::spotifyButtonHandler()
         m_auth->init("8df0570e51ae419baf4a7e2845a43cb4", "5aae9f994086437696de02533fd96ebd", "http://127.0.0.1:8888/callback");
         m_auth->startAuthentication();
         m_spotifyAuthToken = m_auth->waitAndGetToken();
-        std::cout << "the real token: " << m_spotifyAuthToken << "\n";
         m_spotifyAPI.setAccessToken(m_spotifyAuthToken);
-        std::cout << "finisehd and authenticated\n";
         };
 }
 
@@ -118,6 +116,38 @@ void SamplerInfinite::sourceDownloadHandler()
 void SamplerInfinite::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colours::black);
+    g.setColour(juce::Colours::green);
+    g.drawRect(m_selected, 1);
+
+    g.setFont(16.0f);
+    int textY = m_selected.getY() + 20;
+
+    if (m_spotifyBrowser.getSelectedMap().empty())
+    {
+        return;
+    }
+
+    std::map<juce::String, juce::String>& map(m_spotifyBrowser.getSelectedMap());
+    if (!map.empty())
+    {
+        for (const auto& [k, v] : map)
+        {
+            if (textY < m_selected.getBottom())
+            {
+                g.drawText(
+                    k,
+                    m_selected.getX() + 10,
+                    textY,
+                    m_selected.getWidth() - 20,
+                    20,
+                    juce::Justification::centredLeft,
+                    false
+                );
+                textY += 22;
+            }
+            else break;
+        }
+    }
 }
 
 void SamplerInfinite::resized()
@@ -134,7 +164,7 @@ void SamplerInfinite::resized()
 
     buttonPalette.setBounds(getLocalBounds());
     componentButton.setBounds(1600, y + 400, 80, 80);
-    m_spotifyBrowser.setBounds(400, y, 1000, 800);
-    m_spotifyButton.setBounds(200, y + 400, 80, 80);
+    m_spotifyBrowser.setBounds(150, y, 1000, 800);
+    m_spotifyButton.setBounds(50, y + 400, 80, 80);
     m_sourceDownloadButton.setBounds(1500, y + 400, 80, 80);
 }

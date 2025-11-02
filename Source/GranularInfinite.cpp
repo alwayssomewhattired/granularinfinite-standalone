@@ -163,6 +163,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             addAndMakeVisible(m_waveformDisplay);
 
 
+
             buttonPalette.onWaveformButtonAdded = [this]() {
                 resized();
                 };
@@ -172,7 +173,6 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
                     if (onComponentButtonClicked)
                         onComponentButtonClicked();
                 };
-
 
             octaveUp(octaveIncrement);
             octaveDown(octaveDecrement);
