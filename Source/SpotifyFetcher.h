@@ -48,50 +48,51 @@ public:
 	void fetchSongNames()
 	{
 		// obviously make url dynamic. currently hardcoded for top 10 songs
-		juce::URL url("https://api.spotify.com/v1/me/top/tracks?limit=10");
+		// 
+		//juce::URL url("https://api.spotify.com/v1/me/top/tracks?limit=10");
 
-		juce::String extraHeaders = "Authorization: Bearer " + authToken + "\r\nAccept: application / json\r\n";
+		//juce::String extraHeaders = "Authorization: Bearer " + authToken + "\r\nAccept: application / json\r\n";
 
-		auto stream = url.createInputStream(false, nullptr, nullptr, extraHeaders, 10000);
-
-
-		juce::String response;
-
-		if (stream != nullptr)
-		{
-			response = stream->readEntireStreamAsString();
-		}
-		else
-		{
-			std::cout << "failed to connect... \n";
-			return;
-		}
+		//auto stream = url.createInputStream(false, nullptr, nullptr, extraHeaders, 10000);
 
 
-		if (response.isNotEmpty())
-		{
-			juce::var json = juce::JSON::parse(response);
+		//juce::String response;
 
-			if (json.isObject())
-			{
-				juce::StringArray names;
-				auto items = json["items"];
+		//if (stream != nullptr)
+		//{
+		//	response = stream->readEntireStreamAsString();
+		//}
+		//else
+		//{
+		//	std::cout << "failed to connect... \n";
+		//	return;
+		//}
 
-				if (items.isArray())
-				{
-					for (auto& item : *items.getArray())
-					{
-						if (item.isObject())
-						{
-							names.add(item["name"].toString());
-						}
-					}
 
-					if (onSongsFetched)
-						onSongsFetched(names);
-				}
-			}
-		}
+		//if (response.isNotEmpty())
+		//{
+		//	juce::var json = juce::JSON::parse(response);
+
+		//	if (json.isObject())
+		//	{
+		//		juce::StringArray names;
+		//		auto items = json["items"];
+
+		//		if (items.isArray())
+		//		{
+		//			for (auto& item : *items.getArray())
+		//			{
+		//				if (item.isObject())
+		//				{
+		//					names.add(item["name"].toString());
+		//				}
+		//			}
+
+		//			if (onSongsFetched)
+		//				onSongsFetched(names);
+		//		}
+		//	}
+		//}
 	}
 
 private:

@@ -78,15 +78,20 @@ void SamplerInfinite::spotifyButtonHandler()
 void SamplerInfinite::sourceDownloadHandler()
 {
     m_sourceDownloadButton.onClick = [this] {
-        spotifyFetcher = std::make_unique<SpotifyFetcher>(m_spotifyAuthToken);
 
-        spotifyFetcher->onSongsFetched = [this](const juce::StringArray& songs)
-            {
-                if (songs.isEmpty())
-                {
-                    std::cout << "Received nothing from Spotify...\n";
-                    return;
-                }
+        // make this work with the map from spotifybrowser
+
+        std::map<juce::String, juce::String>& songs = m_spotifyBrowser.getSelectedMap();
+
+        //spotifyFetcher = std::make_unique<SpotifyFetcher>(m_spotifyAuthToken);
+
+ /*       spotifyFetcher->onSongsFetched = [this](const juce::StringArray& songs)
+            {*/
+                //if (songs.isEmpty())
+                //{
+                //    std::cout << "Received nothing from Spotify...\n";
+                //    return;
+                //}
 
                 std::thread([songs]()
                     {
@@ -96,19 +101,21 @@ void SamplerInfinite::sourceDownloadHandler()
                             py::gil_scoped_acquire g;
                             PyEval_InitThreads();
                         }
-                        std::cout << "getting this song: " << songs[2].toStdString() << "\n";
+                        //std::cout << "getting this song: " << songs[2].toStdString() << "\n";
                         py::gil_scoped_acquire acquire;
                         py::module sys = py::module::import("sys");
                         sys.attr("path").attr("append")("C:/Users/zacha/Desktop/granularinfinite/Source");
 
-                        auto result = runPythonFunction(songs[2]);
-                        std::cout << "this is the result: " << result.toStdString() << "\n";
+                        for (const auto& [k, v] : songs)
+                        {
+                            auto result = runPythonFunction(v);
+                            std::cout << "this is the result: " << result.toStdString() << "\n";
+                        }
                     }).detach();
 
             };
         //// trigger this via button click in the future
-        spotifyFetcher->startFetching();
-        };
+        //spotifyFetcher->startFetching();
 }
 
 //==============================================================================

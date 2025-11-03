@@ -20,6 +20,8 @@ public:
 
 		artistList.onItemSelected = [this](const SpotifyItem& artist)
 			{
+				currentQuery[0] = artist.name;
+
 				m_api.getArtistsAlbum(artist.id, [this](const juce::Array<SpotifyItem>& albums)
 					{
 						juce::MessageManager::callAsync([this, albums]() {
@@ -31,6 +33,8 @@ public:
 
 		albumList.onItemSelected = [this](const SpotifyItem& album)
 			{
+				currentQuery[1] = album.name;
+
 				m_api.getAlbumTracks(album.id, [this](const juce::Array<SpotifyItem>& tracks)
 					{
 						juce::MessageManager::callAsync([this, tracks]() {
@@ -40,7 +44,14 @@ public:
 			};
 		trackList.onItemSelected = [this](const SpotifyItem& track)
 			{
-				selectedMap[track.name] = track.id;
+				currentQuery[2] = track.name;
+
+				juce::StringArray arr;
+				for (auto& s : currentQuery)
+					arr.add(s);
+				juce::String res = arr.joinIntoString(" ");
+				std::cout << res.toStdString() << "\n";
+				selectedMap[track.name] = arr.joinIntoString(" ");
 				// make editor repaint
 				if (auto* parent = getParentComponent())
 					parent->repaint();
@@ -86,6 +97,9 @@ private:
 	SpotifyList artistList{ "artists" };
 	SpotifyList albumList{ "albums" };
 	SpotifyList trackList{ "tracks" };
+
+	//juce::String currentQuery;
+	std::vector<juce::String> currentQuery{ 3 };
 
 	std::map<juce::String, juce::String> selectedMap;
 

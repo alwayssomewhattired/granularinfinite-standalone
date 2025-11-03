@@ -41,10 +41,12 @@ def download_song(song_name):
 		download_state = str(download_info['directories'][0]['files'][0]['state'])
 		print(download_state)
 		if download_state == "Completed, Succeeded":
-			break
+			return "We have finished"
+			
 		elif download_state == "Completed, Errored":
-			print("Error occurred. Exiting...")
-			break
+			print("Error occurred. Retrying...")
+			download_song(song_name)
 		time.sleep(1)
 
-	return "BOOM MUTHAFUCKAH!"
+
+	return "BOOM MUTHAFUCKAHhHhHh!"
