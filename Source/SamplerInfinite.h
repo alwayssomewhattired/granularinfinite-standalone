@@ -10,6 +10,7 @@
 #include "SpotifyAPI.h"
 #include "SpotifyFetcher.h"
 #include "SpotifyAuthenticator.h"
+#include "SearchableComboBox.h"
 
 
 //==============================================================================
@@ -38,6 +39,15 @@ public:
 
 private:
 
+    struct Config {
+        int chunkSize;
+        int sampleRate;
+        int channels;
+        int productDurationSamples;
+    };
+
+    SearchableComboBox m_frequencyBox;
+
     ButtonPalette& buttonPalette;
     // make a class specifically for the grainPositionSlider.
     //  pass a reference of the audioProcessor object to the initializer list of the audioEditor
@@ -64,7 +74,9 @@ private:
     // selected song(s)
     juce::Rectangle<int> m_selected{ 1150, 110, 300, 780 };
 
-    // samplerinfinite
+    std::vector<std::string> selectedFreqs;
+
+    // samplerinfinite (get rid of this)
     std::unique_ptr<SpotifyFetcher> spotifyFetcher;
 
     GranularinfiniteAudioProcessor& audioProcessor;

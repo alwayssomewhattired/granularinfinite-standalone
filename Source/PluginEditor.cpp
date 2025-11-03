@@ -28,7 +28,6 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
         };
 
     samplerPage->onSamplerComponentButtonClicked = [this]() {
-        std::cout << "r we in?\n";
         samplerPage->setVisible(false);
         granularPage->setVisible(true);
         };

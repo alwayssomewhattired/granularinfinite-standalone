@@ -1,3 +1,7 @@
+// get rid of this piece of shit file. burn everything about it
+
+
+
 
 #pragma once
 #include <juce_core/juce_core.h>

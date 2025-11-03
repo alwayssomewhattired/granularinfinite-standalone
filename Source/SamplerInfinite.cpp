@@ -10,6 +10,7 @@
 #include "SpotifyAPI.h"
 #include "SpotifyFetcher.h"
 #include "SpotifyAuthenticator.h"
+#include "KeyToNote.h"
 #include <pybind11/embed.h>
 namespace py = pybind11;
 
@@ -41,6 +42,9 @@ SamplerInfinite::SamplerInfinite(GranularinfiniteAudioProcessor& p, ButtonPalett
     addAndMakeVisible(m_spotifyButton);
     addAndMakeVisible(m_sourceDownloadButton);
     addAndMakeVisible(m_spotifyBrowser);
+    addAndMakeVisible(m_frequencyBox);
+
+    // handler
 
     spotifyButtonHandler();
     sourceDownloadHandler();
@@ -53,6 +57,18 @@ SamplerInfinite::SamplerInfinite(GranularinfiniteAudioProcessor& p, ButtonPalett
     m_spotifyBrowser.onTrackClicked = [this]() {
         repaint();
         };
+
+    m_frequencyBox.onItemSelected = [](juce::String selected) {
+        std::cout << "selected: " << selected << "\n";
+        };
+
+    Config config{
+        8192,       // chunkSize
+        44100,      // sampleRate
+        1,          // channels
+        96000       // productDurationSamples
+    };
+
 
 }
 
@@ -83,39 +99,27 @@ void SamplerInfinite::sourceDownloadHandler()
 
         std::map<juce::String, juce::String>& songs = m_spotifyBrowser.getSelectedMap();
 
-        //spotifyFetcher = std::make_unique<SpotifyFetcher>(m_spotifyAuthToken);
+        std::thread([songs]()
+            {
+                static std::unique_ptr<py::scoped_interpreter> guard;
+                if (!guard) {
+                    guard = std::make_unique<py::scoped_interpreter>();
+                    py::gil_scoped_acquire g;
+                    PyEval_InitThreads();
+                }
+                //std::cout << "getting this song: " << songs[2].toStdString() << "\n";
+                py::gil_scoped_acquire acquire;
+                py::module sys = py::module::import("sys");
+                sys.attr("path").attr("append")("C:/Users/zacha/Desktop/granularinfinite/Source");
 
- /*       spotifyFetcher->onSongsFetched = [this](const juce::StringArray& songs)
-            {*/
-                //if (songs.isEmpty())
-                //{
-                //    std::cout << "Received nothing from Spotify...\n";
-                //    return;
-                //}
+                for (const auto& [k, v] : songs)
+                {
+                    auto result = runPythonFunction(v);
+                    std::cout << "this is the result: " << result.toStdString() << "\n";
+                }
+            }).detach();
 
-                std::thread([songs]()
-                    {
-                        static std::unique_ptr<py::scoped_interpreter> guard;
-                        if (!guard) {
-                            guard = std::make_unique<py::scoped_interpreter>();
-                            py::gil_scoped_acquire g;
-                            PyEval_InitThreads();
-                        }
-                        //std::cout << "getting this song: " << songs[2].toStdString() << "\n";
-                        py::gil_scoped_acquire acquire;
-                        py::module sys = py::module::import("sys");
-                        sys.attr("path").attr("append")("C:/Users/zacha/Desktop/granularinfinite/Source");
-
-                        for (const auto& [k, v] : songs)
-                        {
-                            auto result = runPythonFunction(v);
-                            std::cout << "this is the result: " << result.toStdString() << "\n";
-                        }
-                    }).detach();
-
-            };
-        //// trigger this via button click in the future
-        //spotifyFetcher->startFetching();
+    };
 }
 
 //==============================================================================
@@ -168,10 +172,10 @@ void SamplerInfinite::resized()
     int labelHeight = 20;
     int spacing = 5;
 
-
     buttonPalette.setBounds(getLocalBounds());
     componentButton.setBounds(1600, y + 400, 80, 80);
     m_spotifyBrowser.setBounds(150, y, 1000, 800);
     m_spotifyButton.setBounds(50, y + 400, 80, 80);
     m_sourceDownloadButton.setBounds(1500, y + 400, 80, 80);
+    m_frequencyBox.setBounds(getLocalBounds());
 }
