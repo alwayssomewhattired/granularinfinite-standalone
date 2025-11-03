@@ -18,14 +18,21 @@ SearchableComboBox::SearchableComboBox()
 	{
 		allItems.add(k);
 	}
+
 	filteredItems = allItems;
+
 }
 
 void SearchableComboBox::resized()
 {
-	auto bounds = getLocalBounds();
-	searchBox.setBounds(1500, 100, 40, 20);
-	listBox.setBounds(1500, 120, 40, 200);
+
+	searchBox.setBounds(0, 0, 50, 40);
+	listBox.setBounds(0, 40, 50, 200);
+	searchBox.setFont(juce::Font(26.0f));
+	searchBox.setColour(juce::TextEditor::textColourId, juce::Colours::green);
+	searchBox.setColour(juce::TextEditor::backgroundColourId, juce::Colours::black);
+	searchBox.setJustification(juce::Justification::centredTop);
+	
 }
 
 int SearchableComboBox::getNumRows() { return filteredItems.size(); }
@@ -33,9 +40,15 @@ int SearchableComboBox::getNumRows() { return filteredItems.size(); }
 void SearchableComboBox::paintListBoxItem(int row, juce::Graphics& g, int w, int h, bool selected)
 {
 	if (selected)
-		g.fillAll(juce::Colours::lightyellow);
+	{
+		g.fillAll(juce::Colours::yellow);
+		g.setColour(juce::Colours::black);
+	}
+	else
+	{
+		g.setColour(juce::Colours::green);
+	}
 
-	g.setColour(juce::Colours::green);
 	g.drawText(filteredItems[row], 5, 0, w, h, juce::Justification::centredLeft);
 }
 

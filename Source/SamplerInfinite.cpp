@@ -177,5 +177,5 @@ void SamplerInfinite::resized()
     m_spotifyBrowser.setBounds(150, y, 1000, 800);
     m_spotifyButton.setBounds(50, y + 400, 80, 80);
     m_sourceDownloadButton.setBounds(1500, y + 400, 80, 80);
-    m_frequencyBox.setBounds(getLocalBounds());
+    m_frequencyBox.setBounds(1500, 200, 500, 300);
 }
