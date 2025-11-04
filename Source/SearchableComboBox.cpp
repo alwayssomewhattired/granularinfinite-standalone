@@ -37,9 +37,23 @@ void SearchableComboBox::resized()
 
 int SearchableComboBox::getNumRows() { return filteredItems.size(); }
 
+std::vector<double> SearchableComboBox::getFrequencies()
+{
+	std::vector<double> chosenFreqs;
+	std::map<std::string, double> myMap = createNoteToFreq();
+	for (const int& n : toggledRows)
+	{
+		chosenFreqs.push_back(myMap[filteredItems[n].toStdString()]);
+	}
+
+	return chosenFreqs;
+}
+
 void SearchableComboBox::paintListBoxItem(int row, juce::Graphics& g, int w, int h, bool selected)
 {
-	if (selected)
+	const bool isToggled = toggledRows.contains(row);
+
+	if (isToggled)
 	{
 		g.fillAll(juce::Colours::yellow);
 		g.setColour(juce::Colours::black);
@@ -54,6 +68,12 @@ void SearchableComboBox::paintListBoxItem(int row, juce::Graphics& g, int w, int
 
 void SearchableComboBox::listBoxItemClicked(int row, const juce::MouseEvent&)
 {
+	if (toggledRows.contains(row))
+		toggledRows.removeAllInstancesOf(row);
+	else
+		toggledRows.add(row);
+	listBox.repaintRow(row);
+
 	if (onItemSelected)
 		onItemSelected(filteredItems[row]);
 }

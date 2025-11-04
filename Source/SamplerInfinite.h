@@ -33,6 +33,7 @@ public:
 
 
     void spotifyButtonHandler();
+    void sampleProcessing();
     void sourceDownloadHandler();
 
 
@@ -45,6 +46,8 @@ private:
         int channels;
         int productDurationSamples;
     };
+
+    Config config;
 
     SearchableComboBox m_frequencyBox;
 
@@ -74,6 +77,7 @@ private:
     // selected song(s)
     juce::Rectangle<int> m_selected{ 1150, 110, 300, 780 };
 
+    // unused
     std::vector<std::string> selectedFreqs;
 
     // samplerinfinite (get rid of this)

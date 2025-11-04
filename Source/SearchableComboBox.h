@@ -12,6 +12,8 @@ public:
 
 	int getNumRows() override;
 
+	std::vector<double> getFrequencies();
+
 	void paintListBoxItem(int row, juce::Graphics& g, int w, int h, bool selected) override;
 
 	void listBoxItemClicked(int row, const juce::MouseEvent&) override;
@@ -25,4 +27,7 @@ private:
 	juce::ListBox listBox;
 	juce::StringArray allItems;
 	juce::StringArray filteredItems;
+
+	// stores indices of rows that are selected
+	juce::Array<int> toggledRows;
 };

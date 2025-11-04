@@ -11,6 +11,7 @@
 #include "SpotifyFetcher.h"
 #include "SpotifyAuthenticator.h"
 #include "KeyToNote.h"
+#include "FFTProcessor.h"
 #include <pybind11/embed.h>
 namespace py = pybind11;
 
@@ -20,7 +21,13 @@ SamplerInfinite::SamplerInfinite(GranularinfiniteAudioProcessor& p, ButtonPalett
     : audioProcessor(p),
     buttonPalette(bp),
     m_spotifyButton(buttonPalette.spotifyButton),
-    m_sourceDownloadButton(buttonPalette.sourceDownloadButton)
+    m_sourceDownloadButton(buttonPalette.sourceDownloadButton),
+    config{
+        8192,       // chunkSize
+        44100,      // sampleRate
+        1,          // channels
+        0       // productDurationSamples
+    }
 {
 
     //spotify authentication
@@ -62,13 +69,6 @@ SamplerInfinite::SamplerInfinite(GranularinfiniteAudioProcessor& p, ButtonPalett
         std::cout << "selected: " << selected << "\n";
         };
 
-    Config config{
-        8192,       // chunkSize
-        44100,      // sampleRate
-        1,          // channels
-        96000       // productDurationSamples
-    };
-
 
 }
 
@@ -89,6 +89,15 @@ void SamplerInfinite::spotifyButtonHandler()
         m_spotifyAuthToken = m_auth->waitAndGetToken();
         m_spotifyAPI.setAccessToken(m_spotifyAuthToken);
         };
+}
+
+void SamplerInfinite::sampleProcessing()
+{
+    std::vector<double> freqs = m_frequencyBox.getFrequencies();
+
+    FFTProcessor fftProcessor(config.chunkSize, config.sampleRate);
+
+    // up next:: audio file parse
 }
 
 void SamplerInfinite::sourceDownloadHandler()
@@ -119,6 +128,8 @@ void SamplerInfinite::sourceDownloadHandler()
                 }
             }).detach();
 
+        // make a guard against this vvv
+        sampleProcessing();
     };
 }
 

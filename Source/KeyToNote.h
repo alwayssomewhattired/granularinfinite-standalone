@@ -1,6 +1,7 @@
 #include <map>
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <algorithm>
+#include <cmath>
 #pragma once
 
 inline std::map<char, juce::String> CreateKeyToNote(int octave)
@@ -51,3 +52,30 @@ inline std::map<juce::String, int> CreateNoteToMidi = {
 
 	{ "C8", 108 }, { "C#8", 109 }, { "D8", 110 }, { "D#8", 111 }, { "E8", 112 }, { "F8", 113 }
 };
+
+// make a map of the actual freq values
+
+std::map<std::string, double> createNoteToFreq()
+{
+	std::map<std::string, double> noteToFreq;
+	const std::string noteNames[] = { "C", "C#", "D", "D#", "E", "F",
+									  "F#", "G", "G#", "A", "A#", "B" };
+
+	const double A4_FREQ = 440.0;
+	const int A4_INDEX = 9;
+	const int A4_OCTAVE = 4;
+
+	for (int octave = 0; octave <= 8; ++octave)
+	{
+		for (int i = 0; i < 12; ++i)
+		{
+			int semitoneOffset = (octave - A4_OCTAVE) * 12 + (i - A4_INDEX);
+			double freq = A4_FREQ * std::pow(2.0, semitoneOffset / 12.0);
+
+			std::string noteName = noteNames[i] + std::to_string(octave);
+			noteToFreq[noteName] = freq;
+		}
+	}
+
+	return noteToFreq;
+}
