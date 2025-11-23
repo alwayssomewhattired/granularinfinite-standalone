@@ -6,7 +6,7 @@
 class SearchableComboBox : public juce::Component, private juce::TextEditor::Listener, private juce::ListBoxModel
 {
 public:
-	SearchableComboBox();
+	SearchableComboBox(const bool realtimeResults);
 
 	void resized() override;
 
@@ -27,6 +27,8 @@ private:
 	juce::ListBox listBox;
 	juce::StringArray allItems;
 	juce::StringArray filteredItems;
+
+	bool realtimeResults;
 
 	// stores indices of rows that are selected
 	juce::Array<int> toggledRows;

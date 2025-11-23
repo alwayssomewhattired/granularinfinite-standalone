@@ -55,7 +55,7 @@ inline std::map<juce::String, int> CreateNoteToMidi = {
 
 // make a map of the actual freq values
 
-std::map<std::string, double> createNoteToFreq()
+inline std::map<std::string, double> createNoteToFreq()
 {
 	std::map<std::string, double> noteToFreq;
 	const std::string noteNames[] = { "C", "C#", "D", "D#", "E", "F",

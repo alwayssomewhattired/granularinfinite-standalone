@@ -12,6 +12,7 @@
 #include "SpotifyAuthenticator.h"
 #include "KeyToNote.h"
 #include "FFTProcessor.h"
+#include "AudioFileParse.h"
 #include <pybind11/embed.h>
 namespace py = pybind11;
 
@@ -22,6 +23,8 @@ SamplerInfinite::SamplerInfinite(GranularinfiniteAudioProcessor& p, ButtonPalett
     buttonPalette(bp),
     m_spotifyButton(buttonPalette.spotifyButton),
     m_sourceDownloadButton(buttonPalette.sourceDownloadButton),
+    m_frequencyBox(true),
+    m_directoryBox(false),
     config{
         8192,       // chunkSize
         44100,      // sampleRate
@@ -50,6 +53,7 @@ SamplerInfinite::SamplerInfinite(GranularinfiniteAudioProcessor& p, ButtonPalett
     addAndMakeVisible(m_sourceDownloadButton);
     addAndMakeVisible(m_spotifyBrowser);
     addAndMakeVisible(m_frequencyBox);
+    addAndMakeVisible(m_directoryBox);
 
     // handler
 
@@ -69,7 +73,10 @@ SamplerInfinite::SamplerInfinite(GranularinfiniteAudioProcessor& p, ButtonPalett
         std::cout << "selected: " << selected << "\n";
         };
 
-
+    m_directoryBox.onItemSelected = [](juce::String selected)
+        {
+            std::cout << selected << "\n";
+        };
 }
 
 SamplerInfinite::~SamplerInfinite()
@@ -97,7 +104,10 @@ void SamplerInfinite::sampleProcessing()
 
     FFTProcessor fftProcessor(config.chunkSize, config.sampleRate);
 
-    // up next:: audio file parse
+    AudioFileParse parser;
+
+    // up next: get location + filename and pass into this
+    // parser.readAudioFileAsMono(location, name)
 }
 
 void SamplerInfinite::sourceDownloadHandler()
@@ -130,6 +140,7 @@ void SamplerInfinite::sourceDownloadHandler()
 
         // make a guard against this vvv
         sampleProcessing();
+
     };
 }
 
@@ -189,4 +200,5 @@ void SamplerInfinite::resized()
     m_spotifyButton.setBounds(50, y + 400, 80, 80);
     m_sourceDownloadButton.setBounds(1500, y + 400, 80, 80);
     m_frequencyBox.setBounds(1500, 200, 500, 300);
+    m_directoryBox.setBounds(1500, 700, 500, 300);
 }

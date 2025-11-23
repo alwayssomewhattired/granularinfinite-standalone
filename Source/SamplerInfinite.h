@@ -50,6 +50,7 @@ private:
     Config config;
 
     SearchableComboBox m_frequencyBox;
+    SearchableComboBox m_directoryBox;
 
     ButtonPalette& buttonPalette;
     // make a class specifically for the grainPositionSlider.
@@ -76,6 +77,9 @@ private:
 
     // selected song(s)
     juce::Rectangle<int> m_selected{ 1150, 110, 300, 780 };
+
+    // directory component
+
 
     // unused
     std::vector<std::string> selectedFreqs;

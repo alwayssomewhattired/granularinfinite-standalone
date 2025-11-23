@@ -9,6 +9,11 @@
 #include "ButtonPalette.h"
 #include "DualThumbSlider.h"
 #include "GrainPositionControl.h"
+#include <memory>
+#include "JuceHeader.h"
+#include <juce_core/juce_core.h>
+
+
 
 
 
@@ -82,8 +87,15 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             // sample-name
             auto* label = new SampleLabel("");
             button->setOnFileDropped([this, myNoteName, label](const juce::String& fullPath,
-                const juce::String& name) {
-                    juce::String refinedNote = myNoteName.dropLastCharacters(1) + juce::String(octave);
+                const juce::String& name, std::map<juce::String, juce::Array<juce::File>>& noteToFiles) {
+
+                    // loop over all elements of m_noteToFile.
+
+                    //juce::String refinedNote = myNoteName.dropLastCharacters(1) + juce::String(octave);
+                    for (const auto& [k, v] : noteToFiles) {
+                        std::cout << "note name: " << k.toStdString() << "\n";
+                        juce::String refinedNote = k;
+
                     label->setButtonText(name);
                     noteToSample.set(refinedNote, name);
                     juce::File file(fullPath);
@@ -120,6 +132,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
                                 m_waveformDisplay.clear();
                             }
                         });
+                }
                 });
             //------------//
 

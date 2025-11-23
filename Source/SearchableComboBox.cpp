@@ -4,7 +4,7 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 #include "KeyToNote.h"
 
-SearchableComboBox::SearchableComboBox()
+SearchableComboBox::SearchableComboBox(const bool realtimeResults)
 {
 	addAndMakeVisible(searchBox);
 	searchBox.addListener(this);
@@ -12,22 +12,32 @@ SearchableComboBox::SearchableComboBox()
 	addAndMakeVisible(listBox);
 	listBox.setModel(this);
 
-	auto& notes = CreateNoteToMidi;
-
-	for (const auto& [k, v] : notes)
+	if (realtimeResults)
 	{
-		allItems.add(k);
-	}
+		auto& notes = CreateNoteToMidi;
 
-	filteredItems = allItems;
+		for (const auto& [k, v] : notes)
+		{
+			allItems.add(k);
+		}
+
+		filteredItems = allItems;
+	}
 
 }
 
 void SearchableComboBox::resized()
 {
-
-	searchBox.setBounds(0, 0, 50, 40);
-	listBox.setBounds(0, 40, 50, 200);
+	if (realtimeResults)
+	{
+		searchBox.setBounds(0, 0, 200, 40);
+		listBox.setBounds(0, 40, 200, 200);
+	}
+	else
+	{
+		searchBox.setBounds(0, 0, 50, 40);
+		listBox.setBounds(0, 40, 50, 200);
+	}
 	searchBox.setFont(juce::Font(26.0f));
 	searchBox.setColour(juce::TextEditor::textColourId, juce::Colours::green);
 	searchBox.setColour(juce::TextEditor::backgroundColourId, juce::Colours::black);
@@ -41,6 +51,7 @@ std::vector<double> SearchableComboBox::getFrequencies()
 {
 	std::vector<double> chosenFreqs;
 	std::map<std::string, double> myMap = createNoteToFreq();
+	
 	for (const int& n : toggledRows)
 	{
 		chosenFreqs.push_back(myMap[filteredItems[n].toStdString()]);
