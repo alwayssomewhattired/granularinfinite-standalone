@@ -12,6 +12,7 @@
 #include <memory>
 #include "JuceHeader.h"
 #include <juce_core/juce_core.h>
+#include <algorithm>
 
 
 
@@ -85,60 +86,44 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             button->setColour(juce::TextButton::textColourOffId, juce::Colours::black);
 
             // sample-name
-            auto* label = new SampleLabel("");
-            button->setOnFileDropped([this, myNoteName, label, button](std::map<juce::String, juce::Array<juce::File>>& noteToFiles, const bool& isDir) {
+            auto* sampleLabel = new SampleLabel("", myNoteName);
+            button->setOnFileDropped([this, myNoteName, sampleLabel, button](std::map<juce::String, juce::Array<juce::File>>& noteToFiles, 
+                const bool& isDir) {
 
-                    // loop over all elements of m_noteToFile.
-                    std::cout << "before loop\n";
                     juce::String fullPath;
                     juce::String name;
                     juce::String refinedNote;
-                    std::cout << noteToFiles.size() << "\n";
 
                     for (const auto& [k, v] : noteToFiles) {
-                        std::cout << "note name: " << k.toStdString() << "\n";
                         for (const juce::File& audioFile : v) {
-                            std::cout << "inener loop\n";
                             fullPath = audioFile.getFullPathName();
                             name = audioFile.getFileNameWithoutExtension();
-                            //button->setTrimmedFileName(name);
 
                             if (isDir) {
-                                std::cout << "yes it is dir: " << k << "\n";
                                 refinedNote = k;
                             }
                             else {
-                                std::cout << "not it is not dir: " << myNoteName.dropLastCharacters(1) + juce::String(octave) << "\n";
                                 size_t lastUnderscore = name.toStdString().rfind('_');
                                 if (lastUnderscore != std::string::npos) {
                                     refinedNote = name.substring(lastUnderscore + 1);
-                                    std::cout << "fucke ecerything: " << refinedNote << "\n";
                                 }
-                                std::cout << "midi size: " << CreateNoteToMidi.size() << "\n";
                                 if (CreateNoteToMidi.find(refinedNote) == CreateNoteToMidi.end()) {
                                     refinedNote = myNoteName.dropLastCharacters(1) + juce::String(octave);
-                                    std::cout << "fuck you\n";
-                                }
-                                else {
-                                    std::cout << "we are in deep shit\n";
                                 }
                             }
 
-                        
-                            label->setButtonText(name);
+                            SampleLabel* matchingSampleLabel = sampleLabel;
+                            matchingSampleLabel->setButtonText(name);
                             noteToSample.set(refinedNote, name);
                             juce::File file(fullPath);
                             juce::String refinedName = file.getFileNameWithoutExtension();
-                            label->file = refinedName;
+                            matchingSampleLabel->file = refinedName;
                             synthNote = refinedNote;
-                            std::cout << "name: " << name << "\n";
-                            std::cout << "refinedNote: " << refinedNote << "\n";
-                            std::cout << "refinedName: " << refinedName << "\n";
-                            std::cout << "synthnote: " << synthNote << "\n";
+
                             noteToFile[refinedNote] = std::make_unique<juce::File>(fullPath);
                             GranularinfiniteAudioProcessor::Sample* samplePtr = audioProcessor.loadFile(file, refinedNote, "false");
 
-                            // i can't see my waveform button anymore
+                             //i can't see my waveform button anymore
                             buttonPalette.addWaveformButton(refinedName, [this, refinedNote, refinedName, samplePtr](juce::TextButton& button)
                                 {
 
@@ -169,6 +154,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
                         }
                     }
 
+                    sampleRefresh(button);
                 });
             //------------//
 
@@ -206,7 +192,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             addAndMakeVisible(grainPositionSlider);
             addAndMakeVisible(noteLabel);
             addAndMakeVisible(button);
-            addAndMakeVisible(label);
+            addAndMakeVisible(sampleLabel);
             addAndMakeVisible(buttonPalette.synthToggleButton);
             addAndMakeVisible(m_waveformDisplay);
 
@@ -230,11 +216,11 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             grainPositionAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainPosition", grainPositionSlider);
 
             synthToggleHandler(buttonPalette.synthToggleButton);
-            sampleLabelHandler(*label);
+            sampleLabelHandler(*sampleLabel);
 
             noteLabels.add(noteLabel);
             keyButtons.add(button);
-            sampleLabels.add(label);
+            sampleLabels.add(sampleLabel);
                     }
     }
     resized();
@@ -372,6 +358,33 @@ bool GranularInfinite::keyStateChanged(bool isKeyDown,
     return false;
 }
 
+// *TO-DO*
+// - finish the 'sampleRefresh' function (make it work almost like 'octaveUp'.
+
+// - use this after dropping file/folder.
+// - lazily fixes SampleLabel issue.
+void GranularInfinite::sampleRefresh(KeyButton* button) {
+
+    auto& keyToNote = CreateKeyToNote(octave);
+    const std::string order = "awsedftgyhujkolp;'";
+
+    for (size_t i = 0; i < order.size(); i++)
+    {
+        auto it = keyToNote.find(order[i]);
+        if (it != keyToNote.end())
+        {
+            auto* sample = noteToSample.getValue(it->second);
+            if (!sample)
+            {
+                sampleLabels[i]->setButtonText("");
+            }
+            else {
+                juce::String raw = *sample;
+                sampleLabels[i]->setButtonText(raw);
+            }
+        }
+    }
+}
 
 void GranularInfinite::octaveUp(juce::TextButton& button)
 {
@@ -672,7 +685,6 @@ void GranularInfinite::resized()
         }
         sampleLabels[i]->setBounds(x, y + buttonHeight, buttonWidth, labelHeight);
         const auto& noteName = keyButtons[i]->getTrimmedFileName();
-        std::cout << "the note name: " << noteName.toStdString() << "\n";
         if (auto it = buttonPalette.waveformButtons.find(noteName);
             it != buttonPalette.waveformButtons.end() && it->second)
         {

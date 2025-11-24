@@ -5,9 +5,10 @@
 class SampleLabel : public juce::TextButton
 {
 public:
-	SampleLabel(const juce::String fileName)
+	SampleLabel(const juce::String fileName, const juce::String note)
 	{
 		file = fileName;
+		m_note = note;
 		setButtonText(fileName);
 		setColour(juce::TextButton::textColourOnId, juce::Colours::green);
 		setColour(juce::TextButton::textColourOffId, juce::Colours::green);
@@ -29,9 +30,11 @@ public:
 		g.drawText(getButtonText(), getLocalBounds(), juce::Justification::centred);
 	};
 
+	// I assume this is the file name
 	juce::String file;
 
 	~SampleLabel() override = default;
 private:
+	juce::String m_note;
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SampleLabel)
 };

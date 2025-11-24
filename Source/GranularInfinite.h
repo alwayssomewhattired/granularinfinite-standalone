@@ -42,6 +42,8 @@ public:
     bool keyPressed(const juce::KeyPress& key, Component* originatingComponent) override;
     bool keyStateChanged(bool isKeyDown, Component* originatingComponent) override;
 
+    void sampleRefresh(KeyButton* button);
+
     void octaveUp(juce::TextButton& button);
     void octaveDown(juce::TextButton& button);
 

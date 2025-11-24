@@ -44,8 +44,6 @@ public:
 		//return false;
 	}
 
-	//juce::String fileFreq;
-
 	void collectAudioFiles(const juce::File& file, juce::Array<juce::File>& results, juce::String fileFreq) {
 		if (!file.exists()) return;
 
@@ -61,9 +59,7 @@ public:
 		}
 		else {
 			if (file.hasFileExtension("wav;mp3;aiff;flac;ogg")) {
-				std::cout << "current freq: " << currentFreq.toStdString() << "\n";
 				m_noteToFiles[currentFreq].add(file);
-				std::cout << "this size: " << m_noteToFiles.size() << "\n";
 			}
 		}
 	}
@@ -85,15 +81,8 @@ public:
 			collectAudioFiles(file, audioFiles, fileFreq);
 		}
 
-		//for (const auto& [k, v] : m_noteToFiles) {
-
-		//	const juce::String path = audioFile.getFullPathName();
-		//	std::cout << "other filepath: " << path << "\n";
-		//	auto trimmed = audioFile.getFileNameWithoutExtension();
-
 			if (onFileDropped)
 				onFileDropped(m_noteToFiles, m_isDir);
-		//}
 	}
 
 
