@@ -12,8 +12,7 @@ class KeyButton : public juce::TextButton,
 				  public juce::FileDragAndDropTarget
 {
 public:
-	using FileDroppedCallback = std::function<void(const juce::String& fullPath,
-		const juce::String& fileName, std::map<juce::String, juce::Array<juce::File>>& noteToFiles)>;
+	using FileDroppedCallback = std::function<void(std::map<juce::String, juce::Array<juce::File>>& noteToFiles, const bool& isDir)>;
 
 	KeyButton(const juce::String& keyName, const juce::String& noteName)
 		: TextButton(keyName), noteName(keyName)
@@ -21,7 +20,9 @@ public:
 		setRepaintsOnMouseActivity(true);
 	}
 
-	void setOnFileDropped(FileDroppedCallback cb) { onFileDropped = std::move(cb); }
+	void setOnFileDropped(FileDroppedCallback cb) { 
+		onFileDropped = std::move(cb); 
+	}
 
 	juce::String getNoteName() const { return noteName; }
 
@@ -31,6 +32,7 @@ public:
 	// the trimmed filename
 	juce::String getTrimmedFileName() const { return trimmedFileName; }
 
+	void setTrimmedFileName(const juce::String& filename) { trimmedFileName = filename; }
 
 	bool isInterestedInFileDrag(const juce::StringArray& files) override
 	{	
@@ -47,7 +49,7 @@ public:
 	void collectAudioFiles(const juce::File& file, juce::Array<juce::File>& results, juce::String fileFreq) {
 		if (!file.exists()) return;
 
-		juce::String currentFreq;
+		static juce::String currentFreq;
 
 		if (file.isDirectory()) {
 			juce::Array<juce::File> children;
@@ -58,8 +60,11 @@ public:
 			for (auto& child : children) collectAudioFiles(child, results, fileFreq);
 		}
 		else {
-			if (file.hasFileExtension("wav;mp3;aiff;flac;ogg"))
-				m_noteToFiles[currentFreq] = file;
+			if (file.hasFileExtension("wav;mp3;aiff;flac;ogg")) {
+				std::cout << "current freq: " << currentFreq.toStdString() << "\n";
+				m_noteToFiles[currentFreq].add(file);
+				std::cout << "this size: " << m_noteToFiles.size() << "\n";
+			}
 		}
 	}
 
@@ -69,27 +74,39 @@ public:
 
 		juce::Array<juce::File> audioFiles;
 		juce::String fileFreq;
+		juce::File file;
 
-		for (auto& path : files)
-			collectAudioFiles(juce::File(path), audioFiles, fileFreq);
+		for (auto& path : files) {
+			file = juce::File(path);
+			if (file.isDirectory())
+				m_isDir = true;
+			else
+				m_isDir = false;
+			collectAudioFiles(file, audioFiles, fileFreq);
+		}
 
-		for (auto& audioFile : audioFiles) {
-			const juce::String path = audioFile.getFullPathName();
-			auto trimmed = audioFile.getFileNameWithoutExtension();
+		//for (const auto& [k, v] : m_noteToFiles) {
+
+		//	const juce::String path = audioFile.getFullPathName();
+		//	std::cout << "other filepath: " << path << "\n";
+		//	auto trimmed = audioFile.getFileNameWithoutExtension();
 
 			if (onFileDropped)
-				onFileDropped(path, trimmed, m_noteToFiles);
-		}
+				onFileDropped(m_noteToFiles, m_isDir);
+		//}
 	}
 
 
 private:
 	juce::String noteName;
 	juce::String assignedFile;
+	// filename without the extension
 	juce::String trimmedFileName;
 	juce::String sampleName;
-
+	// Key: frequency
+	// Value: folder of audio files
 	std::map<juce::String, juce::Array<juce::File>> m_noteToFiles;
+	bool m_isDir;
 
 	FileDroppedCallback onFileDropped;
 

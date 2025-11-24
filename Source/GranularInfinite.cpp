@@ -86,56 +86,91 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
 
             // sample-name
             auto* label = new SampleLabel("");
-            button->setOnFileDropped([this, myNoteName, label](const juce::String& fullPath,
-                const juce::String& name, std::map<juce::String, juce::Array<juce::File>>& noteToFiles) {
+            button->setOnFileDropped([this, myNoteName, label, button](std::map<juce::String, juce::Array<juce::File>>& noteToFiles, const bool& isDir) {
 
                     // loop over all elements of m_noteToFile.
+                    std::cout << "before loop\n";
+                    juce::String fullPath;
+                    juce::String name;
+                    juce::String refinedNote;
+                    std::cout << noteToFiles.size() << "\n";
 
-                    //juce::String refinedNote = myNoteName.dropLastCharacters(1) + juce::String(octave);
                     for (const auto& [k, v] : noteToFiles) {
                         std::cout << "note name: " << k.toStdString() << "\n";
-                        juce::String refinedNote = k;
+                        for (const juce::File& audioFile : v) {
+                            std::cout << "inener loop\n";
+                            fullPath = audioFile.getFullPathName();
+                            name = audioFile.getFileNameWithoutExtension();
+                            //button->setTrimmedFileName(name);
 
-                    label->setButtonText(name);
-                    noteToSample.set(refinedNote, name);
-                    juce::File file(fullPath);
-                    juce::String refinedName = file.getFileNameWithoutExtension();
-                    label->file = refinedName;
-                    synthNote = refinedNote;
-                    noteToFile[refinedNote] = std::make_unique<juce::File>(fullPath);
-                    GranularinfiniteAudioProcessor::Sample* samplePtr = audioProcessor.loadFile(file, refinedNote, "false");
-
-                    buttonPalette.addWaveformButton(refinedName, [this, refinedNote, refinedName, samplePtr](juce::TextButton& button)
-                        {
-
-                            juce::String& state = buttonPalette.waveformState;
-                            if (button.getToggleState())
-                            {
-                                if (state.isNotEmpty())
-                                {
-                                    if (auto it = buttonPalette.waveformButtons.find(state); it != buttonPalette.waveformButtons.end())
-                                    {
-                                        it->second->setToggleState(false, juce::dontSendNotification);
-                                    }
-                                }
-                                state = refinedName;
-                                m_waveformDisplay.setBuffer(audioProcessor.getSampleBuffer(refinedNote));
-                                m_waveformDisplay.setSample(samplePtr);
-
-                                // pass in samplePtr and do logic within that 
-                                // this is all wrong. useless sample ptr.
-                                m_waveformDisplay.setPlayheadPosition();
-                                button.setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
+                            if (isDir) {
+                                std::cout << "yes it is dir: " << k << "\n";
+                                refinedNote = k;
                             }
                             else {
-                                state = juce::String();
-                                m_waveformDisplay.clear();
+                                std::cout << "not it is not dir: " << myNoteName.dropLastCharacters(1) + juce::String(octave) << "\n";
+                                size_t lastUnderscore = name.toStdString().rfind('_');
+                                if (lastUnderscore != std::string::npos) {
+                                    refinedNote = name.substring(lastUnderscore + 1);
+                                    std::cout << "fucke ecerything: " << refinedNote << "\n";
+                                }
+                                std::cout << "midi size: " << CreateNoteToMidi.size() << "\n";
+                                if (CreateNoteToMidi.find(refinedNote) == CreateNoteToMidi.end()) {
+                                    refinedNote = myNoteName.dropLastCharacters(1) + juce::String(octave);
+                                    std::cout << "fuck you\n";
+                                }
+                                else {
+                                    std::cout << "we are in deep shit\n";
+                                }
                             }
-                        });
-                }
+
+                        
+                            label->setButtonText(name);
+                            noteToSample.set(refinedNote, name);
+                            juce::File file(fullPath);
+                            juce::String refinedName = file.getFileNameWithoutExtension();
+                            label->file = refinedName;
+                            synthNote = refinedNote;
+                            std::cout << "name: " << name << "\n";
+                            std::cout << "refinedNote: " << refinedNote << "\n";
+                            std::cout << "refinedName: " << refinedName << "\n";
+                            std::cout << "synthnote: " << synthNote << "\n";
+                            noteToFile[refinedNote] = std::make_unique<juce::File>(fullPath);
+                            GranularinfiniteAudioProcessor::Sample* samplePtr = audioProcessor.loadFile(file, refinedNote, "false");
+
+                            // i can't see my waveform button anymore
+                            buttonPalette.addWaveformButton(refinedName, [this, refinedNote, refinedName, samplePtr](juce::TextButton& button)
+                                {
+
+                                    juce::String& state = buttonPalette.waveformState;
+                                    if (button.getToggleState())
+                                    {
+                                        if (state.isNotEmpty())
+                                        {
+                                            if (auto it = buttonPalette.waveformButtons.find(state); it != buttonPalette.waveformButtons.end())
+                                            {
+                                                it->second->setToggleState(false, juce::dontSendNotification);
+                                            }
+                                        }
+                                        state = refinedName;
+                                        m_waveformDisplay.setBuffer(audioProcessor.getSampleBuffer(refinedNote));
+                                        m_waveformDisplay.setSample(samplePtr);
+
+                                        // pass in samplePtr and do logic within that 
+                                        // this is all wrong. useless sample ptr.
+                                        m_waveformDisplay.setPlayheadPosition();
+                                        button.setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
+                                    }
+                                    else {
+                                        state = juce::String();
+                                        m_waveformDisplay.clear();
+                                    }
+                                });
+                        }
+                    }
+
                 });
             //------------//
-
 
             // control-buttons
 
@@ -637,6 +672,7 @@ void GranularInfinite::resized()
         }
         sampleLabels[i]->setBounds(x, y + buttonHeight, buttonWidth, labelHeight);
         const auto& noteName = keyButtons[i]->getTrimmedFileName();
+        std::cout << "the note name: " << noteName.toStdString() << "\n";
         if (auto it = buttonPalette.waveformButtons.find(noteName);
             it != buttonPalette.waveformButtons.end() && it->second)
         {
