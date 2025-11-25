@@ -23,7 +23,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
     :
     audioProcessor(p),
     buttonPalette(bp),
-    grainLengthSlider(std::tuple<double, double, double>(128.0, 48000.0, 1.0)),
+    grainLengthSlider(std::tuple<double, double, double>(512.0, 36000.0, 1.0)),
     grainSpacingLabel(buttonPalette.grainSpacingLabel),
     grainSpacingSlider(buttonPalette.grainSpacingSlider),
     grainAmountLabel(buttonPalette.grainAmountLabel),
@@ -263,11 +263,16 @@ void GranularInfinite::changeListenerCallback(juce::ChangeBroadcaster* source)
 bool GranularInfinite::keyPressed(const juce::KeyPress& key,
     Component* originatingComponent)
 {
+    if (currentlyPressedKeys.find(static_cast<char>(key.getTextCharacter())) != currentlyPressedKeys.end()) {
+        return false;
+    }
     const std::string order = "awsedftgyhujkolp;'";
     char char_key = static_cast<char>(key.getTextCharacter());
     auto it = keyToNote.find(char_key);
     if (it != keyToNote.end())
     {
+        const juce::String& noteName = it->second;
+
         auto it2 = currentlyPressedKeys.find(char_key);
         size_t index = order.find(char_key);
         if (index != std::string::npos)
@@ -277,7 +282,7 @@ bool GranularInfinite::keyPressed(const juce::KeyPress& key,
             {
                 if (it2 == currentlyPressedKeys.end())
                 {
-                    const int midi_note = CreateNoteToMidi[it->second];
+                    const int midi_note = CreateNoteToMidi[noteName];
                     juce::MidiMessage m = juce::MidiMessage::noteOn(1, midi_note, (juce::uint8)127);
                     audioProcessor.addMidiEvent(m);
                     currentlyPressedKeys.insert(char_key);
@@ -299,17 +304,22 @@ bool GranularInfinite::keyPressed(const juce::KeyPress& key,
 
             button->setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
             button->repaint();
-            if (auto* sampleName = noteToSample.getValue(it->second))
+            if (auto* sampleName = noteToSample.getValue(noteName))
             {
-                if (sampleName->isNotEmpty())
-
                 {
-                    audioProcessor.startPlayback(it->second);
-                }
-                return true;
+
+                    if (sampleName->isNotEmpty())
+                    {
+                        if (noteName.isNotEmpty()) {
+                            if (audioProcessor.grainAll)
+                                audioProcessor.updateCurrentSamples(noteName, false);
+                        }
+                        audioProcessor.startPlayback(noteName);
+                    }
+                    return true;
             }
+        }
             else {
-                std::cout << "sample failure\n";
                 return false;
             }
         }
@@ -347,6 +357,14 @@ bool GranularInfinite::keyStateChanged(bool isKeyDown,
                 }
                 juce::String noteName = keyToNote[keyChar];
                 it = currentlyPressedKeys.erase(it);
+
+                auto sampleNameIt = keyToNote.find(keyChar);
+                if (sampleNameIt != keyToNote.end()) {
+                    if (auto* sampleName = noteToSample.getValue(sampleNameIt->second)) {
+                        if (audioProcessor.grainAll)
+                            audioProcessor.updateCurrentSamples(*sampleName, true);
+                    }
+                }
                 audioProcessor.stopPlayback(noteName);
             }
             else

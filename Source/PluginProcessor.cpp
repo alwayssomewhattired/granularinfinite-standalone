@@ -212,7 +212,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
         "GrainMaxLength",
         128,
         48000,
-        512
+        36000
     ));
 
     params.push_back(std::make_unique<juce::AudioParameterInt>(
@@ -220,7 +220,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
         "GrainMinLength",
         128,
         48000,
-        36000
+        512
     ));
 
     auto dynamicRange = juce::NormalisableRange<float>(
@@ -241,8 +241,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
 void GranularinfiniteAudioProcessor::updateMaxFileSize(float const& newMaxFileSize)
 {
 
-    if (m_maxFileSize < newMaxFileSize)
+    if (m_maxFileSize < newMaxFileSize) {
+        std::cout << "the other one in here : " << m_maxFileSize << "\n";
+        std::cout << "the other one in after : " << newMaxFileSize << "\n";
         m_maxFileSize = newMaxFileSize;
+    }
     // I don't believe we need the rest of this down below...
     if (auto* param = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("grainPosition")))
     {
@@ -259,6 +262,14 @@ void GranularinfiniteAudioProcessor::updateMaxFileSize(float const& newMaxFileSi
     sendChangeMessage();
 }
 
+void GranularinfiniteAudioProcessor::updateCurrentSamples(const juce::String noteName, const bool remove) {
+    // samples is duplicating when repressed. fix this. could be in another function
+    if (!remove)
+        currentNotes.push_back(noteName);
+    else {
+        currentNotes.erase(std::remove(currentNotes.begin(), currentNotes.end(), noteName), currentNotes.end());
+    }
+}
 
 void GranularinfiniteAudioProcessor::addMidiEvent(const juce::MidiMessage& m)
 {
@@ -275,13 +286,17 @@ void GranularinfiniteAudioProcessor::spawnGrain(int64_t fileLength)
 
 
     Grain g;
+    std::cout << "maxGrainLength" << maxGrainLength << "\n";
+    std::cout << "minGrainLength" << minGrainLength << "\n";
 
     g.length = juce::Random::getSystemRandom().nextInt(maxGrainLength - minGrainLength + 1) + minGrainLength;
-
     // start sample plays a random sample
     maxGrainLength = apvts.getRawParameterValue("grainMaxLength")->load();
-
+    std::cout << "g length: " << g.length << "\n";
+    std::cout << "m_maxFileSize: " << m_maxFileSize << "\n";
     const float grainArea = (apvts.getRawParameterValue("grainPosition")->load() / 600.0f) * m_maxFileSize;
+    std::cout << "grainArea: " << grainArea << "\n";
+
     g.startSample = juce::Random::getSystemRandom().nextInt(std::abs(grainArea - g.length));
 
 
@@ -320,52 +335,62 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
     buffer.clear();
     minGrainLength = *minGrainLengthPtr;
     maxGrainLength = *maxGrainLengthPtr;
-    for (auto& pair : samples)
-    {
-        auto& sample = pair.second;
-        auto& m_fullBuffer = sample->fullBuffer;
-
-        for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
+    // *TO-DO*
+    // - iterate over the correct sample that's pressed
+    for (const juce::String& noteName : currentNotes) {
+        for (auto& pair : samples)
         {
-            float out = 0.0f;
 
-            for (auto it = grains.begin(); it != grains.end(); )
+            // *TO-DO*
+            // - we never pass this condition
+            //std::cout << "first: " << pair.first.toStdString() << "\n";
+            //std::cout << "noteName: " << noteName.toStdString() << "\n";
+            if (pair.first != noteName) continue;
+
+            auto& sample = pair.second;
+            auto& m_fullBuffer = sample->fullBuffer;
+
+            for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
             {
-                Grain& g = *it;
-                if (g.position < g.length)
+                float out = 0.0f;
+
+                for (auto it = grains.begin(); it != grains.end(); )
                 {
-                    int readIndex = (g.startSample + (int)(g.position * g.pitchRatio));
-                    if (readIndex >= m_fullBuffer.getNumSamples())
+                    Grain& g = *it;
+                    if (g.position < g.length)
                     {
-                        it = grains.erase(it);
-                        continue;
+                        int readIndex = (g.startSample + (int)(g.position * g.pitchRatio));
+                        if (readIndex >= m_fullBuffer.getNumSamples())
+                        {
+                            it = grains.erase(it);
+                            continue;
+                        }
+
+                        int idx = (g.position * hannWindow.size()) / g.length;
+                        float env = hannWindow[idx];
+                        out += m_fullBuffer.getSample(0, readIndex) * env;
+
+                        ++g.position;
+                        ++it;
                     }
-
-                    int idx = (g.position * hannWindow.size()) / g.length;
-                    float env = hannWindow[idx];
-                    out += m_fullBuffer.getSample(0, readIndex) * env;
-
-                    ++g.position;
-                    ++it;
+                    else {
+                        it = grains.erase(it);
+                    }
                 }
-                else {
-                    it = grains.erase(it);
+                for (int ch = 0; ch < outCh; ++ch)
+                {
+                    buffer.addSample(ch, sampleIdx, out);
                 }
             }
-            for (int ch = 0; ch < outCh; ++ch)
+
+            grainCounter += numSamples;
+            if (grainCounter >= grainSpacing)
             {
-                buffer.addSample(ch, sampleIdx, out);
+                grainCounter = 0;
+                spawnGrain(sample->audioFileLength);
             }
-        }
-
-        grainCounter += numSamples;
-        if (grainCounter >= grainSpacing)
-        {
-            grainCounter = 0;
-            spawnGrain(sample->audioFileLength);
         }
     }
-
 }
 
 void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
@@ -412,6 +437,7 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
 
     if (grainAll)
     {
+        // pass the buttons pressed into granularpath
         if (m_keyPressed)
             processGranularPath(buffer, outCh, numSamples);
         return;

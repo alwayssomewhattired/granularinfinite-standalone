@@ -18,7 +18,7 @@ public:
 		decrementButton.setButtonText("-");
 
 		synthToggleButton.setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
-		synthToggleButton.setButtonText("mode");
+		synthToggleButton.setButtonText("granular");
 		synthToggleButton.setClickingTogglesState(true);
 
 		grainSpacingLabel.setText("grain spacing", juce::dontSendNotification);

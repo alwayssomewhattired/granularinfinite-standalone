@@ -63,6 +63,8 @@ public:
     float getMaxFileSize() const;
     void  updateMaxFileSize(float const& newMaxFileSize);
 
+    void updateCurrentSamples(const juce::String fileName, const bool remove);
+
     juce::AudioBuffer<float>& getSampleBuffer(const juce::String& fileName) const;
 
     bool synthToggle = false;
@@ -138,9 +140,9 @@ private:
     // controls
     int grainSpacing = 1;
     int grainAmount = 1;
-    int minGrainLength = 128;
+    int minGrainLength = 512;
     std::atomic<float>* minGrainLengthPtr = nullptr;
-    int maxGrainLength = 512; 
+    int maxGrainLength = 3600; 
     std::atomic<float>* maxGrainLengthPtr = nullptr;
     int maxCircularSize = 24000; // half second
     juce::NormalisableRange<float> m_dynamicRange;
@@ -150,6 +152,9 @@ private:
     // dunno if i need this circular anymore
     juce::AudioBuffer<float> circularBuffer;
     int circularWritePos = 0;
+
+    // - stored filenames of current samples
+    std::vector<juce::String> currentNotes;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GranularinfiniteAudioProcessor)
