@@ -66,6 +66,8 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
     const std::string order = "awsedftgyhujkolp;'";
     int count = 0;
 
+    // IMPORTANT!
+    // i have a bunch of stuff in this loop that only needs to be initialized once. get it out of there
     for (auto key : order)
     {
         if (keyToNote.find(key) != keyToNote.end()) count++;
@@ -177,9 +179,12 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             grainAmountSlider.setLookAndFeel(&customLook);
             grainLengthSlider.setLookAndFeel(&diySlider);
             grainPositionSlider.setLookAndFeel(&customLook);
+            buttonPalette.frequencyUpwardCompressorSlider.setLookAndFeel(&customLook);
 
 
             addAndMakeVisible(buttonPalette);
+            addAndMakeVisible(buttonPalette.frequencyUpwardCompressorLabel);
+            addAndMakeVisible(buttonPalette.frequencyUpwardCompressorSlider);
             addAndMakeVisible(componentButton);
             addAndMakeVisible(octaveIncrement);
             addAndMakeVisible(octaveDecrement);
@@ -216,7 +221,10 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             grainSpacingAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainSpacing", grainSpacingSlider);
             grainAmountAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainAmount", grainAmountSlider);
             grainPositionAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainPosition", grainPositionSlider);
+            frequencyUpwardCompressorAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "frequencyUpwardCompressorProminence",
+                buttonPalette.frequencyUpwardCompressorSlider);
             hanningToggleAttachment = std::make_unique<ButtonAttachment>(audioProcessor.apvts, "hanningToggle", *hanningToggleButton);
+
 
             synthToggleHandler(buttonPalette.synthToggleButton);
             sampleLabelHandler(*sampleLabel);
@@ -236,6 +244,7 @@ GranularInfinite::~GranularInfinite()
     grainAmountSlider.setLookAndFeel(nullptr);
     grainLengthSlider.setLookAndFeel(nullptr);
     grainPositionSlider.setLookAndFeel(nullptr);
+    buttonPalette.frequencyUpwardCompressorSlider.setLookAndFeel(nullptr);
 }
 
 //==============================================================================
@@ -605,6 +614,9 @@ void GranularInfinite::resized()
     buttonPalette.synthToggleButton.setBounds(x, y + 350, buttonWidth, buttonHeight);
 
     buttonPalette.hanningToggleButton.setBounds(x + 100, y + 350, buttonWidth, buttonHeight);
+
+    buttonPalette.frequencyUpwardCompressorLabel.setBounds(x + 200, y + 300, buttonWidth + 20, buttonHeight - 40);
+    buttonPalette.frequencyUpwardCompressorSlider.setBounds(x + 200, y + 330, 200, 100);
 
     m_waveformDisplay.setBounds(1500, 275, 600, 200);
 

@@ -139,6 +139,27 @@ void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int sampl
     );
 
 
+    // frequency upward-compressor
+
+    juce::dsp::ProcessSpec spec{ sampleRate, (juce::uint32)samplesPerBlock, 1 };
+
+    bandpassFilter.prepare(spec);
+    m_upwardCompressor.prepare(spec);
+
+    // compressor settings
+    m_upwardCompressor.setThreshold(-40.0f);
+    m_upwardCompressor.setRatio(10.0f);
+    m_upwardCompressor.setAttack(10.0f);
+    m_upwardCompressor.setRelease(50.0f);
+
+    //set center frequency at startup
+
+    updateFilter(sampleRate);
+
+
+
+    //
+    // //
     //// trigger this via button click in the future
     //////spotify token grabber
     //SpotifyAuthenticator auth;
@@ -242,6 +263,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
         "hanningToggle",
         "HanningToggle",
         false
+    ));
+
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "frequencyUpwardCompressorProminence",
+        "FrequencyUpwardCompressorProminence",
+        0.00f,
+        1.00f,
+        0.00f
     ));
 
     return { params.begin(), params.end() };
@@ -352,9 +381,15 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                         if (hanningToggle) {
                             idx = (g.position * hannWindow.size()) / g.length;
                             float env = hannWindow[idx];
-                            out += limiter(m_fullBuffer.getSample(0, readIndex) * env, 0.8f);
+                            float limiterSamples = limiter(m_fullBuffer.getSample(0, readIndex) * env, 0.8f);
+
+                            out += upwardCompressor(limiterSamples);
                         }
-                        else out += limiter(m_fullBuffer.getSample(0, readIndex), 0.8f);
+                        else {
+                            float limiterSamples = limiter(m_fullBuffer.getSample(0, readIndex), 0.8f);
+
+                            out += upwardCompressor(limiterSamples);
+                        }
 
                         ++g.position;
                         ++it;
@@ -377,6 +412,52 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
             }
         }
     }
+}
+
+float GranularinfiniteAudioProcessor::upwardCompressor(float x)
+{
+    // get presence value
+    float presence = apvts.getRawParameterValue("frequencyUpwardCompressorProminence")->load();
+
+    float makeupGain = juce::Decibels::decibelsToGain(presence * 12.0f);
+    float wetDry = presence;
+
+    // 1. Extract the frequency band
+    float band = bandpassFilter.processSample(x);
+
+    // 2. Run through downward compressor
+    float before = band;
+
+    // first channel only... forsseable change in future
+    float after = m_upwardCompressor.processSample(0, band);
+
+    // 3. Invert gain reduction (upward compression)
+    float gainReduction = before - after;
+
+    float upwardBoost = gainReduction * presence; // presenceAmount = presence
+
+    // 4. Combine band + inverted GR
+    float processed = after + upwardBoost;
+
+    // Apply makeup gain only to the processed band
+    processed *= makeupGain;
+
+    // 5. Wet/dry mix into original signal
+    return x + processed * wetDry;
+}
+
+
+
+void GranularinfiniteAudioProcessor::updateFilter(const double& sampleRate) {
+    float Q = 10.0f;
+
+    auto coeffs = juce::dsp::IIR::Coefficients<float>::makeBandPass(
+        sampleRate,
+        centerFreq,
+        Q
+    );
+
+    bandpassFilter.coefficients = coeffs;
 }
 
 // simple limiter

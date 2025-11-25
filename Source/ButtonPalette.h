@@ -34,7 +34,7 @@ public:
 		grainSpacingSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
 		grainSpacingSlider.setRange(0.1, 48000.0, 0.1);
 		grainSpacingSlider.setValue(1.0);
-		
+
 		grainAmountLabel.setText("grain amount", juce::dontSendNotification);
 		grainAmountLabel.setFont(juce::Font(16.0f, juce::Font::bold));
 		grainAmountLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
@@ -45,6 +45,11 @@ public:
 		grainAmountSlider.setRange(1.0, 256.0, 1.0);
 		grainAmountSlider.setValue(1.0);
 
+		frequencyUpwardCompressorSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+		frequencyUpwardCompressorSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
+		frequencyUpwardCompressorSlider.setRange(0.0, 1.0, 0.01);
+		frequencyUpwardCompressorSlider.setValue(0.0);
+
 		grainPositionLabel.setText("grain area", juce::dontSendNotification);
 		grainPositionLabel.setFont(juce::Font(16.0f, juce::Font::bold));
 		grainPositionLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
@@ -54,6 +59,12 @@ public:
 		grainLengthLabel.setFont(juce::Font(16.0f, juce::Font::bold));
 		grainLengthLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
 		grainLengthLabel.setJustificationType(juce::Justification::centred);
+
+		frequencyUpwardCompressorLabel.setText("freq expander", juce::dontSendNotification);
+		frequencyUpwardCompressorLabel.setFont(juce::Font(16.0f, juce::Font::bold));
+		frequencyUpwardCompressorLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
+		frequencyUpwardCompressorLabel.setJustificationType(juce::Justification::centred);
+
 
 		// make a button for spotify events vvv
 		spotifyButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
@@ -104,9 +115,11 @@ public:
 
 	juce::Slider grainSpacingSlider;
 	juce::Slider grainAmountSlider;
+	juce::Slider frequencyUpwardCompressorSlider;
 
 	juce::Label grainSpacingLabel;
 	juce::Label grainAmountLabel;
 	juce::Label grainLengthLabel;
 	juce::Label grainPositionLabel;
+	juce::Label frequencyUpwardCompressorLabel;
 };

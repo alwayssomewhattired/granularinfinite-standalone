@@ -111,6 +111,7 @@ private:
     std::unique_ptr<SliderAttachment> grainSpacingAttachment;
     std::unique_ptr<SliderAttachment> grainAmountAttachment;
     std::unique_ptr<SliderAttachment> grainPositionAttachment;
+    std::unique_ptr<SliderAttachment> frequencyUpwardCompressorAttachment;
     std::unique_ptr<ButtonAttachment> hanningToggleAttachment;
 
     // dunno if this is still needed v

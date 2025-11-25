@@ -67,6 +67,19 @@ public:
 
     juce::AudioBuffer<float>& getSampleBuffer(const juce::String& fileName) const;
 
+
+    // frequency compressor
+    float upwardCompressor(float x);
+    void updateFilter(const double& sampleRate);
+
+    juce::dsp::IIR::Filter<float> bandpassFilter;
+    juce::dsp::Compressor<float> m_upwardCompressor;
+
+    float centerFreq = 220.00f;
+    float presenceAmount = 0;
+
+
+
     float limiter(float x, float threshold);
 
     bool synthToggle = false;
