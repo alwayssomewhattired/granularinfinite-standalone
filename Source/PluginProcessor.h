@@ -153,8 +153,11 @@ private:
     juce::AudioBuffer<float> circularBuffer;
     int circularWritePos = 0;
 
-    // - stored filenames of current samples
+    // - stored noteNames of current samples
     std::vector<juce::String> currentNotes;
+
+    // - stored fileNames of current samples
+    std::vector<juce::String> currentFiles;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GranularinfiniteAudioProcessor)
