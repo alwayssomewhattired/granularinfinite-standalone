@@ -362,7 +362,7 @@ bool GranularInfinite::keyStateChanged(bool isKeyDown,
                 if (sampleNameIt != keyToNote.end()) {
                     if (auto* sampleName = noteToSample.getValue(sampleNameIt->second)) {
                         if (audioProcessor.grainAll)
-                            audioProcessor.updateCurrentSamples(*sampleName, true);
+                            audioProcessor.updateCurrentSamples(noteName, true);
                     }
                 }
                 audioProcessor.stopPlayback(noteName);

@@ -242,8 +242,6 @@ void GranularinfiniteAudioProcessor::updateMaxFileSize(float const& newMaxFileSi
 {
 
     if (m_maxFileSize < newMaxFileSize) {
-        std::cout << "the other one in here : " << m_maxFileSize << "\n";
-        std::cout << "the other one in after : " << newMaxFileSize << "\n";
         m_maxFileSize = newMaxFileSize;
     }
     // I don't believe we need the rest of this down below...
@@ -286,19 +284,13 @@ void GranularinfiniteAudioProcessor::spawnGrain(int64_t fileLength)
 
 
     Grain g;
-    std::cout << "maxGrainLength" << maxGrainLength << "\n";
-    std::cout << "minGrainLength" << minGrainLength << "\n";
 
     g.length = juce::Random::getSystemRandom().nextInt(maxGrainLength - minGrainLength + 1) + minGrainLength;
     // start sample plays a random sample
     maxGrainLength = apvts.getRawParameterValue("grainMaxLength")->load();
-    std::cout << "g length: " << g.length << "\n";
-    std::cout << "m_maxFileSize: " << m_maxFileSize << "\n";
     const float grainArea = (apvts.getRawParameterValue("grainPosition")->load() / 600.0f) * m_maxFileSize;
-    std::cout << "grainArea: " << grainArea << "\n";
 
     g.startSample = juce::Random::getSystemRandom().nextInt(std::abs(grainArea - g.length));
-
 
     g.position = 0;
     // insert pitch stuff here...

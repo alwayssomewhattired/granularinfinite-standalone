@@ -91,6 +91,7 @@ private:
 	juce::String assignedFile;
 	// filename without the extension
 	juce::String trimmedFileName;
+
 	juce::String sampleName;
 	// Key: frequency
 	// Value: folder of audio files
