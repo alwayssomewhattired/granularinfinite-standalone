@@ -67,6 +67,8 @@ public:
 
     juce::AudioBuffer<float>& getSampleBuffer(const juce::String& fileName) const;
 
+    float limiter(float x, float threshold);
+
     bool synthToggle = false;
 
     // granular toggle flag

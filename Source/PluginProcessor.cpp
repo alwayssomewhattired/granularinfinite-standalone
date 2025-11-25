@@ -345,14 +345,16 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                             it = grains.erase(it);
                             continue;
                         }
+
                         int idx;
                         const bool hanningToggle = apvts.getRawParameterValue("hanningToggle")->load();
+
                         if (hanningToggle) {
                             idx = (g.position * hannWindow.size()) / g.length;
                             float env = hannWindow[idx];
-                            out += m_fullBuffer.getSample(0, readIndex) * env;
+                            out += limiter(m_fullBuffer.getSample(0, readIndex) * env, 0.8f);
                         }
-                        else out += m_fullBuffer.getSample(0, readIndex);
+                        else out += limiter(m_fullBuffer.getSample(0, readIndex), 0.8f);
 
                         ++g.position;
                         ++it;
@@ -375,6 +377,13 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
             }
         }
     }
+}
+
+// simple limiter
+float GranularinfiniteAudioProcessor::limiter(float x, float threshold) {
+    if (x > threshold) return threshold + (x - threshold) * 0.2f;
+    if (x < -threshold) return -threshold + (x + threshold) * 0.2f;
+    return x;
 }
 
 void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
