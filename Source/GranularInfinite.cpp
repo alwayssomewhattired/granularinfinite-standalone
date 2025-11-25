@@ -30,7 +30,8 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
     grainAmountSlider(buttonPalette.grainAmountSlider),
     grainPositionSlider(GrainPositionControl(p)),
     grainPositionLabel(buttonPalette.grainPositionLabel),
-    grainLengthLabel(buttonPalette.grainLengthLabel)
+    grainLengthLabel(buttonPalette.grainLengthLabel),
+    hanningToggleButton(&buttonPalette.hanningToggleButton)
 
 {
     audioProcessor.addChangeListener(this);
@@ -194,6 +195,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             addAndMakeVisible(button);
             addAndMakeVisible(sampleLabel);
             addAndMakeVisible(buttonPalette.synthToggleButton);
+            addAndMakeVisible(buttonPalette.hanningToggleButton);
             addAndMakeVisible(m_waveformDisplay);
 
 
@@ -214,6 +216,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             grainSpacingAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainSpacing", grainSpacingSlider);
             grainAmountAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainAmount", grainAmountSlider);
             grainPositionAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainPosition", grainPositionSlider);
+            hanningToggleAttachment = std::make_unique<ButtonAttachment>(audioProcessor.apvts, "hanningToggle", *hanningToggleButton);
 
             synthToggleHandler(buttonPalette.synthToggleButton);
             sampleLabelHandler(*sampleLabel);
@@ -596,10 +599,13 @@ void GranularInfinite::resized()
     buttonPalette.componentButton.setBounds(1600, y + 400, 80, 80);
     componentButton.setBounds(1600, y + 400, 80, 80);
 
-    buttonPalette.decrementButton.setBounds(x - 200, y + 400, buttonWidth, buttonHeight);
-    buttonPalette.incrementButton.setBounds(x - 100, y + 400, buttonWidth, buttonHeight);
+    buttonPalette.decrementButton.setBounds(x - 200, y + 350, buttonWidth, buttonHeight);
+    buttonPalette.incrementButton.setBounds(x - 100, y + 350, buttonWidth, buttonHeight);
 
-    buttonPalette.synthToggleButton.setBounds(x, y + 400, buttonWidth, buttonHeight);
+    buttonPalette.synthToggleButton.setBounds(x, y + 350, buttonWidth, buttonHeight);
+
+    buttonPalette.hanningToggleButton.setBounds(x + 100, y + 350, buttonWidth, buttonHeight);
+
     m_waveformDisplay.setBounds(1500, 275, 600, 200);
 
     juce::FlexBox outer;

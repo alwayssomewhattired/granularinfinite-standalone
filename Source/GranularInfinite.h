@@ -101,14 +101,17 @@ private:
     juce::Label& grainPositionLabel;
     GrainPositionControl grainPositionSlider;
 
+    std::unique_ptr<juce::TextButton> hanningToggleButton;
 
 
 
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
+    using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
 
     std::unique_ptr<SliderAttachment> grainSpacingAttachment;
     std::unique_ptr<SliderAttachment> grainAmountAttachment;
     std::unique_ptr<SliderAttachment> grainPositionAttachment;
+    std::unique_ptr<ButtonAttachment> hanningToggleAttachment;
 
     // dunno if this is still needed v
     std::unique_ptr<SliderAttachment> grainMaxLength;

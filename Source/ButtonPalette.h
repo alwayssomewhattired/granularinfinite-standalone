@@ -21,6 +21,10 @@ public:
 		synthToggleButton.setButtonText("granular");
 		synthToggleButton.setClickingTogglesState(true);
 
+		hanningToggleButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
+		hanningToggleButton.setButtonText("hanning");
+		hanningToggleButton.setClickingTogglesState(true);
+
 		grainSpacingLabel.setText("grain spacing", juce::dontSendNotification);
 		grainSpacingLabel.setFont(juce::Font(16.0f, juce::Font::bold));
 		grainSpacingLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
@@ -28,8 +32,8 @@ public:
 
 		grainSpacingSlider.setSliderStyle(juce::Slider::LinearHorizontal);
 		grainSpacingSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
-		grainSpacingSlider.setRange(1.0, 48000.0, 1.0);
-		grainSpacingSlider.setValue(20.0);
+		grainSpacingSlider.setRange(0.1, 48000.0, 0.1);
+		grainSpacingSlider.setValue(1.0);
 		
 		grainAmountLabel.setText("grain amount", juce::dontSendNotification);
 		grainAmountLabel.setFont(juce::Font(16.0f, juce::Font::bold));
@@ -57,6 +61,7 @@ public:
 
 		sourceDownloadButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
 		sourceDownloadButton.setButtonText("download");
+
 	}
 
 	std::function<void()> onWaveformButtonAdded;
@@ -92,6 +97,7 @@ public:
 	juce::TextButton waveformButton;
 	juce::TextButton spotifyButton;
 	juce::TextButton sourceDownloadButton;
+	juce::TextButton hanningToggleButton;
 
 	// file-name to waveformButton
 	std::map<juce::String, std::unique_ptr<juce::TextButton>> waveformButtons;

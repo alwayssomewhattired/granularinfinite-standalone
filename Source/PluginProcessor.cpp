@@ -129,6 +129,7 @@ void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int sampl
     circularBuffer.setSize(getTotalNumOutputChannels(), maxCircularSize, false, false, true);
     circularBuffer.clear();
 
+    // make control for hann window
     hannWindow.resize(maxGrainLength);
     juce::dsp::WindowingFunction<float>::fillWindowingTables(
         hannWindow.data(),
@@ -196,7 +197,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
     params.push_back(std::make_unique<juce::AudioParameterFloat>(
         "grainSpacing",
         "GrainSpacing",
-        juce::NormalisableRange<float> (1.0f, 48000.0f, 1.0f),
+        juce::NormalisableRange<float> (0.1f, 48000.0f, 0.1f),
         1.0f
     ));
 
@@ -233,6 +234,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
         "GrainPosition",
         dynamicRange,
         0
+    ));
+
+    params.push_back(std::make_unique<juce::AudioParameterBool>(
+        "hanningToggle",
+        "HanningToggle",
+        false
     ));
 
     return { params.begin(), params.end() };
@@ -357,10 +364,14 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                             it = grains.erase(it);
                             continue;
                         }
-
-                        int idx = (g.position * hannWindow.size()) / g.length;
-                        float env = hannWindow[idx];
-                        out += m_fullBuffer.getSample(0, readIndex) * env;
+                        int idx;
+                        const bool hanningToggle = apvts.getRawParameterValue("hanningToggle")->load();
+                        if (hanningToggle) {
+                            idx = (g.position * hannWindow.size()) / g.length;
+                            float env = hannWindow[idx];
+                            out += m_fullBuffer.getSample(0, readIndex) * env;
+                        }
+                        else out += m_fullBuffer.getSample(0, readIndex);
 
                         ++g.position;
                         ++it;
