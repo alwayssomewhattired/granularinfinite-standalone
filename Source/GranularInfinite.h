@@ -68,18 +68,25 @@ private:
 
     juce::String synthNote = "G4";
 
+    const std::vector<std::string> noteRange = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+
     std::map<juce::String, std::unique_ptr<juce::File>> noteToFile;
     std::set<char> currentlyPressedKeys;
+    // i believe these are the keybuttons that are in current octave range
     juce::OwnedArray<KeyButton> keyButtons;
     juce::OwnedArray<SampleLabel> sampleLabels;
     juce::OwnedArray<NoteLabel> noteLabels;
     std::map<char, juce::String> keyToNote;
     BiMap<juce::String, juce::String> noteToSample;
+    const std::map<std::string, double>& m_noteToFreq = createNoteToFreq();
+
     juce::MidiBuffer pendingMidi;
     int octave = 4;
     juce::String currentlyPressedSample = "none";
 
     void timerCallback() override;
+
+
 
     ButtonPalette& buttonPalette;
     // make a class specifically for the grainPositionSlider.
@@ -103,7 +110,15 @@ private:
 
     std::unique_ptr<juce::TextButton> hanningToggleButton;
 
+    struct FrequencyUpwardCompressor {
+        double frequency;
+        std::unique_ptr<juce::Slider> slider;
+    };
 
+    // note to struct
+    std::unordered_map<std::string, FrequencyUpwardCompressor> frequencyUpwardCompressors;
+    // note to label
+    std::unordered_map<std::string, std::unique_ptr<juce::Label>> m_frequencyUpwardCompressorLabels;
 
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
     using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
@@ -112,6 +127,7 @@ private:
     std::unique_ptr<SliderAttachment> grainAmountAttachment;
     std::unique_ptr<SliderAttachment> grainPositionAttachment;
     std::unique_ptr<SliderAttachment> frequencyUpwardCompressorAttachment;
+    std::unique_ptr<SliderAttachment> frequencyUpwardCompressorFreqAttachment;
     std::unique_ptr<ButtonAttachment> hanningToggleAttachment;
 
     // dunno if this is still needed v

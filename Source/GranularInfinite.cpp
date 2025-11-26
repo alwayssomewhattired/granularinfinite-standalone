@@ -58,10 +58,30 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
         "C7", "C#7", "D7", "D#7", "E7", "F7", "F#7", "G7", "G#7", "A7", "A#7", "B7",
         "C8", "C#8", "D8", "D#8", "E8", "F8" };
 
-    // i think the problem is this is a string. it should be a juce::string!
+
     for (std::string noteValue : notes)
     {
         noteToSample.set(noteValue, "");
+        // creates frequencyUpwardCompressors
+        for (const auto& [k, v] : m_noteToFreq) {
+            auto [sliderPtr, labelPtr] = buttonPalette.createFrequencyUpwardCompressor(v);
+
+            sliderPtr->setLookAndFeel(&customLook);
+
+
+            addAndMakeVisible(*sliderPtr);
+            addAndMakeVisible(*labelPtr);
+
+            frequencyUpwardCompressorFreqAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "frequencyUpwardCompressorFreq", *sliderPtr);
+            frequencyUpwardCompressorAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "frequencyUpwardCompressorProminence",
+                *sliderPtr);
+
+
+            frequencyUpwardCompressors[k] = FrequencyUpwardCompressor{ v, std::move(sliderPtr) };
+            m_frequencyUpwardCompressorLabels[k] = std::move(labelPtr);
+
+        }
+
     }
     const std::string order = "awsedftgyhujkolp;'";
     int count = 0;
@@ -174,17 +194,15 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             juce::TextButton& octaveDecrement = buttonPalette.decrementButton;
 
 
+
             // custom looknfeel
             grainSpacingSlider.setLookAndFeel(&customLook);
             grainAmountSlider.setLookAndFeel(&customLook);
             grainLengthSlider.setLookAndFeel(&diySlider);
             grainPositionSlider.setLookAndFeel(&customLook);
-            buttonPalette.frequencyUpwardCompressorSlider.setLookAndFeel(&customLook);
 
 
             addAndMakeVisible(buttonPalette);
-            addAndMakeVisible(buttonPalette.frequencyUpwardCompressorLabel);
-            addAndMakeVisible(buttonPalette.frequencyUpwardCompressorSlider);
             addAndMakeVisible(componentButton);
             addAndMakeVisible(octaveIncrement);
             addAndMakeVisible(octaveDecrement);
@@ -221,8 +239,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             grainSpacingAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainSpacing", grainSpacingSlider);
             grainAmountAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainAmount", grainAmountSlider);
             grainPositionAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainPosition", grainPositionSlider);
-            frequencyUpwardCompressorAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "frequencyUpwardCompressorProminence",
-                buttonPalette.frequencyUpwardCompressorSlider);
+
             hanningToggleAttachment = std::make_unique<ButtonAttachment>(audioProcessor.apvts, "hanningToggle", *hanningToggleButton);
 
 
@@ -244,7 +261,9 @@ GranularInfinite::~GranularInfinite()
     grainAmountSlider.setLookAndFeel(nullptr);
     grainLengthSlider.setLookAndFeel(nullptr);
     grainPositionSlider.setLookAndFeel(nullptr);
-    buttonPalette.frequencyUpwardCompressorSlider.setLookAndFeel(nullptr);
+    for (auto& [k, v] : frequencyUpwardCompressors) {
+        v.slider->setLookAndFeel(nullptr);
+    }
 }
 
 //==============================================================================
@@ -615,10 +634,9 @@ void GranularInfinite::resized()
 
     buttonPalette.hanningToggleButton.setBounds(x + 100, y + 350, buttonWidth, buttonHeight);
 
-    buttonPalette.frequencyUpwardCompressorLabel.setBounds(x + 200, y + 300, buttonWidth + 20, buttonHeight - 40);
-    buttonPalette.frequencyUpwardCompressorSlider.setBounds(x + 200, y + 330, 200, 100);
-
     m_waveformDisplay.setBounds(1500, 275, 600, 200);
+
+
 
     juce::FlexBox outer;
     juce::FlexBox inner1;
@@ -705,28 +723,57 @@ void GranularInfinite::resized()
     inner1.performLayout(inner1Area.toFloat());
     auto inner2Area = controlBounds2.withTrimmedTop(100);
     inner2.performLayout(inner2Area.toFloat());
+
+
+
+
+    // per keybutton in current octave range loop
+    int keyControlX = 75;
+    for (int i = 0; i < noteRange.size() + 6; i++) {
+        const std::string& note = noteRange[i % 12];
+        std::string noteWithOctave;
+        if (i >= 12)
+            noteWithOctave = note + std::to_string(octave + 1);
+        else
+            noteWithOctave = note + std::to_string(octave);
+
+        if (auto& it = frequencyUpwardCompressors.find(noteWithOctave); it != frequencyUpwardCompressors.end()) {
+            it->second.slider->setBounds(keyControlX, y + 200, buttonWidth, 100);
+        }
+        if (auto& it = m_frequencyUpwardCompressorLabels.find(noteWithOctave); it != m_frequencyUpwardCompressorLabels.end()) {
+
+            it->second->setBounds(keyControlX, y + 125, buttonWidth, buttonHeight - 25);
+        }
+
+        keyControlX += buttonWidth + spacing + 35;
+    }
+
+
+    int keyButtonX = 75;
     for (int i = 0; i < keyButtons.size(); ++i)
     {
-        noteLabels[i]->setBounds(x, y - 50, buttonWidth, labelHeight);
+        noteLabels[i]->setBounds(keyButtonX, y - 50, buttonWidth, labelHeight);
         if (i == 1 || i == 3 || i == 6 || i == 8 || i == 10 || i == 13 || i == 15)
         {
-            keyButtons[i]->setBounds(x + 2, y - 10, buttonWidth - 5, buttonHeight - 25);
+            keyButtons[i]->setBounds(keyButtonX + 2, y - 10, buttonWidth - 5, buttonHeight - 25);
             keyButtons[i]->setColour(juce::TextButton::buttonColourId, juce::Colours::black);
             keyButtons[i]->setColour(juce::TextButton::textColourOnId, juce::Colours::white);
             keyButtons[i]->setColour(juce::TextButton::textColourOffId, juce::Colours::white);
             keyButtons[i]->setColour(juce::ComboBox::outlineColourId, juce::Colours::white);
         }
         else {
-            keyButtons[i]->setBounds(x, y, buttonWidth, buttonHeight);
+            keyButtons[i]->setBounds(keyButtonX, y, buttonWidth, buttonHeight);
         }
-        sampleLabels[i]->setBounds(x, y + buttonHeight, buttonWidth, labelHeight);
+        sampleLabels[i]->setBounds(keyButtonX, y + buttonHeight, buttonWidth, labelHeight);
         const auto& noteName = keyButtons[i]->getTrimmedFileName();
         if (auto it = buttonPalette.waveformButtons.find(noteName);
             it != buttonPalette.waveformButtons.end() && it->second)
         {
-            it->second->setBounds(x, y + buttonHeight + labelHeight + 10, buttonWidth, labelHeight);
+            it->second->setBounds(keyButtonX, y + buttonHeight + labelHeight + 10, buttonWidth, labelHeight);
         }
 
-        x += buttonWidth + spacing;   // move to next key
+
+        keyButtonX += buttonWidth + spacing + 35;   // move to next key
     }
 }
+

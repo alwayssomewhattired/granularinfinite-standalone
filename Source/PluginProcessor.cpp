@@ -266,6 +266,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
     ));
 
     params.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "frequencyUpwardCompressorFreq",
+        "FrequencyUpwardCompressorFreq",
+        0.00f,
+        6000.00f,
+        0.00f
+        ));
+
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(
         "frequencyUpwardCompressorProminence",
         "FrequencyUpwardCompressorProminence",
         0.00f,

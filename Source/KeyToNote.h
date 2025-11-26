@@ -54,7 +54,7 @@ inline std::map<juce::String, int> CreateNoteToMidi = {
 };
 
 // make a map of the actual freq values
-
+// this function is so overused
 inline std::map<std::string, double> createNoteToFreq()
 {
 	std::map<std::string, double> noteToFreq;

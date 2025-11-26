@@ -45,11 +45,6 @@ public:
 		grainAmountSlider.setRange(1.0, 256.0, 1.0);
 		grainAmountSlider.setValue(1.0);
 
-		frequencyUpwardCompressorSlider.setSliderStyle(juce::Slider::LinearHorizontal);
-		frequencyUpwardCompressorSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
-		frequencyUpwardCompressorSlider.setRange(0.0, 1.0, 0.01);
-		frequencyUpwardCompressorSlider.setValue(0.0);
-
 		grainPositionLabel.setText("grain area", juce::dontSendNotification);
 		grainPositionLabel.setFont(juce::Font(16.0f, juce::Font::bold));
 		grainPositionLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
@@ -60,10 +55,7 @@ public:
 		grainLengthLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
 		grainLengthLabel.setJustificationType(juce::Justification::centred);
 
-		frequencyUpwardCompressorLabel.setText("freq expander", juce::dontSendNotification);
-		frequencyUpwardCompressorLabel.setFont(juce::Font(16.0f, juce::Font::bold));
-		frequencyUpwardCompressorLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
-		frequencyUpwardCompressorLabel.setJustificationType(juce::Justification::centred);
+
 
 
 		// make a button for spotify events vvv
@@ -96,6 +88,22 @@ public:
 		}
 	}
 
+	std::pair<std::unique_ptr<juce::Slider>, std::unique_ptr<juce::Label>> createFrequencyUpwardCompressor(double freq) {
+		auto slider = std::make_unique<juce::Slider>();
+		slider->setSliderStyle(juce::Slider::LinearVertical);
+		slider->setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
+		slider->setRange(0.0, 1.0, 0.01);
+		slider->setValue(0.0);
+
+		auto label = std::make_unique<juce::Label>();
+		label->setText("freq expander", juce::dontSendNotification);
+		label->setFont(juce::Font(16.0f, juce::Font::bold));
+		label->setColour(juce::Label::textColourId, juce::Colours::green);
+		label->setJustificationType(juce::Justification::centred);
+
+		return std::make_pair(std::move(slider), std::move(label));
+	}
+
 
 	// file-name of current waveform button pressed. (warning: not a reference. be careful)
 	juce::String waveformState;
@@ -115,11 +123,11 @@ public:
 
 	juce::Slider grainSpacingSlider;
 	juce::Slider grainAmountSlider;
-	juce::Slider frequencyUpwardCompressorSlider;
+	//juce::Slider frequencyUpwardCompressorSlider;
 
 	juce::Label grainSpacingLabel;
 	juce::Label grainAmountLabel;
 	juce::Label grainLengthLabel;
 	juce::Label grainPositionLabel;
-	juce::Label frequencyUpwardCompressorLabel;
+	//juce::Label frequencyUpwardCompressorLabel;
 };
