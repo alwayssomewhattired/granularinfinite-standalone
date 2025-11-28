@@ -265,21 +265,25 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
         false
     ));
 
-    params.push_back(std::make_unique<juce::AudioParameterFloat>(
-        "frequencyUpwardCompressorFreq",
-        "FrequencyUpwardCompressorFreq",
-        0.00f,
-        6000.00f,
-        0.00f
-        ));
+    //params.push_back(std::make_unique<juce::AudioParameterFloat>(
+    //    "frequencyUpwardCompressorFreq",
+    //    "FrequencyUpwardCompressorFreq",
+    //    0.00f,
+    //    6000.00f,
+    //    0.00f
+    //    ));
 
-    params.push_back(std::make_unique<juce::AudioParameterFloat>(
-        "frequencyUpwardCompressorProminence",
-        "FrequencyUpwardCompressorProminence",
-        0.00f,
-        1.00f,
-        0.00f
-    ));
+
+    // loop over every note name for this
+    for (const auto& note : allNotes()) {
+        params.push_back(std::make_unique<juce::AudioParameterFloat>(
+            std::string("frequencyUpwardCompressorProminence") + std::string(note),
+            std::string("FrequencyUpwardCompressorProminence") + std::string(note),
+            0.00f,
+            1.00f,
+            0.00f
+        ));
+    }
 
     return { params.begin(), params.end() };
 }
@@ -359,6 +363,7 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
     minGrainLength = *minGrainLengthPtr;
     maxGrainLength = *maxGrainLengthPtr;
 
+    // current note name
     for (const juce::String& noteName : currentNotes) {
         for (auto& pair : samples)
         {
@@ -391,12 +396,12 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                             float env = hannWindow[idx];
                             float limiterSamples = limiter(m_fullBuffer.getSample(0, readIndex) * env, 0.8f);
 
-                            out += upwardCompressor(limiterSamples);
+                            out += upwardCompressor(limiterSamples, noteName.toStdString());
                         }
                         else {
                             float limiterSamples = limiter(m_fullBuffer.getSample(0, readIndex), 0.8f);
 
-                            out += upwardCompressor(limiterSamples);
+                            out += upwardCompressor(limiterSamples, noteName.toStdString());
                         }
 
                         ++g.position;
@@ -422,10 +427,11 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
     }
 }
 
-float GranularinfiniteAudioProcessor::upwardCompressor(float x)
+float GranularinfiniteAudioProcessor::upwardCompressor(float x, const std::string& noteName)
 {
     // get presence value
-    float presence = apvts.getRawParameterValue("frequencyUpwardCompressorProminence")->load();
+    float presence = apvts.getRawParameterValue("frequencyUpwardCompressorProminence" + noteName)->load();
+    if (presence == 0.0f) return x;
 
     float makeupGain = juce::Decibels::decibelsToGain(presence * 12.0f);
     float wetDry = presence;

@@ -49,8 +49,8 @@ public:
 
     std::function<void()> onComponentButtonClicked;
 
-    void spotifyButtonHandler();
-    void sourceDownloadHandler();
+    //void spotifyButtonHandler();
+    //void sourceDownloadHandler();
 
     void synthToggleHandler(juce::TextButton& button);
     void grainLengthSliderHandler();
@@ -81,7 +81,7 @@ private:
     const std::map<std::string, double>& m_noteToFreq = createNoteToFreq();
 
     juce::MidiBuffer pendingMidi;
-    int octave = 4;
+    int octave = 3;
     juce::String currentlyPressedSample = "none";
 
     void timerCallback() override;
@@ -126,8 +126,10 @@ private:
     std::unique_ptr<SliderAttachment> grainSpacingAttachment;
     std::unique_ptr<SliderAttachment> grainAmountAttachment;
     std::unique_ptr<SliderAttachment> grainPositionAttachment;
-    std::unique_ptr<SliderAttachment> frequencyUpwardCompressorAttachment;
-    std::unique_ptr<SliderAttachment> frequencyUpwardCompressorFreqAttachment;
+    std::vector<std::unique_ptr<SliderAttachment>> frequencyUpwardCompressorAttachments;
+    //std::vector<std::unique_ptr<SliderAttachment>> frequencyUpwardCompressorFreqAttachments;
+    //std::unique_ptr<SliderAttachment> frequencyUpwardCompressorAttachment;
+    //std::unique_ptr<SliderAttachment> frequencyUpwardCompressorFreqAttachment;
     std::unique_ptr<ButtonAttachment> hanningToggleAttachment;
 
     // dunno if this is still needed v

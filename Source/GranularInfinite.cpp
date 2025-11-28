@@ -62,27 +62,24 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
     for (std::string noteValue : notes)
     {
         noteToSample.set(noteValue, "");
+    }
         // creates frequencyUpwardCompressors
-        for (const auto& [k, v] : m_noteToFreq) {
-            auto [sliderPtr, labelPtr] = buttonPalette.createFrequencyUpwardCompressor(v);
+    for (const auto& [k, v] : m_noteToFreq) {
+        auto [sliderPtr, labelPtr] = buttonPalette.createFrequencyUpwardCompressor(v);
 
-            sliderPtr->setLookAndFeel(&customLook);
+        sliderPtr->setLookAndFeel(&customLook);
 
+        addAndMakeVisible(*sliderPtr);
+        addAndMakeVisible(*labelPtr);
 
-            addAndMakeVisible(*sliderPtr);
-            addAndMakeVisible(*labelPtr);
+        frequencyUpwardCompressorAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, std::string("frequencyUpwardCompressorProminence") + k,
+            *sliderPtr));
 
-            frequencyUpwardCompressorFreqAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "frequencyUpwardCompressorFreq", *sliderPtr);
-            frequencyUpwardCompressorAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "frequencyUpwardCompressorProminence",
-                *sliderPtr);
-
-
-            frequencyUpwardCompressors[k] = FrequencyUpwardCompressor{ v, std::move(sliderPtr) };
-            m_frequencyUpwardCompressorLabels[k] = std::move(labelPtr);
-
-        }
+        frequencyUpwardCompressors[k] = FrequencyUpwardCompressor{ v, std::move(sliderPtr) };
+        m_frequencyUpwardCompressorLabels[k] = std::move(labelPtr);
 
     }
+
     const std::string order = "awsedftgyhujkolp;'";
     int count = 0;
 

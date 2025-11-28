@@ -69,7 +69,7 @@ public:
 
 
     // frequency compressor
-    float upwardCompressor(float x);
+    float upwardCompressor(float x, const std::string& notename);
     void updateFilter(const double& sampleRate);
 
     juce::dsp::IIR::Filter<float> bandpassFilter;

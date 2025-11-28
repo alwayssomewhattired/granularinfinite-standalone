@@ -32,13 +32,6 @@ Value* getValue(const Key& k)
 
 Key* getKey(const Value& v)
 {
-    //for (juce::HashMap<Value, Key>::Iterator i(reverse); i.next(); )
-    //{
-    //    auto key = i.getKey();
-    //    auto value = i.getValue();
-    //    std::cout << "original: " << v << "\n";
-    //    std::cout << "Key: " << key.toStdString() << ", Value: " << value.toStdString() << "\n";
-    //}
     if (reverse.contains(v))
     {
         return &reverse[v];  // safe because we know it exists
@@ -51,7 +44,7 @@ Key* getKey(const Value& v)
     void removeByValue(const Value& v)
     {
         if (reverse.contains(v))
-            forward.remove(reverse[k]);
+            forward.remove(reverse[v]);
         reverse.remove(v);
     }
 
