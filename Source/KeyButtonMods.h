@@ -30,7 +30,7 @@ public:
 
             if (auto& it = m_frequencyUpwardCompressors.find(noteWithOctave); it != m_frequencyUpwardCompressors.end()) {
                 juce::Slider& slider = *it->second.slider;
-                if (auto& it = prevSliders.find(noteWithOctave); it != prevSliders.end()) {
+                if (auto& prevIt = prevSliders.find(noteWithOctave); prevIt != prevSliders.end()) {
                     slider.setVisible(false);
                     prevSliders.erase(noteWithOctave);
                 }

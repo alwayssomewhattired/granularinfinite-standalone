@@ -70,8 +70,8 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
 
         sliderPtr->setLookAndFeel(&customLook);
 
-        /*addAndMakeVisible(*sliderPtr); 
-        addAndMakeVisible(*labelPtr);*/
+        //addAndMakeVisible(*sliderPtr); 
+        //addAndMakeVisible(*labelPtr);
 
         frequencyUpwardCompressorAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, std::string("frequencyUpwardCompressorProminence") + k,
             *sliderPtr));
@@ -217,6 +217,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             addAndMakeVisible(buttonPalette.synthToggleButton);
             addAndMakeVisible(buttonPalette.hanningToggleButton);
             addAndMakeVisible(m_waveformDisplay);
+            addAndMakeVisible(m_keyButtonMods);
 
 
 
