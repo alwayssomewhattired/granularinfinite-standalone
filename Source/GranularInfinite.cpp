@@ -9,10 +9,11 @@
 #include "ButtonPalette.h"
 #include "DualThumbSlider.h"
 #include "GrainPositionControl.h"
+#include "KeyButtonMods.h"
 #include <memory>
+#include <algorithm>
 #include "JuceHeader.h"
 #include <juce_core/juce_core.h>
-#include <algorithm>
 
 
 
@@ -69,15 +70,14 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
 
         sliderPtr->setLookAndFeel(&customLook);
 
-        addAndMakeVisible(*sliderPtr);
-        addAndMakeVisible(*labelPtr);
+        /*addAndMakeVisible(*sliderPtr); 
+        addAndMakeVisible(*labelPtr);*/
 
         frequencyUpwardCompressorAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, std::string("frequencyUpwardCompressorProminence") + k,
             *sliderPtr));
 
-        frequencyUpwardCompressors[k] = FrequencyUpwardCompressor{ v, std::move(sliderPtr) };
-        m_frequencyUpwardCompressorLabels[k] = std::move(labelPtr);
-
+        m_keyButtonMods.addFrequencyUpwardCompressor(k, v, std::move(sliderPtr));
+        m_keyButtonMods.addFrequencyUpwardCompressorLabel(k, std::move(labelPtr));
     }
 
     const std::string order = "awsedftgyhujkolp;'";
@@ -258,9 +258,9 @@ GranularInfinite::~GranularInfinite()
     grainAmountSlider.setLookAndFeel(nullptr);
     grainLengthSlider.setLookAndFeel(nullptr);
     grainPositionSlider.setLookAndFeel(nullptr);
-    for (auto& [k, v] : frequencyUpwardCompressors) {
-        v.slider->setLookAndFeel(nullptr);
-    }
+    //for (auto& [k, v] : frequencyUpwardCompressors) {
+    //    v.slider->setLookAndFeel(nullptr);
+    //}
 }
 
 //==============================================================================
@@ -456,7 +456,10 @@ void GranularInfinite::octaveUp(juce::TextButton& button)
                 noteLabels[i]->setText(it->second, juce::dontSendNotification);
             }
         }
+        resized();
+
         };
+
 }
 
 void GranularInfinite::octaveDown(juce::TextButton& button)
@@ -481,7 +484,10 @@ void GranularInfinite::octaveDown(juce::TextButton& button)
                 noteLabels[i]->setText(it->second, juce::dontSendNotification);
             }
         }
+        resized();
+
         };
+
 }
 
 
@@ -721,29 +727,8 @@ void GranularInfinite::resized()
     auto inner2Area = controlBounds2.withTrimmedTop(100);
     inner2.performLayout(inner2Area.toFloat());
 
-
-
-
-    // per keybutton in current octave range loop
     int keyControlX = 75;
-    for (int i = 0; i < noteRange.size() + 6; i++) {
-        const std::string& note = noteRange[i % 12];
-        std::string noteWithOctave;
-        if (i >= 12)
-            noteWithOctave = note + std::to_string(octave + 1);
-        else
-            noteWithOctave = note + std::to_string(octave);
-
-        if (auto& it = frequencyUpwardCompressors.find(noteWithOctave); it != frequencyUpwardCompressors.end()) {
-            it->second.slider->setBounds(keyControlX, y + 200, buttonWidth, 100);
-        }
-        if (auto& it = m_frequencyUpwardCompressorLabels.find(noteWithOctave); it != m_frequencyUpwardCompressorLabels.end()) {
-
-            it->second->setBounds(keyControlX, y + 125, buttonWidth, buttonHeight - 25);
-        }
-
-        keyControlX += buttonWidth + spacing + 35;
-    }
+    m_keyButtonMods.drawUpwardCompressors(noteRange, octave, keyControlX, y, buttonWidth, buttonHeight, spacing, buttonPalette);
 
 
     int keyButtonX = 75;

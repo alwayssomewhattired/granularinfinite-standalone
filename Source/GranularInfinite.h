@@ -15,6 +15,7 @@
 #include "DualThumbSlider.h"
 #include "GrainPositionControl.h"
 #include "WaveformDisplay.h"
+#include "KeyButtonMods.h"
 #include "SpotifyBrowser.h"
 #include "SpotifyList.h"
 #include "SpotifyAPI.h"
@@ -86,7 +87,7 @@ private:
 
     void timerCallback() override;
 
-
+    KeyButtonMods m_keyButtonMods;
 
     ButtonPalette& buttonPalette;
     // make a class specifically for the grainPositionSlider.
@@ -110,15 +111,15 @@ private:
 
     std::unique_ptr<juce::TextButton> hanningToggleButton;
 
-    struct FrequencyUpwardCompressor {
-        double frequency;
-        std::unique_ptr<juce::Slider> slider;
-    };
+    //struct FrequencyUpwardCompressor {
+    //    double frequency;
+    //    std::unique_ptr<juce::Slider> slider;
+    //};
 
-    // note to struct
-    std::unordered_map<std::string, FrequencyUpwardCompressor> frequencyUpwardCompressors;
-    // note to label
-    std::unordered_map<std::string, std::unique_ptr<juce::Label>> m_frequencyUpwardCompressorLabels;
+    //// note to struct
+    //std::unordered_map<std::string, FrequencyUpwardCompressor> frequencyUpwardCompressors;
+    //// note to label
+    //std::unordered_map<std::string, std::unique_ptr<juce::Label>> m_frequencyUpwardCompressorLabels;
 
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
     using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
