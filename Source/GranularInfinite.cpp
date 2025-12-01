@@ -65,6 +65,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
         noteToSample.set(noteValue, "");
     }
         // creates frequencyUpwardCompressors
+    //m_keyButtonMods.setInterceptsMouseClicks(false, false);
     for (const auto& [k, v] : m_noteToFreq) {
         auto [sliderPtr, labelPtr] = buttonPalette.createFrequencyUpwardCompressor(v);
 
@@ -73,8 +74,8 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
         //addAndMakeVisible(*sliderPtr); 
         //addAndMakeVisible(*labelPtr);
 
-        frequencyUpwardCompressorAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, std::string("frequencyUpwardCompressorProminence") + k,
-            *sliderPtr));
+        frequencyUpwardCompressorAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, 
+            std::string("frequencyUpwardCompressorProminence") + k, *sliderPtr));
 
         m_keyButtonMods.addFrequencyUpwardCompressor(k, v, std::move(sliderPtr));
         m_keyButtonMods.addFrequencyUpwardCompressorLabel(k, std::move(labelPtr));
@@ -458,7 +459,6 @@ void GranularInfinite::octaveUp(juce::TextButton& button)
             }
         }
         resized();
-
         };
 
 }
@@ -627,6 +627,8 @@ void GranularInfinite::resized()
 
 
     buttonPalette.setBounds(getLocalBounds());
+
+    m_keyButtonMods.setBounds(0, 100, 4000, 300);
 
     buttonPalette.componentButton.setBounds(1600, y + 400, 80, 80);
     componentButton.setBounds(1600, y + 400, 80, 80);

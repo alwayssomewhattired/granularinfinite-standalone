@@ -20,6 +20,10 @@ public:
 
         static std::unordered_map<std::string, juce::Slider*> prevSliders;
 
+        for (auto [k, v] : prevSliders) {
+            v->setVisible(false);
+        }
+
         for (int i = 0; i < noteRange.size() + 6; i++) {
             const std::string& note = noteRange[i % 12];
             std::string noteWithOctave;
@@ -28,19 +32,15 @@ public:
             else
                 noteWithOctave = note + std::to_string(octave);
 
-            if (auto& it = m_frequencyUpwardCompressors.find(noteWithOctave); it != m_frequencyUpwardCompressors.end()) {
+            if (auto it = m_frequencyUpwardCompressors.find(noteWithOctave); it != m_frequencyUpwardCompressors.end()) {
                 juce::Slider& slider = *it->second.slider;
-                if (auto& prevIt = prevSliders.find(noteWithOctave); prevIt != prevSliders.end()) {
-                    slider.setVisible(false);
-                    prevSliders.erase(noteWithOctave);
-                }
-                addAndMakeVisible(slider);
-                slider.setBounds(keyControlX, y + 200, buttonWidth, 100);
-                prevSliders[noteWithOctave] = &slider;
+                    addAndMakeVisible(slider);
+                    slider.setBounds(keyControlX, 200, buttonWidth, 100);
+                    prevSliders[noteWithOctave] = &slider;
             }
-            if (auto& it = m_frequencyUpwardCompressorLabels.find(noteWithOctave); it != m_frequencyUpwardCompressorLabels.end()) {
+            if (auto it = m_frequencyUpwardCompressorLabels.find(noteWithOctave); it != m_frequencyUpwardCompressorLabels.end()) {
                 addAndMakeVisible(*it->second);
-                it->second->setBounds(keyControlX, y + 125, buttonWidth, buttonHeight - 25);
+                it->second->setBounds(keyControlX, 125, buttonWidth, buttonHeight - 25);
             }
 
             keyControlX += buttonWidth + spacing + 35;
