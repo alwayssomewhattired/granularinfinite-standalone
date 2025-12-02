@@ -138,6 +138,18 @@ void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int sampl
         juce::dsp::WindowingFunction<float>::hann
     );
 
+    // compressor
+    //m_compressor.setThreshold(-24.0f); // db
+    //m_compressor.setRatio(4.0f);
+    //m_compressor.setAttack(10.0f);    //ms
+    //m_compressor.setRelease(100.0f);   // ms
+
+    //juce::dsp::ProcessSpec spec;
+    //spec.sampleRate = sampleRate;
+    //spec.maximumBlockSize = samplesPerBlock;
+    //spec.numChannels = getTotalNumOutputChannels();
+    //m_compressor.prepare(spec);
+
 
     // frequency upward-compressor
 
@@ -401,7 +413,8 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                         else {
                             float limiterSamples = limiter(m_fullBuffer.getSample(0, readIndex), 0.8f);
 
-                            out += upwardCompressor(limiterSamples, noteName.toStdString());
+                            float upwardCompressed = upwardCompressor(limiterSamples, noteName.toStdString());
+                            out += m_compressor.process(upwardCompressed);
                         }
 
                         ++g.position;

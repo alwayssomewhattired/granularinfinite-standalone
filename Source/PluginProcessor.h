@@ -72,6 +72,7 @@ public:
     float upwardCompressor(float x, const std::string& notename);
     void updateFilter(const double& sampleRate);
 
+    //juce::dsp::Compressor<float> m_compressor;
     juce::dsp::IIR::Filter<float> bandpassFilter;
     juce::dsp::Compressor<float> m_upwardCompressor;
 
@@ -163,6 +164,32 @@ private:
     juce::NormalisableRange<float> m_dynamicRange;
 
     std::vector<float> hannWindow;
+
+    struct MySampleCompressor {
+        float envelope = 0.0f;
+        float threshold = 0.5f; // linear
+        float ratio = 4.0f;
+        float attackCoeff = 0.01f;
+        float releaseCoeff = 0.1f;
+
+        float process(float input) {
+            float level = std::abs(input);
+
+            // envelope follower
+            if (level > envelope)
+                envelope = attackCoeff * (envelope - level) + level;
+            else
+                envelope = releaseCoeff * (envelope - level) + level;
+
+            float gain = 1.0f;
+            if (envelope > threshold)
+                gain = std::pow(envelope / threshold, 1.0f - 1.0f / ratio);
+
+            return input * gain;
+        }
+    };
+
+    MySampleCompressor m_compressor;
 
     // dunno if i need this circular anymore
     juce::AudioBuffer<float> circularBuffer;

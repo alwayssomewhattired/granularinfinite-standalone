@@ -109,6 +109,8 @@ private:
     juce::Label& grainPositionLabel;
     GrainPositionControl grainPositionSlider;
 
+    juce::dsp::Compressor<float> compressor;
+
     std::unique_ptr<juce::TextButton> hanningToggleButton;
 
     //struct FrequencyUpwardCompressor {
