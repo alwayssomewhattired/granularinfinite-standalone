@@ -95,21 +95,23 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             //-------keyboard------//
             char myChar = it->first;
             juce::String myKeyName = juce::String::charToString(myChar);
+            juce::String keyNameWithOctave = myKeyName + juce::String(count);
             juce::String myNoteName = it->second;
 
             // note-name
             auto* noteLabel = new NoteLabel(myNoteName);
 
             // piano-key
-            auto* button = new KeyButton(myKeyName, myNoteName);
+            auto* button = new KeyButton(myKeyName, myNoteName, keyNameWithOctave);
             button->setColour(juce::TextButton::buttonColourId, juce::Colours::white);
             button->setColour(juce::TextButton::buttonOnColourId, juce::Colours::lightgrey);
             button->setColour(juce::TextButton::textColourOffId, juce::Colours::black);
 
             // sample-name
             auto* sampleLabel = new SampleLabel("", myNoteName);
-            button->setOnFileDropped([this, myNoteName, sampleLabel, button](std::map<juce::String, juce::Array<juce::File>>& noteToFiles, 
+            button->setOnFileDropped([this, myNoteName, sampleLabel, button, myKeyName](std::map<juce::String, juce::Array<juce::File>>& noteToFiles, 
                 const bool& isDir) {
+                    const std::map<char, juce::String>& keyToNote = CreateKeyToNote(octave);
 
                     juce::String fullPath;
                     juce::String name;
@@ -119,7 +121,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
                         for (const juce::File& audioFile : v) {
                             fullPath = audioFile.getFullPathName();
                             name = audioFile.getFileNameWithoutExtension();
-
+                            button->setTrimmedFileName(name);
                             if (isDir) {
                                 refinedNote = k;
                             }
@@ -145,9 +147,9 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
                             GranularinfiniteAudioProcessor::Sample* samplePtr = audioProcessor.loadFile(file, refinedNote, "false");
 
                              //i can't see my waveform button anymore
-                            buttonPalette.addWaveformButton(refinedName, [this, refinedNote, refinedName, samplePtr](juce::TextButton& button)
+                            buttonPalette.addWaveformButton(refinedName, myKeyName, refinedNote,
+                                [this, refinedNote, refinedName, samplePtr](juce::TextButton& button)
                                 {
-
                                     juce::String& state = buttonPalette.waveformState;
                                     if (button.getToggleState())
                                     {
@@ -155,15 +157,13 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
                                         {
                                             if (auto it = buttonPalette.waveformButtons.find(state); it != buttonPalette.waveformButtons.end())
                                             {
-                                                it->second->setToggleState(false, juce::dontSendNotification);
+                                                it->second->waveformButton->setToggleState(false, juce::dontSendNotification);
                                             }
                                         }
                                         state = refinedName;
                                         m_waveformDisplay.setBuffer(audioProcessor.getSampleBuffer(refinedNote));
                                         m_waveformDisplay.setSample(samplePtr);
 
-                                        // pass in samplePtr and do logic within that 
-                                        // this is all wrong. useless sample ptr.
                                         m_waveformDisplay.setPlayheadPosition();
                                         button.setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
                                     }
@@ -606,7 +606,9 @@ void GranularInfinite::synthToggleHandler(juce::TextButton& button)
         };
 }
 
+
 //==============================================================================
+
 
 void GranularInfinite::paint(juce::Graphics& g)
 {
@@ -640,9 +642,7 @@ void GranularInfinite::resized()
 
     buttonPalette.hanningToggleButton.setBounds(x + 100, y + 350, buttonWidth, buttonHeight);
 
-    m_waveformDisplay.setBounds(1500, 275, 600, 200);
-
-
+    m_waveformDisplay.setBounds(650, 450, 600, 200);
 
     juce::FlexBox outer;
     juce::FlexBox inner1;
@@ -737,6 +737,7 @@ void GranularInfinite::resized()
     int keyButtonX = 75;
     for (int i = 0; i < keyButtons.size(); ++i)
     {
+        //auto& keyButton = keyButtons[i];
         noteLabels[i]->setBounds(keyButtonX, y - 50, buttonWidth, labelHeight);
         if (i == 1 || i == 3 || i == 6 || i == 8 || i == 10 || i == 13 || i == 15)
         {
@@ -750,13 +751,13 @@ void GranularInfinite::resized()
             keyButtons[i]->setBounds(keyButtonX, y, buttonWidth, buttonHeight);
         }
         sampleLabels[i]->setBounds(keyButtonX, y + buttonHeight, buttonWidth, labelHeight);
-        const auto& noteName = keyButtons[i]->getTrimmedFileName();
-        if (auto it = buttonPalette.waveformButtons.find(noteName);
-            it != buttonPalette.waveformButtons.end() && it->second)
+        const auto& fileName = keyButtons[i]->getTrimmedFileName();
+        if (auto it = buttonPalette.waveformButtons.find(fileName);
+            it != buttonPalette.waveformButtons.end())
         {
-            it->second->setBounds(keyButtonX, y + buttonHeight + labelHeight + 10, buttonWidth, labelHeight);
+            const auto& waveformButton = it->second->waveformButton;
+            waveformButton->setBounds(keyButtonX, y + buttonHeight + labelHeight + 10, buttonWidth, labelHeight);
         }
-
 
         keyButtonX += buttonWidth + spacing + 35;   // move to next key
     }

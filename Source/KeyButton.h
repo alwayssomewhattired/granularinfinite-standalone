@@ -14,8 +14,8 @@ class KeyButton : public juce::TextButton,
 public:
 	using FileDroppedCallback = std::function<void(std::map<juce::String, juce::Array<juce::File>>& noteToFiles, const bool& isDir)>;
 
-	KeyButton(const juce::String& keyName, const juce::String& noteName)
-		: TextButton(keyName), noteName(keyName)
+	KeyButton(const juce::String& keyName, const juce::String& noteName, const juce::String& keyNameWithOctave)
+		: TextButton(keyName), noteName(keyName), m_keyNameWithOctave(keyNameWithOctave)
 	{
 		setRepaintsOnMouseActivity(true);
 	}
@@ -89,6 +89,7 @@ public:
 private:
 	juce::String noteName;
 	juce::String assignedFile;
+	juce::String m_keyNameWithOctave;
 	// filename without the extension
 	juce::String trimmedFileName;
 

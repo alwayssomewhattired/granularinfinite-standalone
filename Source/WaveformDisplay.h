@@ -70,8 +70,10 @@ public:
 
 	void paint(juce::Graphics& g) override
 	{
-        if (buffer.getNumSamples() == 0)
+
+        if (buffer.getNumSamples() == 0) {
             return;
+        }
         g.setColour(juce::Colours::green);
 
         auto bounds = getLocalBounds();
@@ -94,6 +96,7 @@ public:
         }
 
         // reads first channel
+        // currently empty
         const float* channelData = buffer.getReadPointer(0);
 
         juce::Path path;
@@ -103,12 +106,12 @@ public:
         for (int x = 0; x < width; ++x)
         {
             int sampleIndex = juce::jmap<int>(x, 0, (int)width, 0, numSamples);
+
             float level = channelData[sampleIndex];
             float y = juce::jmap(level, -1.0f, 1.0f, (float)height, 0.0f);
             path.lineTo((float)x, y);
         }
         g.strokePath(path, juce::PathStrokeType(1.0f));
-
 
 	}
 
