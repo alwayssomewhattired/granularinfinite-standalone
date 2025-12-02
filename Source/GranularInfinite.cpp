@@ -83,6 +83,8 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
 
     const std::string order = "awsedftgyhujkolp;'";
     int count = 0;
+    int keyButtonX = 75;
+
 
     // IMPORTANT!
     // i have a bunch of stuff in this loop that only needs to be initialized once. get it out of there
@@ -92,6 +94,9 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
         auto it = keyToNote.find(key);
         if (it != keyToNote.end())
         {
+
+
+
             //-------keyboard------//
             char myChar = it->first;
             juce::String myKeyName = juce::String::charToString(myChar);
@@ -102,10 +107,16 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             auto* noteLabel = new NoteLabel(myNoteName);
 
             // piano-key
-            auto* button = new KeyButton(myKeyName, myNoteName, keyNameWithOctave);
+            auto* button = new KeyButton(myKeyName, myNoteName, keyNameWithOctave, keyButtonX);
             button->setColour(juce::TextButton::buttonColourId, juce::Colours::white);
             button->setColour(juce::TextButton::buttonOnColourId, juce::Colours::lightgrey);
             button->setColour(juce::TextButton::textColourOffId, juce::Colours::black);
+
+            int buttonWidth = 60;
+            int buttonHeight = 120;
+            int labelHeight = 20;
+            int spacing = 5;
+            keyButtonX += buttonWidth + spacing + 35;
 
             // sample-name
             auto* sampleLabel = new SampleLabel("", myNoteName);
@@ -174,7 +185,8 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
                                 });
                         }
                     }
-
+                    
+                    resized();
                     sampleRefresh(button);
                 });
             //------------//
@@ -751,15 +763,17 @@ void GranularInfinite::resized()
             keyButtons[i]->setBounds(keyButtonX, y, buttonWidth, buttonHeight);
         }
         sampleLabels[i]->setBounds(keyButtonX, y + buttonHeight, buttonWidth, labelHeight);
-        const auto& fileName = keyButtons[i]->getTrimmedFileName();
-        if (auto it = buttonPalette.waveformButtons.find(fileName);
-            it != buttonPalette.waveformButtons.end())
-        {
-            const auto& waveformButton = it->second->waveformButton;
-            waveformButton->setBounds(keyButtonX, y + buttonHeight + labelHeight + 10, buttonWidth, labelHeight);
+        for (auto& [k, v] : buttonPalette.waveformButtons) {
+            if (keyButtons[i]->getNoteName() == v->noteName) {
+                const auto& waveformButton = v->waveformButton;
+                addAndMakeVisible(*waveformButton);
+                waveformButton->setBounds(keyButtons[i]->getPosition(), y + buttonHeight + labelHeight + 10, buttonWidth, labelHeight);
+            }
         }
+        const auto& fileName = keyButtons[i]->getTrimmedFileName();
 
         keyButtonX += buttonWidth + spacing + 35;   // move to next key
     }
+
 }
 
