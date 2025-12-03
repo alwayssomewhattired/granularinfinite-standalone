@@ -233,6 +233,12 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             addAndMakeVisible(buttonPalette.compressor.attackCoeffSlider);
             addAndMakeVisible(buttonPalette.compressor.releaseCoeffSlider);
             addAndMakeVisible(buttonPalette.compressor.gainSlider);
+            addAndMakeVisible(buttonPalette.sampleCompressorLabel);
+            addAndMakeVisible(buttonPalette.compressor.thresholdSliderLabel);
+            addAndMakeVisible(buttonPalette.compressor.ratioSliderLabel);
+            addAndMakeVisible(buttonPalette.compressor.attackCoeffSliderLabel);
+            addAndMakeVisible(buttonPalette.compressor.releaseCoeffSliderLabel);
+            addAndMakeVisible(buttonPalette.compressor.gainSliderLabel);
             addAndMakeVisible(m_waveformDisplay);
             addAndMakeVisible(m_keyButtonMods);
 
@@ -662,11 +668,17 @@ void GranularInfinite::resized()
     buttonPalette.componentButton.setBounds(1600, y + 400, 80, 80);
     componentButton.setBounds(1600, y + 400, 80, 80);
 
+    buttonPalette.sampleCompressorLabel.setBounds(1300, y + 300, 80, 100);
     buttonPalette.compressor.thresholdSlider.setBounds(1300, y + 400, 80, 100);
     buttonPalette.compressor.ratioSlider.setBounds(1300, y + 500, 80, 100);
     buttonPalette.compressor.attackCoeffSlider.setBounds(1300, y + 600, 80, 100);
     buttonPalette.compressor.releaseCoeffSlider.setBounds(1300, y + 700, 80, 100);
     buttonPalette.compressor.gainSlider.setBounds(1300, y + 800, 80, 100);
+    buttonPalette.compressor.thresholdSliderLabel.setBounds(1200, y + 400, 80, 100);
+    buttonPalette.compressor.ratioSliderLabel.setBounds(1200, y + 500, 80, 100);
+    buttonPalette.compressor.attackCoeffSliderLabel.setBounds(1200, y + 600, 80, 100);
+    buttonPalette.compressor.releaseCoeffSliderLabel.setBounds(1200, y + 700, 80, 100);
+    buttonPalette.compressor.gainSliderLabel.setBounds(1200, y + 800, 80, 100);
 
     buttonPalette.decrementButton.setBounds(x - 200, y + 350, buttonWidth, buttonHeight);
     buttonPalette.incrementButton.setBounds(x - 100, y + 350, buttonWidth, buttonHeight);

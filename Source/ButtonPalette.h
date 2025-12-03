@@ -56,33 +56,55 @@ public:
 		grainLengthLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
 		grainLengthLabel.setJustificationType(juce::Justification::centred);
 
-		juce::Label sampleCompressorLabel;
-
 		sampleCompressorLabel.setText("compressor", juce::dontSendNotification);
 		sampleCompressorLabel.setFont(juce::Font(16.0f, juce::Font::bold));
-		sampleCompressorLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
+		sampleCompressorLabel.setColour(juce::Label::textColourId, juce::Colours::green);
 		sampleCompressorLabel.setJustificationType(juce::Justification::centred);
 
+		compressor.thresholdSliderLabel.setText("threshold", juce::dontSendNotification);
+		compressor.thresholdSliderLabel.setFont(juce::Font(16.0f, juce::Font::bold));
+		compressor.thresholdSliderLabel.setColour(juce::Label::textColourId, juce::Colours::green);
+		compressor.thresholdSliderLabel.setJustificationType(juce::Justification::centred);
 
 		compressor.thresholdSlider.setSliderStyle(juce::Slider::LinearHorizontal);
 		compressor.thresholdSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
 		compressor.thresholdSlider.setRange(0.001, 1.000, 0.001);
 		compressor.thresholdSlider.setValue(0.100);
 
+		compressor.ratioSliderLabel.setText("ratio", juce::dontSendNotification);
+		compressor.ratioSliderLabel.setFont(juce::Font(16.0f, juce::Font::bold));
+		compressor.ratioSliderLabel.setColour(juce::Label::textColourId, juce::Colours::green);
+		compressor.ratioSliderLabel.setJustificationType(juce::Justification::centred);
+
 		compressor.ratioSlider.setSliderStyle(juce::Slider::LinearHorizontal);
 		compressor.ratioSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
 		compressor.ratioSlider.setRange(1.0, 20.0, 1.0);
 		compressor.ratioSlider.setValue(1.0);
+
+		compressor.attackCoeffSliderLabel.setText("attack", juce::dontSendNotification);
+		compressor.attackCoeffSliderLabel.setFont(juce::Font(16.0f, juce::Font::bold));
+		compressor.attackCoeffSliderLabel.setColour(juce::Label::textColourId, juce::Colours::green);
+		compressor.attackCoeffSliderLabel.setJustificationType(juce::Justification::centred);
 
 		compressor.attackCoeffSlider.setSliderStyle(juce::Slider::LinearHorizontal);
 		compressor.attackCoeffSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
 		compressor.attackCoeffSlider.setRange(0.1, 20.0, 0.1);
 		compressor.attackCoeffSlider.setValue(10.0);
 
+		compressor.releaseCoeffSliderLabel.setText("release", juce::dontSendNotification);
+		compressor.releaseCoeffSliderLabel.setFont(juce::Font(16.0f, juce::Font::bold));
+		compressor.releaseCoeffSliderLabel.setColour(juce::Label::textColourId, juce::Colours::green);
+		compressor.releaseCoeffSliderLabel.setJustificationType(juce::Justification::centred);
+
 		compressor.releaseCoeffSlider.setSliderStyle(juce::Slider::LinearHorizontal);
 		compressor.releaseCoeffSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
 		compressor.releaseCoeffSlider.setRange(20.0, 2000.0, 1.0);
 		compressor.releaseCoeffSlider.setValue(200.0);
+
+		compressor.gainSliderLabel.setText("gain", juce::dontSendNotification);
+		compressor.gainSliderLabel.setFont(juce::Font(16.0f, juce::Font::bold));
+		compressor.gainSliderLabel.setColour(juce::Label::textColourId, juce::Colours::green);
+		compressor.gainSliderLabel.setJustificationType(juce::Justification::centred);
 
 		compressor.gainSlider.setSliderStyle(juce::Slider::LinearHorizontal);
 		compressor.gainSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
@@ -170,10 +192,15 @@ public:
 
 	juce::Label sampleCompressorLabel;
 	struct MySampleCompressor {
+		juce::Label thresholdSliderLabel;
 		juce::Slider thresholdSlider;
+		juce::Label ratioSliderLabel;
 		juce::Slider ratioSlider;
+		juce::Label attackCoeffSliderLabel;
 		juce::Slider attackCoeffSlider;
+		juce::Label releaseCoeffSliderLabel;
 		juce::Slider releaseCoeffSlider;
+		juce::Label gainSliderLabel;
 		juce::Slider gainSlider;
 	};
 
