@@ -56,6 +56,38 @@ public:
 		grainLengthLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
 		grainLengthLabel.setJustificationType(juce::Justification::centred);
 
+		juce::Label sampleCompressorLabel;
+
+		sampleCompressorLabel.setText("compressor", juce::dontSendNotification);
+		sampleCompressorLabel.setFont(juce::Font(16.0f, juce::Font::bold));
+		sampleCompressorLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
+		sampleCompressorLabel.setJustificationType(juce::Justification::centred);
+
+
+		compressor.thresholdSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+		compressor.thresholdSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
+		compressor.thresholdSlider.setRange(0.001, 1.000, 0.001);
+		compressor.thresholdSlider.setValue(0.100);
+
+		compressor.ratioSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+		compressor.ratioSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
+		compressor.ratioSlider.setRange(1.0, 20.0, 1.0);
+		compressor.ratioSlider.setValue(1.0);
+
+		compressor.attackCoeffSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+		compressor.attackCoeffSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
+		compressor.attackCoeffSlider.setRange(0.1, 20.0, 0.1);
+		compressor.attackCoeffSlider.setValue(10.0);
+
+		compressor.releaseCoeffSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+		compressor.releaseCoeffSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
+		compressor.releaseCoeffSlider.setRange(20.0, 2000.0, 1.0);
+		compressor.releaseCoeffSlider.setValue(200.0);
+
+		compressor.gainSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+		compressor.gainSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
+		compressor.gainSlider.setRange(0.01, 1.0, 0.01);
+		compressor.gainSlider.setValue(1.0);
 
 
 
@@ -135,6 +167,17 @@ public:
 
 	// file-name to waveformButton
 	std::map<juce::String, std::unique_ptr<WaveformButton>> waveformButtons;
+
+	juce::Label sampleCompressorLabel;
+	struct MySampleCompressor {
+		juce::Slider thresholdSlider;
+		juce::Slider ratioSlider;
+		juce::Slider attackCoeffSlider;
+		juce::Slider releaseCoeffSlider;
+		juce::Slider gainSlider;
+	};
+
+	MySampleCompressor compressor;
 
 	juce::Slider grainSpacingSlider;
 	juce::Slider grainAmountSlider;

@@ -166,11 +166,12 @@ private:
     std::vector<float> hannWindow;
 
     struct MySampleCompressor {
-        float envelope = 0.0f;
-        float threshold = 0.5f; // linear
-        float ratio = 4.0f;
-        float attackCoeff = 0.01f;
-        float releaseCoeff = 0.1f;
+        float envelope = 0.0f; // leave at 0.0f;
+        float threshold = 0.1f; // linear
+        float ratio = 1.0f;
+        float attackCoeff = 0.0f;
+        float releaseCoeff = 0.0f;
+        float gain = 1.0f;
 
         float process(float input) {
             float level = std::abs(input);
@@ -181,15 +182,21 @@ private:
             else
                 envelope = releaseCoeff * (envelope - level) + level;
 
-            float gain = 1.0f;
-            if (envelope > threshold)
-                gain = std::pow(envelope / threshold, 1.0f - 1.0f / ratio);
+            if (envelope > threshold) {
+                float over = envelope / threshold;
+                float compressed = std::pow(over, -(ratio - 1.0f));
+                gain = compressed;
+            }
+
+              
 
             return input * gain;
         }
     };
 
     MySampleCompressor m_compressor;
+
+    void updateCompressor();
 
     // dunno if i need this circular anymore
     juce::AudioBuffer<float> circularBuffer;

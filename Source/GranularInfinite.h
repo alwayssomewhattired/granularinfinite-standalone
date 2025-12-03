@@ -109,8 +109,6 @@ private:
     juce::Label& grainPositionLabel;
     GrainPositionControl grainPositionSlider;
 
-    juce::dsp::Compressor<float> compressor;
-
     std::unique_ptr<juce::TextButton> hanningToggleButton;
 
     //struct FrequencyUpwardCompressor {
@@ -134,6 +132,11 @@ private:
     //std::unique_ptr<SliderAttachment> frequencyUpwardCompressorAttachment;
     //std::unique_ptr<SliderAttachment> frequencyUpwardCompressorFreqAttachment;
     std::unique_ptr<ButtonAttachment> hanningToggleAttachment;
+    std::unique_ptr<SliderAttachment> compressorThresholdAttachment;
+    std::unique_ptr<SliderAttachment> compressorRatioAttachment;
+    std::unique_ptr<SliderAttachment> compressorAttackCoeffAttachment;
+    std::unique_ptr<SliderAttachment> compressorReleaseCoeffAttachment;
+    std::unique_ptr<SliderAttachment> compressorGainAttachment;
 
     // dunno if this is still needed v
     std::unique_ptr<SliderAttachment> grainMaxLength;

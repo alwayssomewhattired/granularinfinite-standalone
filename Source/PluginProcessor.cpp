@@ -138,18 +138,6 @@ void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int sampl
         juce::dsp::WindowingFunction<float>::hann
     );
 
-    // compressor
-    //m_compressor.setThreshold(-24.0f); // db
-    //m_compressor.setRatio(4.0f);
-    //m_compressor.setAttack(10.0f);    //ms
-    //m_compressor.setRelease(100.0f);   // ms
-
-    //juce::dsp::ProcessSpec spec;
-    //spec.sampleRate = sampleRate;
-    //spec.maximumBlockSize = samplesPerBlock;
-    //spec.numChannels = getTotalNumOutputChannels();
-    //m_compressor.prepare(spec);
-
 
     // frequency upward-compressor
 
@@ -275,6 +263,54 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
         "hanningToggle",
         "HanningToggle",
         false
+    ));
+
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "compressorThreshold",
+        "CompressorThreshold",
+        juce::NormalisableRange<float>(0.001f, 1.0f, 0.0f, 0.3f), // exponential
+        0.1f,
+        juce::AudioParameterFloatAttributes()
+        .withStringFromValueFunction([](float v, int)
+            {
+                return juce::String(v, 3);  // <-- 3 decimal places
+            })
+        .withValueFromStringFunction([](const juce::String& s)
+            {
+                return s.getFloatValue();
+            })
+    ));
+
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "compressorRatio",
+        "CompressorRatio",
+        1.0f,
+        20.0f,
+        1.0f
+    ));
+
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "compressorAttackCoeff",
+        "CompressorAttackCoeff",
+        0.1f,
+        50.0f,
+        10.0f
+    ));
+
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "compressorReleaseCoeff",
+        "CompressorReleaseCoeff",
+        20.0f,
+        2000.0f,
+        200.0f
+    ));
+
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "compressorGain",
+        "CompressorGain",
+        0.01f,
+        1.0f,
+        1.0f
     ));
 
     //params.push_back(std::make_unique<juce::AudioParameterFloat>(
@@ -411,6 +447,7 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                             out += upwardCompressor(limiterSamples, noteName.toStdString());
                         }
                         else {
+                            updateCompressor();
                             float limiterSamples = limiter(m_fullBuffer.getSample(0, readIndex), 0.8f);
 
                             float upwardCompressed = upwardCompressor(limiterSamples, noteName.toStdString());
@@ -492,6 +529,14 @@ float GranularinfiniteAudioProcessor::limiter(float x, float threshold) {
     if (x > threshold) return threshold + (x - threshold) * 0.2f;
     if (x < -threshold) return -threshold + (x + threshold) * 0.2f;
     return x;
+}
+
+void GranularinfiniteAudioProcessor::updateCompressor() {
+    m_compressor.threshold = *apvts.getRawParameterValue("compressorThreshold");
+    m_compressor.ratio = *apvts.getRawParameterValue("compressorRatio");
+    m_compressor.attackCoeff = std::exp(-1.0f / (*apvts.getRawParameterValue("compressorAttackCoeff") * 0.001f * m_sampleRate));
+    m_compressor.releaseCoeff = std::exp(-1.0f / (*apvts.getRawParameterValue("compressorReleaseCoeff") * 0.001f * m_sampleRate));
+    m_compressor.gain = *apvts.getRawParameterValue("compressorGain");
 }
 
 void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
