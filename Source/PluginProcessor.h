@@ -188,9 +188,13 @@ private:
                 gain = compressed;
             }
 
-              
+            float mix = 0.5f;
 
-            return input * gain;
+            float wet = input * gain;
+            float dry = input;
+
+            //return input * gain;
+            return dry * (1.0f - mix) + wet * mix;
         }
     };
 

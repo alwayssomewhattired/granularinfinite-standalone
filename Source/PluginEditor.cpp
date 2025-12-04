@@ -16,7 +16,7 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
     openConsole();
     granularPage = std::make_unique<GranularInfinite>(audioProcessor, buttonPalette);
     samplerPage = std::make_unique<SamplerInfinite>(audioProcessor, buttonPalette);
-    setSize(1900, 1000);
+    setSize(1900, 2000);
 
     addAndMakeVisible(*granularPage);
     addAndMakeVisible(*samplerPage);

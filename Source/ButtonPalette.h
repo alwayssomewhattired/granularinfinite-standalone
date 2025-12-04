@@ -61,15 +61,39 @@ public:
 		sampleCompressorLabel.setColour(juce::Label::textColourId, juce::Colours::green);
 		sampleCompressorLabel.setJustificationType(juce::Justification::centred);
 
-		compressor.thresholdSliderLabel.setText("threshold", juce::dontSendNotification);
-		compressor.thresholdSliderLabel.setFont(juce::Font(16.0f, juce::Font::bold));
-		compressor.thresholdSliderLabel.setColour(juce::Label::textColourId, juce::Colours::green);
-		compressor.thresholdSliderLabel.setJustificationType(juce::Justification::centred);
+		compressor.thresholdStruct.thresholdSliderLabel.setText("threshold", juce::dontSendNotification);
+		compressor.thresholdStruct.thresholdSliderLabel.setFont(juce::Font(16.0f, juce::Font::bold));
+		compressor.thresholdStruct.thresholdSliderLabel.setColour(juce::Label::textColourId, juce::Colours::green);
+		compressor.thresholdStruct.thresholdSliderLabel.setJustificationType(juce::Justification::centred);
 
-		compressor.thresholdSlider.setSliderStyle(juce::Slider::LinearHorizontal);
-		compressor.thresholdSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
-		compressor.thresholdSlider.setRange(0.001, 1.000, 0.001);
-		compressor.thresholdSlider.setValue(0.100);
+		compressor.thresholdStruct.thresholdSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+		compressor.thresholdStruct.thresholdSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
+		compressor.thresholdStruct.thresholdSlider.setRange(0.001, 1.000, 0.001);
+		compressor.thresholdStruct.thresholdSlider.setValue(0.100);
+
+		compressor.thresholdStruct.inc.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
+		compressor.thresholdStruct.inc.setButtonText("+");
+		compressor.thresholdStruct.inc.setRepeatSpeed(500, 100);
+
+		compressor.thresholdStruct.dec.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
+		compressor.thresholdStruct.dec.setButtonText("-");
+		compressor.thresholdStruct.dec.setRepeatSpeed(500, 100);
+
+		compressor.thresholdStruct.inc.onClick = [this]() {
+			juce::Slider& slider = compressor.thresholdStruct.thresholdSlider;
+			double v = compressor.thresholdStruct.thresholdSlider.getValue();
+			v += 0.001;
+			if (v > slider.getMaximum()) v = slider.getMaximum();
+			slider.setValue(v, juce::sendNotificationAsync);
+			};
+
+		compressor.thresholdStruct.dec.onClick = [this]() {
+			juce::Slider& slider = compressor.thresholdStruct.thresholdSlider;
+			double v = compressor.thresholdStruct.thresholdSlider.getValue();
+			v -= 0.001;
+			if (v < slider.getMinimum()) v = slider.getMinimum();
+			slider.setValue(v, juce::sendNotificationAsync);
+			};
 
 		compressor.ratioSliderLabel.setText("ratio", juce::dontSendNotification);
 		compressor.ratioSliderLabel.setFont(juce::Font(16.0f, juce::Font::bold));
@@ -192,8 +216,14 @@ public:
 
 	juce::Label sampleCompressorLabel;
 	struct MySampleCompressor {
-		juce::Label thresholdSliderLabel;
-		juce::Slider thresholdSlider;
+		struct ThresholdStruct {
+			juce::Label thresholdSliderLabel;
+			juce::Slider thresholdSlider;
+			juce::TextButton inc;
+			juce::TextButton dec;
+
+		};
+		ThresholdStruct thresholdStruct;
 		juce::Label ratioSliderLabel;
 		juce::Slider ratioSlider;
 		juce::Label attackCoeffSliderLabel;

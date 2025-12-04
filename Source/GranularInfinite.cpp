@@ -228,13 +228,15 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             addAndMakeVisible(sampleLabel);
             addAndMakeVisible(buttonPalette.synthToggleButton);
             addAndMakeVisible(buttonPalette.hanningToggleButton);
-            addAndMakeVisible(buttonPalette.compressor.thresholdSlider);
+            addAndMakeVisible(buttonPalette.compressor.thresholdStruct.thresholdSlider);
+            addAndMakeVisible(buttonPalette.compressor.thresholdStruct.inc);
+            addAndMakeVisible(buttonPalette.compressor.thresholdStruct.dec);
             addAndMakeVisible(buttonPalette.compressor.ratioSlider);
             addAndMakeVisible(buttonPalette.compressor.attackCoeffSlider);
             addAndMakeVisible(buttonPalette.compressor.releaseCoeffSlider);
             addAndMakeVisible(buttonPalette.compressor.gainSlider);
             addAndMakeVisible(buttonPalette.sampleCompressorLabel);
-            addAndMakeVisible(buttonPalette.compressor.thresholdSliderLabel);
+            addAndMakeVisible(buttonPalette.compressor.thresholdStruct.thresholdSliderLabel);
             addAndMakeVisible(buttonPalette.compressor.ratioSliderLabel);
             addAndMakeVisible(buttonPalette.compressor.attackCoeffSliderLabel);
             addAndMakeVisible(buttonPalette.compressor.releaseCoeffSliderLabel);
@@ -264,7 +266,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             hanningToggleAttachment = std::make_unique<ButtonAttachment>(audioProcessor.apvts, "hanningToggle", *hanningToggleButton);
 
             compressorThresholdAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "compressorThreshold", 
-                buttonPalette.compressor.thresholdSlider);
+                buttonPalette.compressor.thresholdStruct.thresholdSlider);
             compressorRatioAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "compressorRatio", 
                 buttonPalette.compressor.ratioSlider);
             compressorAttackCoeffAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "compressorAttackCoeff", 
@@ -669,12 +671,14 @@ void GranularInfinite::resized()
     componentButton.setBounds(1600, y + 400, 80, 80);
 
     buttonPalette.sampleCompressorLabel.setBounds(1300, y + 300, 80, 100);
-    buttonPalette.compressor.thresholdSlider.setBounds(1300, y + 400, 80, 100);
+    buttonPalette.compressor.thresholdStruct.thresholdSlider.setBounds(1300, y + 400, 80, 100);
+    buttonPalette.compressor.thresholdStruct.inc.setBounds(1375, y + 440, 20, 20);
+    buttonPalette.compressor.thresholdStruct.dec.setBounds(1375, y + 460, 20, 20);
     buttonPalette.compressor.ratioSlider.setBounds(1300, y + 500, 80, 100);
     buttonPalette.compressor.attackCoeffSlider.setBounds(1300, y + 600, 80, 100);
     buttonPalette.compressor.releaseCoeffSlider.setBounds(1300, y + 700, 80, 100);
     buttonPalette.compressor.gainSlider.setBounds(1300, y + 800, 80, 100);
-    buttonPalette.compressor.thresholdSliderLabel.setBounds(1200, y + 400, 80, 100);
+    buttonPalette.compressor.thresholdStruct.thresholdSliderLabel.setBounds(1200, y + 400, 80, 100);
     buttonPalette.compressor.ratioSliderLabel.setBounds(1200, y + 500, 80, 100);
     buttonPalette.compressor.attackCoeffSliderLabel.setBounds(1200, y + 600, 80, 100);
     buttonPalette.compressor.releaseCoeffSliderLabel.setBounds(1200, y + 700, 80, 100);
