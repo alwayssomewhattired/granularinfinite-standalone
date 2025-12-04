@@ -3,6 +3,7 @@
 #include "GranularInfinite.h"
 #include "OpenConsole.h"
 #include "ButtonPalette.h"
+#include "OutOfBounds.h"
 
 
 
@@ -10,16 +11,22 @@
 GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
 (GranularinfiniteAudioProcessor& p)
     : juce::AudioProcessorEditor(&p),
-    audioProcessor(p)
+    audioProcessor(p),
+    outOfBounds(p)
 
 {
     openConsole();
     granularPage = std::make_unique<GranularInfinite>(audioProcessor, buttonPalette);
     samplerPage = std::make_unique<SamplerInfinite>(audioProcessor, buttonPalette);
-    setSize(1900, 2000);
+    setSize(1900, 1000);
 
-    addAndMakeVisible(*granularPage);
-    addAndMakeVisible(*samplerPage);
+    addAndMakeVisible(viewport);
+    outOfBounds.addAndMakeVisible(*granularPage);
+    outOfBounds.addAndMakeVisible(*samplerPage);
+
+    viewport.setViewedComponent(&outOfBounds, false);
+    viewport.getVerticalScrollBar().setColour(juce::ScrollBar::thumbColourId, juce::Colours::green);
+
     samplerPage->setVisible(false);
 
     granularPage->onComponentButtonClicked = [this]() {
@@ -66,7 +73,8 @@ void GranularinfiniteAudioProcessorEditor::resized()
     int labelHeight = 20;
     int spacing = 5;
 
-
+    viewport.setBounds(getLocalBounds());
+    outOfBounds.setSize(1900, 2000);
     buttonPalette.setBounds(getLocalBounds());
     if (granularPage == nullptr)
         std::cout << "your null!!!\n";

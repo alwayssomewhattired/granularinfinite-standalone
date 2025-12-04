@@ -313,6 +313,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
         1.0f
     ));
 
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "compressorMix",
+        "CompressorMix",
+        0.0f,
+        1.0f,
+        0.0f
+    ));
+
     //params.push_back(std::make_unique<juce::AudioParameterFloat>(
     //    "frequencyUpwardCompressorFreq",
     //    "FrequencyUpwardCompressorFreq",
@@ -537,6 +545,7 @@ void GranularinfiniteAudioProcessor::updateCompressor() {
     m_compressor.attackCoeff = std::exp(-1.0f / (*apvts.getRawParameterValue("compressorAttackCoeff") * 0.001f * m_sampleRate));
     m_compressor.releaseCoeff = std::exp(-1.0f / (*apvts.getRawParameterValue("compressorReleaseCoeff") * 0.001f * m_sampleRate));
     m_compressor.gain = *apvts.getRawParameterValue("compressorGain");
+    m_compressor.mix = *apvts.getRawParameterValue("compressorMix");
 }
 
 void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,

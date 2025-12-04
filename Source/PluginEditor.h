@@ -7,6 +7,7 @@
 #include "ButtonPalette.h"
 #include "GranularInfinite.h"
 #include "SamplerInfinite.h"
+#include "OutOfBounds.h"
 
 class GranularInfinite;
 //==============================================================================
@@ -29,6 +30,8 @@ public:
 private:
     GranularinfiniteAudioProcessor& audioProcessor;
 
+    juce::Viewport viewport;
+    OutOfBounds outOfBounds;
 
     // using a pointer fixed this issue
     std::unique_ptr<GranularInfinite> granularPage;

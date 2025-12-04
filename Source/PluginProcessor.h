@@ -172,6 +172,7 @@ private:
         float attackCoeff = 0.0f;
         float releaseCoeff = 0.0f;
         float gain = 1.0f;
+        float mix = 0.0f;
 
         float process(float input) {
             float level = std::abs(input);
@@ -187,8 +188,6 @@ private:
                 float compressed = std::pow(over, -(ratio - 1.0f));
                 gain = compressed;
             }
-
-            float mix = 0.5f;
 
             float wet = input * gain;
             float dry = input;
