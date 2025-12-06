@@ -55,7 +55,7 @@ public:
 
     void synthToggleHandler(juce::TextButton& button);
     void grainLengthSliderHandler();
-    void grainPositionSliderHandler();
+    void grainAreaSliderHandler();
     void playheadPositionHandler();
     void sampleLabelHandler(SampleLabel& button);
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
@@ -106,8 +106,8 @@ private:
     juce::Label& grainLengthLabel;
     DualThumbSlider grainLengthSlider;
 
-    juce::Label& grainPositionLabel;
-    GrainPositionControl grainPositionSlider;
+    juce::Label& grainAreaLabel;
+    DualThumbSlider grainAreaSlider;
 
     std::unique_ptr<juce::TextButton> hanningToggleButton;
 
@@ -126,7 +126,7 @@ private:
 
     std::unique_ptr<SliderAttachment> grainSpacingAttachment;
     std::unique_ptr<SliderAttachment> grainAmountAttachment;
-    std::unique_ptr<SliderAttachment> grainPositionAttachment;
+    //std::unique_ptr<SliderAttachment> grainAreaAttachment;
     std::vector<std::unique_ptr<SliderAttachment>> frequencyUpwardCompressorAttachments;
     //std::vector<std::unique_ptr<SliderAttachment>> frequencyUpwardCompressorFreqAttachments;
     //std::unique_ptr<SliderAttachment> frequencyUpwardCompressorAttachment;

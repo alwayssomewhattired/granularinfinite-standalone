@@ -29,8 +29,8 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
     grainSpacingSlider(buttonPalette.grainSpacingSlider),
     grainAmountLabel(buttonPalette.grainAmountLabel),
     grainAmountSlider(buttonPalette.grainAmountSlider),
-    grainPositionSlider(GrainPositionControl(p)),
-    grainPositionLabel(buttonPalette.grainPositionLabel),
+    grainAreaSlider(std::tuple<double, double, double>(0.0, 600.0, 1.0)),
+    grainAreaLabel(buttonPalette.grainPositionLabel),
     grainLengthLabel(buttonPalette.grainLengthLabel),
     hanningToggleButton(&buttonPalette.hanningToggleButton)
 
@@ -46,7 +46,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
 
     // handler lambda initialization
     grainLengthSliderHandler();
-    grainPositionSliderHandler();
+    grainAreaSliderHandler();
 
     // intialize noteToSamples vector 
     const std::vector<std::string> notes = { "C0", "C#0", "D0", "D#0", "E0", "F0", "F#0", "G0", "G#0", "A0", "A#0", "B0",
@@ -208,7 +208,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             grainSpacingSlider.setLookAndFeel(&customLook);
             grainAmountSlider.setLookAndFeel(&customLook);
             grainLengthSlider.setLookAndFeel(&diySlider);
-            grainPositionSlider.setLookAndFeel(&customLook);
+            grainAreaSlider.setLookAndFeel(&diySlider);
 
 
             addAndMakeVisible(buttonPalette);
@@ -221,8 +221,8 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             addAndMakeVisible(grainAmountSlider);
             addAndMakeVisible(grainLengthLabel);
             addAndMakeVisible(grainLengthSlider);
-            addAndMakeVisible(grainPositionLabel);
-            addAndMakeVisible(grainPositionSlider);
+            addAndMakeVisible(grainAreaLabel);
+            addAndMakeVisible(grainAreaSlider);
             addAndMakeVisible(noteLabel);
             addAndMakeVisible(button);
             addAndMakeVisible(sampleLabel);
@@ -261,7 +261,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
 
             grainSpacingAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainSpacing", grainSpacingSlider);
             grainAmountAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainAmount", grainAmountSlider);
-            grainPositionAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainPosition", grainPositionSlider);
+            //grainAreaAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainArea", grainAreaSlider);
 
             hanningToggleAttachment = std::make_unique<ButtonAttachment>(audioProcessor.apvts, "hanningToggle", *hanningToggleButton);
 
@@ -294,7 +294,7 @@ GranularInfinite::~GranularInfinite()
     grainSpacingSlider.setLookAndFeel(nullptr);
     grainAmountSlider.setLookAndFeel(nullptr);
     grainLengthSlider.setLookAndFeel(nullptr);
-    grainPositionSlider.setLookAndFeel(nullptr);
+    grainAreaSlider.setLookAndFeel(nullptr);
     //for (auto& [k, v] : frequencyUpwardCompressors) {
     //    v.slider->setLookAndFeel(nullptr);
     //}
@@ -547,12 +547,24 @@ void GranularInfinite::grainLengthSliderHandler()
         };
 }
 
-void GranularInfinite::grainPositionSliderHandler()
+void GranularInfinite::grainAreaSliderHandler()
 {
-    grainPositionSlider.onValueChange = [this]()
+    grainAreaSlider.onRangeChange = [this]()
         {
-            float grainArea = grainPositionSlider.getValue();
+            float grainArea = grainAreaSlider.getValue();
             m_waveformDisplay.setGrainArea(grainArea);
+            
+            auto* minParam = audioProcessor.apvts.getParameter("grainMinArea");
+            if (auto* floatParam = dynamic_cast<juce::RangedAudioParameter*>(minParam)) {
+                float normalized = floatParam->convertTo0to1((float)grainAreaSlider.getMinValue());
+                floatParam->setValueNotifyingHost(normalized);
+            }
+
+            auto* maxParam = audioProcessor.apvts.getParameter("grainMaxArea");
+            if (auto* floatParam = dynamic_cast<juce::RangedAudioParameter*>(maxParam)) {
+                float normalized = floatParam->convertTo0to1((float)grainAreaSlider.getMaxValue());
+                floatParam->setValueNotifyingHost(normalized);
+            }
         };
 }
 
@@ -750,16 +762,16 @@ void GranularInfinite::resized()
         .withWidth(200.0f)
     );
 
-    juce::FlexItem f_grainPositionLabel(grainPositionLabel);
+    juce::FlexItem f_grainPositionLabel(grainAreaLabel);
     inner2.items.add(
         f_grainPositionLabel
         .withHeight(30.0f)
         .withWidth(controlBounds.getWidth())
     );
 
-    juce::FlexItem f_grainPositionSlider(grainPositionSlider);
+    juce::FlexItem f_grainAreaSlider(grainAreaSlider);
     inner2.items.add(
-        f_grainPositionSlider
+        f_grainAreaSlider
         .withHeight(100.f)
         .withWidth(200.0f)
     );

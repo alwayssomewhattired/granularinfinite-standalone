@@ -190,6 +190,10 @@ public:
 		return std::make_pair(std::move(slider), std::move(label));
 	}
 
+	void createSlider() {
+
+	}
+
 
 	// file-name of current waveform button pressed. (warning: not a reference. be careful)
 	juce::String waveformState;

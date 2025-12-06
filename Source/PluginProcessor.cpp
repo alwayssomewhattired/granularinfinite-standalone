@@ -252,9 +252,23 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
         600.0f
     );
 
+    //params.push_back(std::make_unique<juce::AudioParameterFloat>(
+    //    "grainArea",
+    //    "GrainArea",
+    //    dynamicRange,
+    //    0
+    //));
+
     params.push_back(std::make_unique<juce::AudioParameterFloat>(
-        "grainPosition",
-        "GrainPosition",
+        "grainMinArea",
+        "GrainMinArea",
+        dynamicRange,
+        0
+    ));
+
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "grainMaxArea",
+        "GrainMaxArea",
         dynamicRange,
         0
     ));
@@ -379,9 +393,15 @@ void GranularinfiniteAudioProcessor::spawnGrain(int64_t fileLength)
     g.length = juce::Random::getSystemRandom().nextInt(maxGrainLength - minGrainLength + 1) + minGrainLength;
     // start sample plays a random sample
     maxGrainLength = apvts.getRawParameterValue("grainMaxLength")->load();
-    const float grainArea = (apvts.getRawParameterValue("grainPosition")->load() / 600.0f) * m_maxFileSize;
+    //const float grainArea = (apvts.getRawParameterValue("grainArea")->load() / 600.0f) * m_maxFileSize;
+    const float grainAreaMax = (apvts.getRawParameterValue("grainMaxArea")->load() / 600.0f) * m_maxFileSize;
+    // be carefule:::: grainAreaMin might break on different file sizes
+    const float grainAreaMin = (apvts.getRawParameterValue("grainMinArea")->load() / 600.0f) * m_maxFileSize;
 
-    g.startSample = juce::Random::getSystemRandom().nextInt(std::abs(grainArea - g.length));
+
+    //g.startSample = juce::Random::getSystemRandom().nextInt(std::abs(grainArea - g.length));
+    const int range = std::max(1, (int)(grainAreaMax - grainAreaMin - g.length));
+    g.startSample = grainAreaMin + juce::Random::getSystemRandom().nextInt(range);
 
     g.position = 0;
     // insert pitch stuff here...

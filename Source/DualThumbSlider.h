@@ -33,9 +33,9 @@ public:
 
         // Draw thumbs
         g.setColour(juce::Colours::white);
-        drawThumb(g, minX);
-        drawThumb(g, maxX);
-        drawThumb(g, midX);
+        drawThumb(g, minX, false);
+        drawThumb(g, maxX, false);
+        drawThumb(g, midX, true);
     }
 
     void mouseDown(const juce::MouseEvent& e) override
@@ -107,9 +107,11 @@ public:
     std::function<void()> onRangeChange;
 
 private:
-    void drawThumb(juce::Graphics& g, float x)
+    void drawThumb(juce::Graphics& g, float x, bool ifMid)
     {
-        g.fillEllipse(x - 6.0f, getHeight() / 2.0f - 6.0f, 12.0f, 12.0f);
+        if (ifMid) g.fillEllipse(x - 6.0f, getHeight() / 2.0f + 8.0f, 6.0f, 20.0f);
+        else 
+            g.fillEllipse(x - 6.0f, getHeight() / 2.0f - 6.0f, 12.0f, 12.0f);
     }
 
     double minValue = 25.0;
