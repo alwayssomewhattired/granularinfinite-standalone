@@ -38,6 +38,9 @@ GranularinfiniteAudioProcessor::GranularinfiniteAudioProcessor()
     for (int i = 0; i < 16; ++i)
         synth.addVoice(new juce::SamplerVoice());
 
+    incomingBuffer.setSize(1, 1024);
+    outputBuffer.setSize(1, 1024);
+
 }
 
 GranularinfiniteAudioProcessor::~GranularinfiniteAudioProcessor()
@@ -490,6 +493,7 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                         else {
                             updateCompressor();
                             float limiterSample = limiter(m_fullBuffer.getSample(0, readIndex), 0.8f);
+
                             // rolling buffer
                             int start1, size1, start2, size2;
                             fifo.prepareToWrite(1, start1, size1, start2, size2);
@@ -498,12 +502,20 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
 
 
                             if (size1 > 0) {
-                                incomingBuffer.setSize(1, 1024);
-                                outputBuffer.setSize(1, 1024);
-                                incomingBuffer.setSample(0, start1, limiterSample);
-                                outputBuffer.setSample(0, start1, upwardCompressed);
+                                for (int i = 0; i < size1; ++i) {
+                                    incomingBuffer.setSample(0, start1 + i, limiterSample);
+                                    outputBuffer.setSample(0, start1 + i, upwardCompressed);
+                                }
                             }
-                            fifo.finishedWrite(size1);
+
+                            if (size2 > 0) {
+                                for (int i = 0; i < size2; ++i) {
+                                    incomingBuffer.setSample(0, start2 + i, limiterSample);
+                                    outputBuffer.setSample(0, start2 + i, upwardCompressed);
+                                }
+                            }
+
+                            fifo.finishedWrite(size1 + size2);
                             out += (m_compressor.process(upwardCompressed)) * globalGain;
                         }
 

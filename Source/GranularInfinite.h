@@ -65,7 +65,8 @@ public:
     void globalGainSliderHandler(juce::Slider& slider);
 
 private:
-
+    bool m_isCompressorTimer;
+    void compressorWaveformTimer();
     void parameterChanged(const juce::String& parameterID, float newValue) override;
 
     juce::AudioProcessorValueTreeState& m_apvts;

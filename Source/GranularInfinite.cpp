@@ -352,7 +352,9 @@ bool GranularInfinite::keyPressed(const juce::KeyPress& key,
     if (it != keyToNote.end())
     {
         const juce::String& noteName = it->second;
-
+        m_isCompressorTimer = true;
+        compressorWaveformHandle();
+        std::cout << "handeled\n";
         auto it2 = currentlyPressedKeys.find(char_key);
         size_t index = order.find(char_key);
         if (index != std::string::npos)
@@ -414,6 +416,8 @@ bool GranularInfinite::keyStateChanged(bool isKeyDown,
 
     if (!isKeyDown)
     {
+        m_isCompressorTimer = false;
+
         for (auto it = currentlyPressedKeys.begin(); it != currentlyPressedKeys.end();)
         {
             char keyChar = *it;
@@ -456,22 +460,27 @@ bool GranularInfinite::keyStateChanged(bool isKeyDown,
     return false;
 }
 
+void GranularInfinite::compressorWaveformTimer() {
+
+    if (m_compressorWaveformComponent != nullptr )
+    {
+        m_compressorWaveformComponent->repaint();
+    }
+}
 
 void GranularInfinite::compressorWaveformHandle() {
-    if (currentlyPressedKeys.size() > 0) {
-        startTimerHz(60);
-        if (m_compressorWaveformComponent == nullptr) {
-            m_compressorWaveformComponent =
-                std::make_unique<CompressorWaveformComponent>(audioProcessor.incomingBuffer, audioProcessor.outputBuffer, audioProcessor.fifo);
-            addAndMakeVisible(*m_compressorWaveformComponent);
-            m_compressorWaveformComponent->setBounds(650, 450, 600, 200);
-        }
-        else {
-            //m_compressorWaveformComponent->updateSamples(audioProcessor.incomingBuffer, audioProcessor.outputBuffer, audioProcessor.fifo);
-            m_compressorWaveformComponent->repaint();
-        }
+
+    if (m_compressorWaveformComponent == nullptr) {
+        m_compressorWaveformComponent =
+            std::make_unique<CompressorWaveformComponent>(audioProcessor.incomingBuffer, audioProcessor.outputBuffer, audioProcessor.fifo);
+        addAndMakeVisible(*m_compressorWaveformComponent);
+        m_compressorWaveformComponent->setBounds(650, 450, 600, 200);
     }
-    else return;
+    
+    if (m_isCompressorTimer)
+        startTimerHz(60);
+    else
+        stopTimer();
 }
 
 // *TO-DO*
@@ -613,7 +622,16 @@ void GranularInfinite::globalGainSliderHandler(juce::Slider& slider) {
 
 void GranularInfinite::timerCallback()
 {
-    playheadPositionHandler();
+    if (m_compressorWaveformComponent != nullptr && m_isCompressorTimer)
+    {
+        m_compressorWaveformComponent->repaint();
+    }
+
+    // temoporarily disabled. create flag for this vvv
+    //if (m_isPlayhead)
+    //    playheadPositionHandler();
+
+
 }
 
 void GranularInfinite::playheadPositionHandler()
@@ -745,9 +763,11 @@ void GranularInfinite::resized()
 
     buttonPalette.hanningToggleButton.setBounds(x + 100, y + 350, buttonWidth, buttonHeight);
 
-    buttonPalette.globalGainSlider.setBounds(x + 200, y + 350, 80, 100);
+    buttonPalette.globalGainSliderLabel.setBounds(x + 210, y + 350, buttonWidth, labelHeight);
+    buttonPalette.globalGainSlider.setBounds(x + 200, y + 400, 80, 100);
 
     m_waveformDisplay.setBounds(650, 450, 600, 200);
+
     if (m_compressorWaveformComponent != nullptr) {
         m_compressorWaveformComponent->setBounds(650, 450, 600, 200);
     }

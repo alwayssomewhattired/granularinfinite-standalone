@@ -24,5 +24,5 @@ private:
 	juce::AudioBuffer<float>& m_outputBuffer;
 	juce::AbstractFifo& m_fifo;
 	float m_thresholdLevel;
-	juce::Rectangle<int> m_bounds{ 50,50,50,50 };
+	juce::Rectangle<int> m_bounds{ 50, 50, 100, 100 };
 };
