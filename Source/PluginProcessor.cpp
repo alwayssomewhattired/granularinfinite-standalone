@@ -495,28 +495,38 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                             float limiterSample = limiter(m_fullBuffer.getSample(0, readIndex), 0.8f);
 
                             // rolling buffer
-                            int start1, size1, start2, size2;
-                            fifo.prepareToWrite(1, start1, size1, start2, size2);
+                  //         int start1, size1, start2, size2;
+                  //         fifo.prepareToWrite(1, start1, size1, start2, size2);
+                  //
+                           float upwardCompressed = upwardCompressor(limiterSample, noteName.toStdString());
+                  //
+                  //         std::cout << size1 << "\n";
+                  //         if (size1 > 0) {
+                  //             for (int i = 0; i < size1; ++i) {
+                  //                 incomingBuffer.setSample(0, start1 + i, limiterSample);
+                  //                 outputBuffer.setSample(0, start1 + i, upwardCompressed);
+                  //             }
+                  //         }
+                  //
+                  //         if (size2 > 0) {
+                  //             for (int i = 0; i < size2; ++i) {
+                  //                 incomingBuffer.setSample(0, start2 + i, limiterSample);
+                  //                 outputBuffer.setSample(0, start2 + i, upwardCompressed);
+                  //             }
+                  //         }
+                  //
+                            //fifo.finishedWrite(size1 + size2);
 
-                            float upwardCompressed = upwardCompressor(limiterSample, noteName.toStdString());
 
+                           int pos = writePos.load(std::memory_order_relaxed);
 
-                            if (size1 > 0) {
-                                for (int i = 0; i < size1; ++i) {
-                                    incomingBuffer.setSample(0, start1 + i, limiterSample);
-                                    outputBuffer.setSample(0, start1 + i, upwardCompressed);
-                                }
-                            }
+                           incomingBuffer.setSample(0, pos, limiterSample);
+                           outputBuffer.setSample(0, pos, upwardCompressed);
 
-                            if (size2 > 0) {
-                                for (int i = 0; i < size2; ++i) {
-                                    incomingBuffer.setSample(0, start2 + i, limiterSample);
-                                    outputBuffer.setSample(0, start2 + i, upwardCompressed);
-                                }
-                            }
+                           pos = (pos + 1) % 1024;
+                           writePos.store(pos, std::memory_order_release);
 
-                            fifo.finishedWrite(size1 + size2);
-                            out += (m_compressor.process(upwardCompressed)) * globalGain;
+                           out += (m_compressor.process(upwardCompressed)) * globalGain;
                         }
 
                         ++g.position;

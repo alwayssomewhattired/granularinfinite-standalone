@@ -115,7 +115,10 @@ public:
     // for compressor visualization
     juce::AudioBuffer<float> incomingBuffer;
     juce::AudioBuffer<float> outputBuffer;
+    std::atomic<int> writePos{ 0 };
+    // get rid of this fifo bullshit
     juce::AbstractFifo fifo{ 1024 };
+
 
 private:
     //SpotifyAuthenticator auth;

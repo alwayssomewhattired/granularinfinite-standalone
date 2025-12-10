@@ -67,12 +67,12 @@ void CompressorWaveformComponent::paint(juce::Graphics& g) {
 	g.fillAll(juce::Colours::black);
 
 	g.setColour(juce::Colours::red.withAlpha(0.5f));
-	drawCompressionWaveform(m_incomingBuffer, g, juce::Rectangle<int>(400, 0, 200, 200));
+	drawCompressionWaveform(m_incomingBuffer, g, juce::Rectangle<int>(300, -70, 200, 500));
 
 	g.setColour(juce::Colours::yellow.withAlpha(0.5f));
 	drawCompressorLevels(m_thresholdLevel, g, m_bounds);
 
 	g.setColour(juce::Colours::green.withAlpha(0.5f));
-	drawCompressionWaveform(m_outputBuffer, g, juce::Rectangle<int>(50, 0, 200, 200));
+	drawCompressionWaveform(m_outputBuffer, g, juce::Rectangle<int>(50, -70, 200, 500));
 
 }
