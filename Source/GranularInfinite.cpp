@@ -8,6 +8,7 @@
 #include "NoteLabel.h"
 #include "ButtonPalette.h"
 #include "DualThumbSlider.h"
+#include "CompressorWaveformComponent.h"
 #include "GrainPositionControl.h"
 #include "KeyButtonMods.h"
 #include <memory>
@@ -24,6 +25,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
     :
     audioProcessor(p),
     buttonPalette(bp),
+    m_apvts(p.apvts),
     grainLengthSlider(std::tuple<double, double, double>(512.0, 36000.0, 1.0)),
     grainSpacingLabel(buttonPalette.grainSpacingLabel),
     grainSpacingSlider(buttonPalette.grainSpacingSlider),
@@ -228,6 +230,8 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             addAndMakeVisible(sampleLabel);
             addAndMakeVisible(buttonPalette.synthToggleButton);
             addAndMakeVisible(buttonPalette.hanningToggleButton);
+            addAndMakeVisible(buttonPalette.globalGainSlider);
+            addAndMakeVisible(buttonPalette.globalGainSliderLabel);
             addAndMakeVisible(buttonPalette.compressor.thresholdStruct.thresholdSlider);
             addAndMakeVisible(buttonPalette.compressor.thresholdStruct.inc);
             addAndMakeVisible(buttonPalette.compressor.thresholdStruct.dec);
@@ -264,6 +268,8 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             //grainAreaAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainArea", grainAreaSlider);
 
             hanningToggleAttachment = std::make_unique<ButtonAttachment>(audioProcessor.apvts, "hanningToggle", *hanningToggleButton);
+            compressorThresholdAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "globalGain",
+                buttonPalette.globalGainSlider);
 
             compressorThresholdAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "compressorThreshold", 
                 buttonPalette.compressor.thresholdStruct.thresholdSlider);
@@ -279,6 +285,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
 
             synthToggleHandler(buttonPalette.synthToggleButton);
             sampleLabelHandler(*sampleLabel);
+            globalGainSliderHandler(buttonPalette.globalGainSlider);
 
             noteLabels.add(noteLabel);
             keyButtons.add(button);
@@ -302,6 +309,14 @@ GranularInfinite::~GranularInfinite()
 
 //==============================================================================
 
+void GranularInfinite::parameterChanged(const juce::String& parameterID, float newValue) {
+    if (parameterID == "compressorThreshold") {
+        juce::MessageManager::callAsync([this, newValue] {
+            m_compressorWaveformComponent->updateCompressorLevels(newValue);
+            });
+    }
+}
+
 // this lets the audioprocessor trigger a change on the editor
 void GranularInfinite::changeListenerCallback(juce::ChangeBroadcaster* source)
 {
@@ -323,7 +338,7 @@ void GranularInfinite::changeListenerCallback(juce::ChangeBroadcaster* source)
 //                onComponentButtonClicked();
 //        }
 //    };
-//}
+//} 
 
 bool GranularInfinite::keyPressed(const juce::KeyPress& key,
     Component* originatingComponent)
@@ -439,6 +454,24 @@ bool GranularInfinite::keyStateChanged(bool isKeyDown,
         }
     }
     return false;
+}
+
+
+void GranularInfinite::compressorWaveformHandle() {
+    if (currentlyPressedKeys.size() > 0) {
+        startTimerHz(60);
+        if (m_compressorWaveformComponent == nullptr) {
+            m_compressorWaveformComponent =
+                std::make_unique<CompressorWaveformComponent>(audioProcessor.incomingBuffer, audioProcessor.outputBuffer, audioProcessor.fifo);
+            addAndMakeVisible(*m_compressorWaveformComponent);
+            m_compressorWaveformComponent->setBounds(650, 450, 600, 200);
+        }
+        else {
+            //m_compressorWaveformComponent->updateSamples(audioProcessor.incomingBuffer, audioProcessor.outputBuffer, audioProcessor.fifo);
+            m_compressorWaveformComponent->repaint();
+        }
+    }
+    else return;
 }
 
 // *TO-DO*
@@ -568,6 +601,15 @@ void GranularInfinite::grainAreaSliderHandler()
         };
 }
 
+void GranularInfinite::globalGainSliderHandler(juce::Slider& slider) {
+    slider.onValueChange = [this, &slider]() {
+        auto* gainParam = audioProcessor.apvts.getParameter("globalGain");
+        if (auto* floatParam = dynamic_cast<juce::RangedAudioParameter*>(gainParam)) {
+            float normalized = floatParam->convertTo0to1((float)slider.getValue());
+            gainParam->setValueNotifyingHost(normalized);
+        }
+    };
+}
 
 void GranularInfinite::timerCallback()
 {
@@ -703,7 +745,12 @@ void GranularInfinite::resized()
 
     buttonPalette.hanningToggleButton.setBounds(x + 100, y + 350, buttonWidth, buttonHeight);
 
+    buttonPalette.globalGainSlider.setBounds(x + 200, y + 350, 80, 100);
+
     m_waveformDisplay.setBounds(650, 450, 600, 200);
+    if (m_compressorWaveformComponent != nullptr) {
+        m_compressorWaveformComponent->setBounds(650, 450, 600, 200);
+    }
 
     juce::FlexBox outer;
     juce::FlexBox inner1;

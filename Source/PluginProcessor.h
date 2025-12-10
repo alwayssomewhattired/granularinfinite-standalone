@@ -112,6 +112,11 @@ public:
 
     Sample* loadFile(const juce::File& file, const juce::String& noteName, std::optional<juce::String> fileName = std::nullopt);
 
+    // for compressor visualization
+    juce::AudioBuffer<float> incomingBuffer;
+    juce::AudioBuffer<float> outputBuffer;
+    juce::AbstractFifo fifo{ 1024 };
+
 private:
     //SpotifyAuthenticator auth;
     //juce::String spotifyAuthToken;
@@ -200,6 +205,11 @@ private:
     MySampleCompressor m_compressor;
 
     void updateCompressor();
+
+    //// for compressor visualization
+    //juce::AudioBuffer<float> incomingBuffer;
+    //juce::AudioBuffer<float> outputBuffer;
+    //juce::AbstractFifo fifo{ 1024 };
 
     // dunno if i need this circular anymore
     juce::AudioBuffer<float> circularBuffer;

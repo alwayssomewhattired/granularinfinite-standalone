@@ -26,6 +26,16 @@ public:
 		hanningToggleButton.setButtonText("hanning");
 		hanningToggleButton.setClickingTogglesState(true);
 
+		globalGainSliderLabel.setText("gain", juce::dontSendNotification);
+		globalGainSliderLabel.setFont(juce::Font(16.0f, juce::Font::bold));
+		globalGainSliderLabel.setColour(juce::Label::textColourId, juce::Colours::green);
+		globalGainSliderLabel.setJustificationType(juce::Justification::centred);
+
+		globalGainSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+		globalGainSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
+		globalGainSlider.setRange(0.0, 1.0, 0.01);
+		globalGainSlider.setValue(0.1);
+
 		grainSpacingLabel.setText("grain spacing", juce::dontSendNotification);
 		grainSpacingLabel.setFont(juce::Font(16.0f, juce::Font::bold));
 		grainSpacingLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
@@ -190,9 +200,6 @@ public:
 		return std::make_pair(std::move(slider), std::move(label));
 	}
 
-	void createSlider() {
-
-	}
 
 
 	// file-name of current waveform button pressed. (warning: not a reference. be careful)
@@ -207,6 +214,9 @@ public:
 	juce::TextButton spotifyButton;
 	juce::TextButton sourceDownloadButton;
 	juce::TextButton hanningToggleButton;
+
+	juce::Label globalGainSliderLabel;
+	juce::Slider globalGainSlider;
 
 	struct WaveformButton {
 		juce::String keyName;

@@ -280,6 +280,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
     ));
 
     params.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "globalGain",
+        "GlobalGain",
+        0.00f,
+        1.00f,
+        0.10f
+    ));
+
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(
         "compressorThreshold",
         "CompressorThreshold",
         juce::NormalisableRange<float>(0.001f, 1.0f, 0.0f, 0.3f), // exponential
@@ -414,6 +422,7 @@ void GranularinfiniteAudioProcessor::processSamplerPath(juce::AudioBuffer<float>
 
     for (auto& pair : samples)
     {
+
         auto& sample = pair.second;
 
         tempBuffer.setSize(outCh, numSamples, false, false, true);
@@ -431,6 +440,9 @@ void GranularinfiniteAudioProcessor::processSamplerPath(juce::AudioBuffer<float>
         if (srcChans == 1 && outCh >= 2)
             buffer.addFrom(1, 0, tempBuffer, 0, 0, numSamples);
     }
+
+    const float globalGain = apvts.getRawParameterValue("globalGain")->load();
+    buffer.applyGain(globalGain);
 }
 
 void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples)
@@ -466,20 +478,33 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
 
                         int idx;
                         const bool hanningToggle = apvts.getRawParameterValue("hanningToggle")->load();
+                        const float globalGain = apvts.getRawParameterValue("globalGain")->load();
 
                         if (hanningToggle) {
                             idx = (g.position * hannWindow.size()) / g.length;
                             float env = hannWindow[idx];
                             float limiterSamples = limiter(m_fullBuffer.getSample(0, readIndex) * env, 0.8f);
 
-                            out += upwardCompressor(limiterSamples, noteName.toStdString());
+                            out += (upwardCompressor(limiterSamples, noteName.toStdString()) * globalGain);
                         }
                         else {
                             updateCompressor();
-                            float limiterSamples = limiter(m_fullBuffer.getSample(0, readIndex), 0.8f);
+                            float limiterSample = limiter(m_fullBuffer.getSample(0, readIndex), 0.8f);
+                            // rolling buffer
+                            int start1, size1, start2, size2;
+                            fifo.prepareToWrite(1, start1, size1, start2, size2);
 
-                            float upwardCompressed = upwardCompressor(limiterSamples, noteName.toStdString());
-                            out += m_compressor.process(upwardCompressed);
+                            float upwardCompressed = upwardCompressor(limiterSample, noteName.toStdString());
+
+
+                            if (size1 > 0) {
+                                incomingBuffer.setSize(1, 1024);
+                                outputBuffer.setSize(1, 1024);
+                                incomingBuffer.setSample(0, start1, limiterSample);
+                                outputBuffer.setSample(0, start1, upwardCompressed);
+                            }
+                            fifo.finishedWrite(size1);
+                            out += (m_compressor.process(upwardCompressed)) * globalGain;
                         }
 
                         ++g.position;

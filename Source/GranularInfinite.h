@@ -20,13 +20,15 @@
 #include "SpotifyList.h"
 #include "SpotifyAPI.h"
 #include "SpotifyFetcher.h"
+#include "CompressorWaveformComponent.h"
 
 class GranularinfiniteAudioProcessor;
 //==============================================================================
 /**
 */
 
-class GranularInfinite : public juce::Component, public juce::KeyListener, public juce::ChangeListener, private juce::Timer
+class GranularInfinite : public juce::Component, public juce::KeyListener, public juce::ChangeListener, private juce::Timer, 
+    private juce::AudioProcessorValueTreeState::Listener
 {
 public:
     GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPalette& bp);
@@ -59,9 +61,16 @@ public:
     void playheadPositionHandler();
     void sampleLabelHandler(SampleLabel& button);
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
-
+    void compressorWaveformHandle();
+    void globalGainSliderHandler(juce::Slider& slider);
 
 private:
+
+    void parameterChanged(const juce::String& parameterID, float newValue) override;
+
+    juce::AudioProcessorValueTreeState& m_apvts;
+
+    std::unique_ptr<CompressorWaveformComponent> m_compressorWaveformComponent = nullptr;
 
     // LOOK AND FEEL
     CustomLookAndFeel customLook;
@@ -132,6 +141,7 @@ private:
     //std::unique_ptr<SliderAttachment> frequencyUpwardCompressorAttachment;
     //std::unique_ptr<SliderAttachment> frequencyUpwardCompressorFreqAttachment;
     std::unique_ptr<ButtonAttachment> hanningToggleAttachment;
+    std::unique_ptr<SliderAttachment> globalGainAttachment;
     std::unique_ptr<SliderAttachment> compressorThresholdAttachment;
     std::unique_ptr<SliderAttachment> compressorRatioAttachment;
     std::unique_ptr<SliderAttachment> compressorAttackCoeffAttachment;
