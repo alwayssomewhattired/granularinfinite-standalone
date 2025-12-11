@@ -290,6 +290,14 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             noteLabels.add(noteLabel);
             keyButtons.add(button);
             sampleLabels.add(sampleLabel);
+
+            audioProcessor.onThresholdChanged = [this](float v) {
+                m_compressorWaveformComponent->updateCompressorThreshold(v);
+                };
+            audioProcessor.onRatioChanged = [this](float v) {
+                m_compressorWaveformComponent->updateCompressorRatio(v);
+                };
+
                     }
     }
     resized();
@@ -302,6 +310,8 @@ GranularInfinite::~GranularInfinite()
     grainAmountSlider.setLookAndFeel(nullptr);
     grainLengthSlider.setLookAndFeel(nullptr);
     grainAreaSlider.setLookAndFeel(nullptr);
+
+
     //for (auto& [k, v] : frequencyUpwardCompressors) {
     //    v.slider->setLookAndFeel(nullptr);
     //}
@@ -309,13 +319,6 @@ GranularInfinite::~GranularInfinite()
 
 //==============================================================================
 
-void GranularInfinite::parameterChanged(const juce::String& parameterID, float newValue) {
-    if (parameterID == "compressorThreshold") {
-        juce::MessageManager::callAsync([this, newValue] {
-            m_compressorWaveformComponent->updateCompressorLevels(newValue);
-            });
-    }
-}
 
 // this lets the audioprocessor trigger a change on the editor
 void GranularInfinite::changeListenerCallback(juce::ChangeBroadcaster* source)
@@ -472,9 +475,9 @@ void GranularInfinite::compressorWaveformHandle() {
 
     if (m_compressorWaveformComponent == nullptr) {
         m_compressorWaveformComponent =
-            std::make_unique<CompressorWaveformComponent>(audioProcessor.incomingBuffer, audioProcessor.outputBuffer, audioProcessor.fifo);
+            std::make_unique<CompressorWaveformComponent>(audioProcessor.outputBuffer);
         addAndMakeVisible(*m_compressorWaveformComponent);
-        m_compressorWaveformComponent->setBounds(650, 450, 600, 200);
+        m_compressorWaveformComponent->setBounds(650, 650, 500, 200);
     }
     
     if (m_isCompressorTimer)
@@ -768,9 +771,7 @@ void GranularInfinite::resized()
 
     m_waveformDisplay.setBounds(650, 450, 600, 200);
 
-    if (m_compressorWaveformComponent != nullptr) {
-        m_compressorWaveformComponent->setBounds(650, 450, 600, 200);
-    }
+
 
     juce::FlexBox outer;
     juce::FlexBox inner1;

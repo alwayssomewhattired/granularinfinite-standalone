@@ -38,8 +38,10 @@ GranularinfiniteAudioProcessor::GranularinfiniteAudioProcessor()
     for (int i = 0; i < 16; ++i)
         synth.addVoice(new juce::SamplerVoice());
 
-    incomingBuffer.setSize(1, 1024);
     outputBuffer.setSize(1, 1024);
+
+    apvts.addParameterListener("compressorThreshold", this);
+    apvts.addParameterListener("compressorRatio", this);
 
 }
 
@@ -49,6 +51,9 @@ GranularinfiniteAudioProcessor::~GranularinfiniteAudioProcessor()
 
     // possibly make this a thing? dunno bc i already have 'stopFetching' method. prolly don't need this
     //spotifyFetcher->reset();
+
+    apvts.removeParameterListener("compressorThreshold", this);
+    apvts.removeParameterListener("compressorRatio", this);
 }
 
 //==============================================================================
@@ -255,13 +260,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
         600.0f
     );
 
-    //params.push_back(std::make_unique<juce::AudioParameterFloat>(
-    //    "grainArea",
-    //    "GrainArea",
-    //    dynamicRange,
-    //    0
-    //));
-
     params.push_back(std::make_unique<juce::AudioParameterFloat>(
         "grainMinArea",
         "GrainMinArea",
@@ -293,7 +291,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
     params.push_back(std::make_unique<juce::AudioParameterFloat>(
         "compressorThreshold",
         "CompressorThreshold",
-        juce::NormalisableRange<float>(0.001f, 1.0f, 0.0f, 0.3f), // exponential
+        juce::NormalisableRange<float>(0.001f, 1.0f), 
         0.1f,
         juce::AudioParameterFloatAttributes()
         .withStringFromValueFunction([](float v, int)
@@ -346,14 +344,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
         0.0f
     ));
 
-    //params.push_back(std::make_unique<juce::AudioParameterFloat>(
-    //    "frequencyUpwardCompressorFreq",
-    //    "FrequencyUpwardCompressorFreq",
-    //    0.00f,
-    //    6000.00f,
-    //    0.00f
-    //    ));
-
 
     // loop over every note name for this
     for (const auto& note : allNotes()) {
@@ -367,6 +357,23 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
     }
 
     return { params.begin(), params.end() };
+}
+
+void GranularinfiniteAudioProcessor::parameterChanged(const juce::String& parameterID, float newValue) {
+    if (parameterID == "compressorThreshold") {
+        if (onThresholdChanged) {
+            juce::MessageManager::callAsync([this, newValue] {
+                onThresholdChanged(newValue);
+                });
+        }
+    }
+    else if (parameterID == "compressorRatio") {
+        if (onRatioChanged) {
+            juce::MessageManager::callAsync([this, newValue] {
+                onRatioChanged(newValue);
+                });
+        }
+    }
 }
 
 void GranularinfiniteAudioProcessor::updateMaxFileSize(float const& newMaxFileSize)
@@ -494,34 +501,11 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                             updateCompressor();
                             float limiterSample = limiter(m_fullBuffer.getSample(0, readIndex), 0.8f);
 
-                            // rolling buffer
-                  //         int start1, size1, start2, size2;
-                  //         fifo.prepareToWrite(1, start1, size1, start2, size2);
-                  //
                            float upwardCompressed = upwardCompressor(limiterSample, noteName.toStdString());
-                  //
-                  //         std::cout << size1 << "\n";
-                  //         if (size1 > 0) {
-                  //             for (int i = 0; i < size1; ++i) {
-                  //                 incomingBuffer.setSample(0, start1 + i, limiterSample);
-                  //                 outputBuffer.setSample(0, start1 + i, upwardCompressed);
-                  //             }
-                  //         }
-                  //
-                  //         if (size2 > 0) {
-                  //             for (int i = 0; i < size2; ++i) {
-                  //                 incomingBuffer.setSample(0, start2 + i, limiterSample);
-                  //                 outputBuffer.setSample(0, start2 + i, upwardCompressed);
-                  //             }
-                  //         }
-                  //
-                            //fifo.finishedWrite(size1 + size2);
-
 
                            int pos = writePos.load(std::memory_order_relaxed);
 
-                           incomingBuffer.setSample(0, pos, limiterSample);
-                           outputBuffer.setSample(0, pos, upwardCompressed);
+                           outputBuffer.setSample(0, pos, limiterSample);
 
                            pos = (pos + 1) % 1024;
                            writePos.store(pos, std::memory_order_release);

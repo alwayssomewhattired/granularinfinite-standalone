@@ -27,8 +27,8 @@ class GranularinfiniteAudioProcessor;
 /**
 */
 
-class GranularInfinite : public juce::Component, public juce::KeyListener, public juce::ChangeListener, private juce::Timer, 
-    private juce::AudioProcessorValueTreeState::Listener
+class GranularInfinite : public juce::Component, public juce::KeyListener, public juce::ChangeListener, private juce::Timer
+
 {
 public:
     GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPalette& bp);
@@ -67,7 +67,6 @@ public:
 private:
     bool m_isCompressorTimer;
     void compressorWaveformTimer();
-    void parameterChanged(const juce::String& parameterID, float newValue) override;
 
     juce::AudioProcessorValueTreeState& m_apvts;
 
@@ -121,26 +120,13 @@ private:
 
     std::unique_ptr<juce::TextButton> hanningToggleButton;
 
-    //struct FrequencyUpwardCompressor {
-    //    double frequency;
-    //    std::unique_ptr<juce::Slider> slider;
-    //};
-
-    //// note to struct
-    //std::unordered_map<std::string, FrequencyUpwardCompressor> frequencyUpwardCompressors;
-    //// note to label
-    //std::unordered_map<std::string, std::unique_ptr<juce::Label>> m_frequencyUpwardCompressorLabels;
-
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
     using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
 
     std::unique_ptr<SliderAttachment> grainSpacingAttachment;
     std::unique_ptr<SliderAttachment> grainAmountAttachment;
-    //std::unique_ptr<SliderAttachment> grainAreaAttachment;
     std::vector<std::unique_ptr<SliderAttachment>> frequencyUpwardCompressorAttachments;
-    //std::vector<std::unique_ptr<SliderAttachment>> frequencyUpwardCompressorFreqAttachments;
-    //std::unique_ptr<SliderAttachment> frequencyUpwardCompressorAttachment;
-    //std::unique_ptr<SliderAttachment> frequencyUpwardCompressorFreqAttachment;
+
     std::unique_ptr<ButtonAttachment> hanningToggleAttachment;
     std::unique_ptr<SliderAttachment> globalGainAttachment;
     std::unique_ptr<SliderAttachment> compressorThresholdAttachment;

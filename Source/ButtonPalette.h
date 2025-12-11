@@ -252,11 +252,9 @@ public:
 
 	juce::Slider grainSpacingSlider;
 	juce::Slider grainAmountSlider;
-	//juce::Slider frequencyUpwardCompressorSlider;
 
 	juce::Label grainSpacingLabel;
 	juce::Label grainAmountLabel;
 	juce::Label grainLengthLabel;
 	juce::Label grainPositionLabel;
-	//juce::Label frequencyUpwardCompressorLabel;
 };

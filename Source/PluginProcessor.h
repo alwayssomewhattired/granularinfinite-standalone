@@ -7,7 +7,8 @@
 /**
 */
 class GranularinfiniteAudioProcessor  : public juce::AudioProcessor,
-                                        public juce::ChangeBroadcaster
+                                        public juce::ChangeBroadcaster,
+                                        public juce::AudioProcessorValueTreeState::Listener
 {
 public:
     //==============================================================================
@@ -67,6 +68,15 @@ public:
 
     juce::AudioBuffer<float>& getSampleBuffer(const juce::String& fileName) const;
 
+    //==============================================================================
+    //---FUNCTION WRAPPERS---//
+
+    std::function<void(float)> onThresholdChanged;
+    std::function<void(float)> onRatioChanged;
+
+    //==============================================================================
+
+    void parameterChanged(const juce::String& parameterID, float newValue) override;
 
     // frequency compressor
     float upwardCompressor(float x, const std::string& notename);
@@ -113,11 +123,9 @@ public:
     Sample* loadFile(const juce::File& file, const juce::String& noteName, std::optional<juce::String> fileName = std::nullopt);
 
     // for compressor visualization
-    juce::AudioBuffer<float> incomingBuffer;
     juce::AudioBuffer<float> outputBuffer;
     std::atomic<int> writePos{ 0 };
-    // get rid of this fifo bullshit
-    juce::AbstractFifo fifo{ 1024 };
+
 
 
 private:
@@ -208,11 +216,6 @@ private:
     MySampleCompressor m_compressor;
 
     void updateCompressor();
-
-    //// for compressor visualization
-    //juce::AudioBuffer<float> incomingBuffer;
-    //juce::AudioBuffer<float> outputBuffer;
-    //juce::AbstractFifo fifo{ 1024 };
 
     // dunno if i need this circular anymore
     juce::AudioBuffer<float> circularBuffer;
