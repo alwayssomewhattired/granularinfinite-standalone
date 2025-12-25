@@ -4,9 +4,9 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 #include <juce_gui_extra/juce_gui_extra.h>
-#include "ButtonPalette.h"
+#include "components/ButtonPalette.h"
 #include "GranularInfinite.h"
-#include "SamplerInfinite.h"
+#include "samplerinfinite/SamplerInfinite.h"
 #include "OutOfBounds.h"
 
 class GranularInfinite;

@@ -1,17 +1,17 @@
 #pragma once
 
 #include "SamplerInfinite.h"
-#include "ButtonPalette.h"
-#include "PluginProcessor.h"
-#include "PluginEditor.h"
-#include "PythonSoulseek.h"
-#include "SpotifyBrowser.h"
-#include "SpotifyList.h"
-#include "SpotifyAPI.h"
-#include "SpotifyFetcher.h"
-#include "SpotifyAuthenticator.h"
-#include "KeyToNote.h"
 #include "FFTProcessor.h"
+#include "../components/ButtonPalette.h"
+#include "../KeyToNote.h"
+#include "../PluginProcessor.h"
+#include "../PluginEditor.h"
+#include "../sourceinfinite/PythonSoulseek.h"
+#include "../sourceinfinite/SpotifyBrowser.h"
+#include "../sourceinfinite/SpotifyList.h"
+#include "../sourceinfinite/SpotifyAPI.h"
+#include "../sourceinfinite/SpotifyFetcher.h"
+#include "../sourceinfinite/SpotifyAuthenticator.h"
 #include "AudioFileParse.h"
 #include <pybind11/embed.h>
 namespace py = pybind11;

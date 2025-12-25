@@ -3,7 +3,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "OpenConsole.h"
-#include "KeyButton.h"
+#include "components/KeyButton.h"
 #include "KeyToNote.h"
 //#include "SpotifyAuthenticator.h"
 //#include "SamplerInfinite.h"
@@ -122,6 +122,7 @@ void GranularinfiniteAudioProcessor::changeProgramName (int index, const juce::S
 
 void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    // prepares samples for juce 'synth' mode
     for (auto& pair : samples)
     {
         if (std::find(currentFiles.begin(), currentFiles.end(), pair.first) != currentFiles.end())
@@ -713,7 +714,7 @@ void GranularinfiniteAudioProcessor::startPlayback(const juce::String& note)
         synth.noteOn(1, midi_note, 127.0f);
         return;
     }
-
+    std::cout << "note: " << note.toStdString() << "\n";
     auto it = samples.find(note);
     if (it != samples.end())
     {

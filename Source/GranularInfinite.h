@@ -6,21 +6,21 @@
 #include "MyLookAndFeel.h"
 #include "KeyToNote.h"
 #include <juce_gui_extra/juce_gui_extra.h>
-#include "SampleLabel.h"
-#include "KeyButton.h"
-#include "NoteLabel.h"
-#include "ButtonPalette.h"
+#include "components/SampleLabel.h"
+#include "components/KeyButton.h"
+#include "components/NoteLabel.h"
+#include "components/ButtonPalette.h"
 #include "BiMap.h"
 #include "CustomLookAndFeel.h"
-#include "DualThumbSlider.h"
-#include "GrainPositionControl.h"
-#include "WaveformDisplay.h"
-#include "KeyButtonMods.h"
-#include "SpotifyBrowser.h"
-#include "SpotifyList.h"
-#include "SpotifyAPI.h"
-#include "SpotifyFetcher.h"
-#include "CompressorWaveformComponent.h"
+#include "components/DualThumbSlider.h"
+#include "components/GrainPositionControl.h"
+#include "components/WaveformDisplay.h"
+#include "components/KeyButtonMods.h"
+#include "components/CompressorWaveformComponent.h"
+#include "sourceinfinite/SpotifyBrowser.h"
+#include "sourceinfinite/SpotifyList.h"
+#include "sourceinfinite/SpotifyAPI.h"
+#include "sourceinfinite/SpotifyFetcher.h"
 
 class GranularinfiniteAudioProcessor;
 //==============================================================================
@@ -66,6 +66,7 @@ public:
 
 private:
     bool m_isCompressorTimer;
+    bool m_isPlayhead;
     void compressorWaveformTimer();
 
     juce::AudioProcessorValueTreeState& m_apvts;

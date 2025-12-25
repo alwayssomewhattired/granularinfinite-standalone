@@ -3,14 +3,14 @@
 
 #include <JuceHeader.h>
 #include <juce_gui_extra/juce_gui_extra.h>
-#include "PluginProcessor.h"
-#include "ButtonPalette.h"
-#include "SpotifyBrowser.h"
-#include "SpotifyList.h"
-#include "SpotifyAPI.h"
-#include "SpotifyFetcher.h"
-#include "SpotifyAuthenticator.h"
-#include "SearchableComboBox.h"
+#include "../PluginProcessor.h"
+#include "../components/ButtonPalette.h"
+#include "../components/SearchableComboBox.h"
+#include "../sourceinfinite/SpotifyBrowser.h"
+#include "../sourceinfinite/SpotifyList.h"
+#include "../sourceinfinite/SpotifyAPI.h"
+#include "../sourceinfinite/SpotifyFetcher.h"
+#include "../sourceinfinite/SpotifyAuthenticator.h"
 
 
 //==============================================================================

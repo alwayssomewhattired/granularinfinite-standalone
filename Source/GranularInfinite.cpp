@@ -3,14 +3,14 @@
 #include "PluginEditor.h"
 #include "PluginProcessor.h"
 #include "GranularInfinite.h"
-#include "KeyButton.h"
-#include "SampleLabel.h"
+#include "components/KeyButton.h"
+#include "components/SampleLabel.h"
 #include "NoteLabel.h"
-#include "ButtonPalette.h"
-#include "DualThumbSlider.h"
-#include "CompressorWaveformComponent.h"
-#include "GrainPositionControl.h"
-#include "KeyButtonMods.h"
+#include "components/ButtonPalette.h"
+#include "components/DualThumbSlider.h"
+#include "components/CompressorWaveformComponent.h"
+#include "components/GrainPositionControl.h"
+#include "components/KeyButtonMods.h"
 #include <memory>
 #include <algorithm>
 #include "JuceHeader.h"
@@ -35,7 +35,6 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
     grainAreaLabel(buttonPalette.grainPositionLabel),
     grainLengthLabel(buttonPalette.grainLengthLabel),
     hanningToggleButton(&buttonPalette.hanningToggleButton)
-
 {
     audioProcessor.addChangeListener(this);
 
@@ -98,7 +97,6 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
         {
 
 
-
             //-------keyboard------//
             char myChar = it->first;
             juce::String myKeyName = juce::String::charToString(myChar);
@@ -124,73 +122,13 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             auto* sampleLabel = new SampleLabel("", myNoteName);
             button->setOnFileDropped([this, myNoteName, sampleLabel, button, myKeyName](std::map<juce::String, juce::Array<juce::File>>& noteToFiles, 
                 const bool& isDir) {
-                    const std::map<char, juce::String>& keyToNote = CreateKeyToNote(octave);
 
-                    juce::String fullPath;
-                    juce::String name;
-                    juce::String refinedNote;
-
-                    for (const auto& [k, v] : noteToFiles) {
-                        for (const juce::File& audioFile : v) {
-                            fullPath = audioFile.getFullPathName();
-                            name = audioFile.getFileNameWithoutExtension();
-                            button->setTrimmedFileName(name);
-                            if (isDir) {
-                                refinedNote = k;
-                            }
-                            else {
-                                size_t lastUnderscore = name.toStdString().rfind('_');
-                                if (lastUnderscore != std::string::npos) {
-                                    refinedNote = name.substring(lastUnderscore + 1);
-                                }
-                                if (CreateNoteToMidi.find(refinedNote) == CreateNoteToMidi.end()) {
-                                    refinedNote = myNoteName.dropLastCharacters(1) + juce::String(octave);
-                                }
-                            }
-
-                            SampleLabel* matchingSampleLabel = sampleLabel;
-                            matchingSampleLabel->setButtonText(name);
-                            noteToSample.set(refinedNote, name);
-                            juce::File file(fullPath);
-                            juce::String refinedName = file.getFileNameWithoutExtension();
-                            matchingSampleLabel->file = refinedName;
-                            synthNote = refinedNote;
-
-                            noteToFile[refinedNote] = std::make_unique<juce::File>(fullPath);
-                            GranularinfiniteAudioProcessor::Sample* samplePtr = audioProcessor.loadFile(file, refinedNote, "false");
-
-                             //i can't see my waveform button anymore
-                            buttonPalette.addWaveformButton(refinedName, myKeyName, refinedNote,
-                                [this, refinedNote, refinedName, samplePtr](juce::TextButton& button)
-                                {
-                                    juce::String& state = buttonPalette.waveformState;
-                                    if (button.getToggleState())
-                                    {
-                                        if (state.isNotEmpty())
-                                        {
-                                            if (auto it = buttonPalette.waveformButtons.find(state); it != buttonPalette.waveformButtons.end())
-                                            {
-                                                it->second->waveformButton->setToggleState(false, juce::dontSendNotification);
-                                            }
-                                        }
-                                        state = refinedName;
-                                        m_waveformDisplay.setBuffer(audioProcessor.getSampleBuffer(refinedNote));
-                                        m_waveformDisplay.setSample(samplePtr);
-
-                                        m_waveformDisplay.setPlayheadPosition();
-                                        button.setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
-                                    }
-                                    else {
-                                        state = juce::String();
-                                        m_waveformDisplay.clear();
-                                    }
-                                });
-                        }
-                    }
-                    
-                    resized();
-                    sampleRefresh(button);
-                });
+                m_keyButtonMods.fileDropCB(octave, noteToFiles, sampleLabel, myNoteName, button, isDir, audioProcessor, noteToSample, synthNote, 
+                    noteToFile, buttonPalette, m_waveformDisplay);
+                
+                resized();
+                sampleRefresh(button);
+            });
             //------------//
 
             // control-buttons
@@ -357,7 +295,6 @@ bool GranularInfinite::keyPressed(const juce::KeyPress& key,
         const juce::String& noteName = it->second;
         m_isCompressorTimer = true;
         compressorWaveformHandle();
-        std::cout << "handeled\n";
         auto it2 = currentlyPressedKeys.find(char_key);
         size_t index = order.find(char_key);
         if (index != std::string::npos)
@@ -392,7 +329,8 @@ bool GranularInfinite::keyPressed(const juce::KeyPress& key,
             if (auto* sampleName = noteToSample.getValue(noteName))
             {
                 {
-
+                    juce::String fuck = *sampleName;
+                    std::cout << "samplename: " << fuck.toStdString() << "\n";
                     if (sampleName->isNotEmpty())
                     {
                         if (noteName.isNotEmpty()) {
@@ -631,14 +569,15 @@ void GranularInfinite::timerCallback()
     }
 
     // temoporarily disabled. create flag for this vvv
-    //if (m_isPlayhead)
-    //    playheadPositionHandler();
+    if (m_isPlayhead)
+        playheadPositionHandler();
 
 
 }
 
 void GranularInfinite::playheadPositionHandler()
 {
+    startTimerHz(60);
     const juce::AudioBuffer<float> buffer = m_waveformDisplay.getBuffer();
     m_waveformDisplay.setPlayheadPosition();
 }

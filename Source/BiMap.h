@@ -1,3 +1,5 @@
+
+#pragma once
 #include <JuceHeader.h>
 
 template <typename Key, typename Value>
@@ -19,7 +21,6 @@ public:
         forward.set(k, v);
         reverse.set(v, k);
     }
-
 
 
     // Lookup by value

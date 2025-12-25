@@ -2,7 +2,7 @@
 #include "SearchableComboBox.h"
 #include <JuceHeader.h>
 #include <juce_gui_extra/juce_gui_extra.h>
-#include "KeyToNote.h"
+#include "../KeyToNote.h"
 
 SearchableComboBox::SearchableComboBox(const bool realtimeResults)
 {

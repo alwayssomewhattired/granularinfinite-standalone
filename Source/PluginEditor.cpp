@@ -2,7 +2,7 @@
 //#include "PluginEditor.h"
 #include "GranularInfinite.h"
 #include "OpenConsole.h"
-#include "ButtonPalette.h"
+#include "components/ButtonPalette.h"
 #include "OutOfBounds.h"
 
 

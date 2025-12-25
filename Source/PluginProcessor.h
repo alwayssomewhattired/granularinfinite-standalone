@@ -143,7 +143,7 @@ private:
     std::mutex midiMutex;
     juce::Synthesiser synth;
 
-    // file-name to Sample object
+    // note-name to Sample object
     std::map<juce::String, std::unique_ptr<Sample>> samples;
 
     juce::AudioFormatManager formatManager;
