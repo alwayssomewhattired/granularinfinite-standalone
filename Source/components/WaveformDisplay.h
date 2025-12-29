@@ -2,6 +2,7 @@
 #pragma once
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_dsp/juce_dsp.h>
+#include "../Sample.h"
 
 class WaveformDisplay : public juce::Component
 {
@@ -20,7 +21,7 @@ public:
         repaint();
     }
 
-    void setSample(GranularinfiniteAudioProcessor::Sample* sample)
+    void setSample(Sample* sample)
     {
         m_sample = sample;
     }
@@ -119,7 +120,7 @@ private:
     // possibly might not need this. replacing with 'sample' instead...
     juce::AudioBuffer<float> buffer;
 
-    GranularinfiniteAudioProcessor::Sample* m_sample;
+    Sample* m_sample;
 
     juce::Rectangle<int> m_grainAreaRect;
     juce::Rectangle<float> m_playheadPosition;

@@ -2,6 +2,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Sample.h"
 
 //==============================================================================
 /**
@@ -57,8 +58,8 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     //==============================================================================
-    void startPlayback(const juce::String& note);
-    void stopPlayback(const juce::String& note);
+    void startPlayback(const juce::String& note, const juce::String& filename);
+    void stopPlayback(const juce::String& note, const juce::String& filename);
     void addMidiEvent(const juce::MidiMessage& m);
 
     float getMaxFileSize() const;
@@ -66,7 +67,7 @@ public:
 
     void updateCurrentSamples(const juce::String fileName, const bool remove);
 
-    juce::AudioBuffer<float>& getSampleBuffer(const juce::String& fileName) const;
+    const juce::AudioBuffer<float>& getSampleBuffer(const juce::String& noteName, const juce::String& fileName) const;
 
     //==============================================================================
     //---FUNCTION WRAPPERS---//
@@ -96,37 +97,16 @@ public:
     bool synthToggle = false;
 
     // granular toggle flag
-    bool grainAll = false;
+    bool m_grainAll = false;
 
-    struct Sample
-    {
-        std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
-        juce::AudioTransportSource transportSource;
-        bool isPrepared = false;
-
-        std::int64_t audioFileLength = 0;
-        juce::AudioBuffer<float> fullBuffer;
-
-        void setSourceFromReader(juce::AudioFormatReader* reader)
-        {
-            readerSource.reset(new juce::AudioFormatReaderSource(reader, true));
-            transportSource.setSource(readerSource.get(), 0, nullptr, reader->sampleRate);
-
-            audioFileLength = reader->lengthInSamples;
-
-            fullBuffer.setSize((int)reader->numChannels, (int)audioFileLength);
-
-            reader->read(&fullBuffer, 0, (int)audioFileLength, 0, true, true);
-        }
-    };
-
-    Sample* loadFile(const juce::File& file, const juce::String& noteName, std::optional<juce::String> fileName = std::nullopt);
+    std::shared_ptr<Sample>& loadFile(const juce::File& file, const juce::String& noteName, std::optional<juce::String> fileName = std::nullopt);
 
     // for compressor visualization
     juce::AudioBuffer<float> outputBuffer;
     std::atomic<int> writePos{ 0 };
 
-
+    // note-name|file-name to Sample object
+    std::map<std::pair<juce::String, juce::String>, std::shared_ptr<Sample>> samples;
 
 private:
     //SpotifyAuthenticator auth;
@@ -143,8 +123,11 @@ private:
     std::mutex midiMutex;
     juce::Synthesiser synth;
 
-    // note-name to Sample object
-    std::map<juce::String, std::unique_ptr<Sample>> samples;
+    //// note-name|file-name to Sample object
+    //std::map<std::pair<juce::String, juce::String>, std::shared_ptr<Sample>> samples;
+
+    //file-name to Sample object
+    std::map<juce::String, std::shared_ptr<Sample>> fileNameToSample;
 
     juce::AudioFormatManager formatManager;
     juce::AudioBuffer<float> tempBuffer;

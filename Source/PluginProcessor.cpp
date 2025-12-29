@@ -123,14 +123,23 @@ void GranularinfiniteAudioProcessor::changeProgramName (int index, const juce::S
 void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     // prepares samples for juce 'synth' mode
-    for (auto& pair : samples)
-    {
-        if (std::find(currentFiles.begin(), currentFiles.end(), pair.first) != currentFiles.end())
-            pair.second->transportSource.prepareToPlay(samplesPerBlock, sampleRate);
+    if (!m_grainAll) {
+        for (auto& pair : samples)
+        {
+            if (std::find(currentFiles.begin(), currentFiles.end(), pair.first.second) != currentFiles.end())
+                pair.second->transportSource.prepareToPlay(samplesPerBlock, sampleRate);
+            std::cout << "totalLength: " << pair.second->transportSource.getTotalLength() << "\n";
+            break;
+        }
+
+        synth.setCurrentPlaybackSampleRate(sampleRate);
     }
-    m_sampleRate = sampleRate;
-    m_blockSize = samplesPerBlock;
-    synth.setCurrentPlaybackSampleRate(sampleRate);
+
+    // do i really need to do this?
+    //m_sampleRate = sampleRate;
+    //m_blockSize = samplesPerBlock;
+    
+    //synth.setCurrentPlaybackSampleRate(sampleRate);
 
     // i beleive temp buffer and circular buffer can GTFO
     tempBuffer.setSize(getTotalNumOutputChannels(), samplesPerBlock, false, false, true);
@@ -192,10 +201,12 @@ void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int sampl
 
 void GranularinfiniteAudioProcessor::releaseResources()
 {
+    // releases resources of juce 'synth' mode
     for (auto& pair : samples)
     {
-        if (std::find(currentFiles.begin(), currentFiles.end(), pair.first) != currentFiles.end())
+        if (std::find(currentFiles.begin(), currentFiles.end(), pair.first.first) != currentFiles.end())
             pair.second->transportSource.releaseResources();
+        break;
     }
     }
 
@@ -433,6 +444,7 @@ void GranularinfiniteAudioProcessor::processSamplerPath(juce::AudioBuffer<float>
 
     for (auto& pair : samples)
     {
+        // we don't have this set up to work with multiple files.
 
         auto& sample = pair.second;
 
@@ -466,9 +478,18 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
     for (const juce::String& noteName : currentNotes) {
         for (auto& pair : samples)
         {
-            if (pair.first != noteName) continue;
+            if (pair.first.first != noteName) continue;
+
+            // we need to find out how to play the correct sample.
+            // when audio file is clicked, prepare that sample and unprepare the other one. we do this in the scrollable list file.
+            // start playback and endplayback refer to synth mode. don't make synth mode run when synth mode isn't active.
+            // after this, we should have the ability to choose between files in realtime.
 
             auto& sample = pair.second;
+            if (!sample->isChosen) {
+                continue;
+            }
+
             auto& m_fullBuffer = sample->fullBuffer;
 
             for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
@@ -523,6 +544,7 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                 }
                 for (int ch = 0; ch < outCh; ++ch)
                 {
+                    //std::cout << "sample idx: " << sampleIdx << "\n";
                     buffer.addSample(ch, sampleIdx, out);
                 }
             }
@@ -533,6 +555,7 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                 grainCounter = 0;
                 spawnGrain(sample->audioFileLength);
             }
+            std::cout << "pairairair : " << pair.first.second << "\n";
         }
     }
 }
@@ -642,9 +665,10 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
     }
 
 
-    if (grainAll)
+    if (m_grainAll)
     {
         if (currentFiles.size() > 0) {
+
             processGranularPath(buffer, outCh, numSamples);
         }
         return;
@@ -663,10 +687,11 @@ float GranularinfiniteAudioProcessor::getMaxFileSize() const
     return m_maxFileSize;
 
 }
+
 // takes notename and returns the  audio buffer
-juce::AudioBuffer<float>& GranularinfiniteAudioProcessor::getSampleBuffer(const juce::String& noteName) const
+const juce::AudioBuffer<float>& GranularinfiniteAudioProcessor::getSampleBuffer(const juce::String& noteName, const juce::String& fileName) const
 {
-    auto it = samples.find(noteName);
+    auto it = samples.find({ noteName, fileName });
     if (it != samples.end())
     {
         return it->second->fullBuffer;
@@ -676,8 +701,9 @@ juce::AudioBuffer<float>& GranularinfiniteAudioProcessor::getSampleBuffer(const 
     }
 }
 
-// make this function update the m_maxFileSize with the largest file size vvv
-GranularinfiniteAudioProcessor::Sample* GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce::String& noteName, 
+// loads audio file on file drop
+//      -make this function update the m_maxFileSize with the largest file size vvv
+std::shared_ptr<Sample>& GranularinfiniteAudioProcessor::loadFile(const juce::File& file, const juce::String& noteName, 
     std::optional<juce::String> fileName)
 {
     std::string realStr = noteName.toStdString();
@@ -693,17 +719,22 @@ GranularinfiniteAudioProcessor::Sample* GranularinfiniteAudioProcessor::loadFile
         auto sound = new juce::SamplerSound(noteName.toStdString(), *reader, allNotes,
             rootNote, 0.0, 0.0, 10.0);
         synth.addSound(sound);
-        auto sample = std::make_unique<Sample>();
+
+        auto sample = std::make_shared<Sample>();
         sample->setSourceFromReader(reader);
         updateMaxFileSize(sample->audioFileLength);
+        std::cout << "fuck you bitch: " << file.getFileNameWithoutExtension() << "\n";
+        sample->fileName = file.getFileNameWithoutExtension();
+        sample->noteName = noteName;
 
-        auto* samplePtr = sample.get();
-        samples[noteName] = std::move(sample);
-        return samplePtr;
+        samples[{ noteName, file.getFileNameWithoutExtension() }] = sample;
+        fileNameToSample[file.getFileNameWithoutExtension()] = sample;
+        prepareToPlay(m_sampleRate, m_blockSize);
+        return sample;
     }
 }
 
-void GranularinfiniteAudioProcessor::startPlayback(const juce::String& note)
+void GranularinfiniteAudioProcessor::startPlayback(const juce::String& note, const juce::String& fileName)
 {
     m_keyPressed = true;
     // todoS
@@ -714,28 +745,35 @@ void GranularinfiniteAudioProcessor::startPlayback(const juce::String& note)
         synth.noteOn(1, midi_note, 127.0f);
         return;
     }
-    std::cout << "note: " << note.toStdString() << "\n";
-    auto it = samples.find(note);
+
+    auto it = samples.find({ note, fileName });
+
     if (it != samples.end())
     {
-        currentFiles.push_back(it->first);
+        currentFiles.push_back(fileName);
         auto& sample = it->second;
-        if (!sample->isPrepared)
-        {
-            sample->transportSource.prepareToPlay(48000.0, 576);
-            sample->isPrepared = true;
+        if (!m_grainAll) {
+            if (!sample->isPrepared)
+            {
+                sample->transportSource.prepareToPlay(48000.0, 576);
+                sample->isPrepared = true;
+            }
+            if (!sample->transportSource.isPlaying())
+            {
+                prepareToPlay(m_sampleRate, m_blockSize);
+                sample->transportSource.setPosition(0.0);
+                sample->transportSource.start();
+            }
         }
-        if (!sample->transportSource.isPlaying())
-        {
-            
+        else {
             prepareToPlay(m_sampleRate, m_blockSize);
-            sample->transportSource.setPosition(0.0);
-            sample->transportSource.start();
         }
+
+
     }
 }
 
-void GranularinfiniteAudioProcessor::stopPlayback(const juce::String& note)
+void GranularinfiniteAudioProcessor::stopPlayback(const juce::String& note, const juce::String& fileName)
 {
     const int midi_note = CreateNoteToMidi[note];
 
@@ -744,18 +782,21 @@ void GranularinfiniteAudioProcessor::stopPlayback(const juce::String& note)
         synth.noteOff(1, midi_note, 127, false);
     }
 
-    auto it = samples.find(note);
+    auto it = samples.find({ note, fileName });
     if (it != samples.end())
     {
         m_keyPressed = false;
 
-        currentFiles.push_back(it->first);
-        auto& sample = it->second;
+        currentFiles.push_back(it->first.second);
 
-        std::thread([samplePtr = sample.get()] {
-            if (samplePtr)
-                samplePtr->transportSource.stop();
-            }).detach();
+        if (!m_grainAll) {
+            auto& sample = it->second;
+
+            std::thread([samplePtr = sample.get()] {
+                if (samplePtr)
+                    samplePtr->transportSource.stop();
+                }).detach();
+        }
     }
 
 }

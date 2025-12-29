@@ -8,6 +8,8 @@
 #include <juce_core/juce_core.h>
 #include "ButtonPalette.h"
 #include "ScrollableList.h"
+#include "../PluginProcessor.h"
+#include "../Sample.h"
 
 
 
@@ -74,7 +76,8 @@ public:
         juce::String refinedNote;
 
         for (const auto& [k, v] : noteToFiles) {
-            if (v.size() > 1) {
+
+                std::cout << "hehehehehehehe\n";
                 // in here, make the button and 
                 std::vector<juce::String> fileNames;
                 for (const juce::File& file : v) {
@@ -92,12 +95,13 @@ public:
                         refinedNote = myNoteName.dropLastCharacters(1) + juce::String(octave);
                     }
                 }
-                m_scrollableList.setAudioConfig(&noteToSample, refinedNote);
+  /*              auto& samplesPtr = std::make_unique<std::map<std::pair<juce::String, juce::String>, std::shared_ptr<Sample>>>();
+                m_scrollableList.setAudioConfig(&noteToSample, refinedNote, std::move(samplesPtr));
                 m_scrollableList.items = { fileNames };
                 m_listBox.setModel(&m_scrollableList);
                 m_listBox.setRowHeight(20);
-                addAndMakeVisible(m_listBox);
-            }
+                addAndMakeVisible(m_listBox);*/
+
             for (const juce::File& audioFile : v) {
                 fullPath = audioFile.getFullPathName();
                 name = audioFile.getFileNameWithoutExtension();
@@ -124,9 +128,21 @@ public:
                 synthNote = refinedNote;
 
                 noteToFile[refinedNote] = std::make_unique<juce::File>(fullPath);
-                GranularinfiniteAudioProcessor::Sample* samplePtr = audioProcessor.loadFile(file, refinedNote, "false");
 
-                addWaveformButtonCB(refinedName, refinedNote, samplePtr, *button, buttonPalette, waveformDisplay, audioProcessor);
+                std::shared_ptr<Sample>& samplePtr = audioProcessor.loadFile(file, refinedNote, "false");
+
+                //auto samplesPtr = std::make_unique<std::map<std::pair<juce::String, juce::String>, std::shared_ptr<Sample>>>();
+     /*           auto key = std::make_pair(refinedNote, refinedName);
+                audioProcessor.samples.emplace(key, samplePtr);*/
+
+                m_scrollableList.setAudioConfig(&noteToSample, refinedNote, std::move(samplePtr));
+                m_scrollableList.items = { fileNames };
+                m_listBox.setModel(&m_scrollableList);
+                m_listBox.setRowHeight(20);
+                addAndMakeVisible(m_listBox);
+
+                // temporarily disblef
+                //addWaveformButtonCB(refinedName, refinedNote, samplePtr, *button, buttonPalette, waveformDisplay, audioProcessor);
             }
         }
     }
@@ -144,7 +160,7 @@ private:
         std::unique_ptr<juce::Slider> slider;
     };
 
-    void addWaveformButtonCB(juce::String& refinedName, juce::String& refinedNote, GranularinfiniteAudioProcessor::Sample* samplePtr, 
+    void addWaveformButtonCB(juce::String& refinedName, juce::String& refinedNote, Sample* samplePtr, 
         juce::TextButton& button, ButtonPalette& buttonPalette, WaveformDisplay& waveformDisplay, GranularinfiniteAudioProcessor& audioProcessor) {
         juce::String& state = buttonPalette.waveformState;
         if (button.getToggleState())
@@ -158,7 +174,7 @@ private:
                 }
             }
             state = refinedName;
-            waveformDisplay.setBuffer(audioProcessor.getSampleBuffer(refinedNote));
+            waveformDisplay.setBuffer(audioProcessor.getSampleBuffer(refinedNote, refinedName));
             waveformDisplay.setSample(samplePtr);
 
             waveformDisplay.setPlayheadPosition();

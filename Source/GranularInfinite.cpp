@@ -328,21 +328,17 @@ bool GranularInfinite::keyPressed(const juce::KeyPress& key,
             button->repaint();
             if (auto* sampleName = noteToSample.getValue(noteName))
             {
+                juce::String fuck = *sampleName;
+                if (sampleName->isNotEmpty() && noteName.isNotEmpty() && audioProcessor.m_grainAll)
                 {
-                    juce::String fuck = *sampleName;
-                    std::cout << "samplename: " << fuck.toStdString() << "\n";
-                    if (sampleName->isNotEmpty())
-                    {
-                        if (noteName.isNotEmpty()) {
-                            if (audioProcessor.grainAll)
-                                audioProcessor.updateCurrentSamples(noteName, false);
-                        }
-                        audioProcessor.startPlayback(noteName);
-                    }
-                    return true;
+                    audioProcessor.updateCurrentSamples(noteName, false);
+                    audioProcessor.startPlayback(noteName, fuck);
+                }
+                //audioProcessor.startPlayback(noteName);
+                return true;
             }
-        }
             else {
+                std::cout << "didn't find the noteName matching sample \n";
                 return false;
             }
         }
@@ -386,11 +382,15 @@ bool GranularInfinite::keyStateChanged(bool isKeyDown,
                 auto sampleNameIt = keyToNote.find(keyChar);
                 if (sampleNameIt != keyToNote.end()) {
                     if (auto* sampleName = noteToSample.getValue(sampleNameIt->second)) {
-                        if (audioProcessor.grainAll)
+                        if (audioProcessor.m_grainAll)
+                        {
                             audioProcessor.updateCurrentSamples(noteName, true);
+                            audioProcessor.stopPlayback(noteName, *sampleName);
+                        }
+
                     }
                 }
-                audioProcessor.stopPlayback(noteName);
+                //audioProcessor.stopPlayback(noteName);
             }
             else
             {
@@ -645,11 +645,11 @@ void GranularInfinite::synthToggleHandler(juce::TextButton& button)
 
         if (isToggled)
         {
-            audioProcessor.grainAll = true;
+            audioProcessor.m_grainAll = true;
             button.setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
         }
         else {
-            audioProcessor.grainAll = false;
+            audioProcessor.m_grainAll = false;
             button.setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
         }
         };

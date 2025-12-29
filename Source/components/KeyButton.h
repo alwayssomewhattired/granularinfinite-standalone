@@ -100,6 +100,7 @@ private:
 	juce::String trimmedFileName;
 
 	juce::String sampleName;
+
 	// Key: frequency
 	// Value: folder of audio files
 	std::map<juce::String, juce::Array<juce::File>> m_noteToFiles;
