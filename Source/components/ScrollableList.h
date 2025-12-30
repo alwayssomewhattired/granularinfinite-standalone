@@ -3,7 +3,8 @@
 #include "../BiMap.h"
 #include "../Sample.h"
 
-class ScrollableList : public juce::ListBoxModel
+
+struct ScrollableListModel : public juce::ListBoxModel
 {
 public:
 
@@ -26,18 +27,6 @@ public:
 
 		const juce::String& chosenFileName = items[row];
 
-		//jassert(m_currentNoteToSample != nullptr);
-
-		//if (auto* value = m_currentNoteToSample->getValue(m_key))
-		//{
-		//	juce::String blah = *value;
-		//	std::cout << "value!!! " << blah << "\n";
-		//}
-		//else
-		//{
-		//	std::cout << "No value yet for key: " << m_key << "\n";
-		//}
-
 		for (auto& v : (m_samples)) {
 			std::cout << "key 1: " << v->noteName << "\n";
 			std::cout << "k 2: " << v->fileName << "\n";
@@ -45,30 +34,23 @@ public:
 
 		std::cout << "m_key: " << m_key << "\n";
 		std::cout << "chosenFileName: " << chosenFileName << "\n";
-		//if (auto it = (*m_samples).find({ m_key, chosenFileName }) != m_samples->end()) {
-		//	m_currentNoteToSample->set(m_key, items[row]);
-		//	(*m_samples)[{ m_key, items[row] }]->isChosen = true;
-		//}
-		//else {
-		//	std::cout << "couldn't find the correct sample \n";
-		//}
 
 		for (auto& v : m_samples) {
 			if (v->noteName == m_key && v->fileName == chosenFileName) {
 				m_currentNoteToSample->set(m_key, items[row]);
 				v->isChosen = true;
-			} else {
+			}
+			else {
 				v->isChosen = false;
-			std::cout << "couldn't find the correct sample \n";
+				std::cout << "couldn't find the correct sample \n";
 			}
 		}
 
 	}
 
 
-	void setAudioConfig(BiMap<juce::String, juce::String>* currentNoteToSample, juce::String key, 
+	void setAudioConfig(BiMap<juce::String, juce::String>* currentNoteToSample, juce::String key,
 		std::shared_ptr<Sample> samples) {
-		//std::shared_ptr<std::map<std::pair<juce::String, juce::String>, std::shared_ptr<Sample>>> samples) {
 		m_samples.push_back(samples);
 		m_currentNoteToSample = currentNoteToSample;
 		m_key = key;
@@ -78,5 +60,31 @@ public:
 	juce::String m_key;
 	std::vector<juce::String> items;
 	std::vector<std::shared_ptr<Sample>> m_samples;
-	//std::unique_ptr<std::map<std::pair<juce::String, juce::String>, std::shared_ptr<Sample>>> m_samples;
+};
+
+
+class ScrollableList : public juce::Component
+{
+public:
+
+	void setScrollableList(GranularinfiniteAudioProcessor& audioProcessor, const juce::String& refinedNote, const juce::File& file,
+		BiMap<juce::String, juce::String>& noteToSample, std::vector<juce::String>& fileNames) {
+
+		std::shared_ptr<Sample>& samplePtr = audioProcessor.loadFile(file, refinedNote, "false");
+
+		m_scrollableList.setAudioConfig(&noteToSample, refinedNote, std::move(samplePtr));
+		m_scrollableList.items = { fileNames };
+		m_listBox.setModel(&m_scrollableList);
+		m_listBox.setRowHeight(20);
+		addAndMakeVisible(m_listBox);
+	}
+
+	void resized() override
+	{
+		auto area = getLocalBounds();
+		m_listBox.setBounds(area.removeFromLeft(area.getWidth() * 0.07f));
+	}
+
+	ScrollableListModel m_scrollableList;
+	juce::ListBox m_listBox;
 };

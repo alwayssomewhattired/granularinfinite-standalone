@@ -21,7 +21,7 @@ public:
         repaint();
     }
 
-    void setSample(Sample* sample)
+    void setSample(std::shared_ptr<Sample> sample)
     {
         m_sample = sample;
     }
@@ -120,7 +120,7 @@ private:
     // possibly might not need this. replacing with 'sample' instead...
     juce::AudioBuffer<float> buffer;
 
-    Sample* m_sample;
+    std::shared_ptr<Sample> m_sample;
 
     juce::Rectangle<int> m_grainAreaRect;
     juce::Rectangle<float> m_playheadPosition;

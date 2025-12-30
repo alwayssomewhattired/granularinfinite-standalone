@@ -177,7 +177,6 @@ public:
 			onClick(*btnptr);
 			};
 		addAndMakeVisible(*waveformButton->waveformButton);
-
 		waveformButtons[fileName] = std::move(waveformButton);
 		if (onWaveformButtonAdded) {
 			onWaveformButtonAdded();

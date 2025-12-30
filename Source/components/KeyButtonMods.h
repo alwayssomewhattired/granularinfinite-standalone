@@ -65,9 +65,10 @@ public:
         }
     }
 
-    void fileDropCB(int& octave, std::map<juce::String, juce::Array<juce::File>>& noteToFiles, SampleLabel* sampleLabel, const juce::String& myNoteName, 
-        KeyButton* button, const bool& isDir, GranularinfiniteAudioProcessor& audioProcessor, BiMap<juce::String, juce::String>& noteToSample,
-        juce::String& synthNote, std::map<juce::String, std::unique_ptr<juce::File>>& noteToFile, ButtonPalette& buttonPalette, WaveformDisplay& waveformDisplay) {
+    void fileDropCB(int& octave, std::map<juce::String, juce::Array<juce::File>>& noteToFiles, SampleLabel* sampleLabel, const juce::String& myNoteName,
+        const juce::String& myKeyName, KeyButton* button, const bool& isDir, GranularinfiniteAudioProcessor& audioProcessor, BiMap<juce::String, 
+        juce::String>& noteToSample, juce::String& synthNote, std::map<juce::String, std::unique_ptr<juce::File>>& noteToFile, ButtonPalette& buttonPalette, 
+        WaveformDisplay& waveformDisplay, ScrollableList& m_scrollableList) {
 
         const std::map<char, juce::String>& keyToNote = CreateKeyToNote(octave);
 
@@ -77,8 +78,6 @@ public:
 
         for (const auto& [k, v] : noteToFiles) {
 
-                std::cout << "hehehehehehehe\n";
-                // in here, make the button and 
                 std::vector<juce::String> fileNames;
                 for (const juce::File& file : v) {
                     fileNames.push_back(file.getFileNameWithoutExtension());
@@ -95,12 +94,6 @@ public:
                         refinedNote = myNoteName.dropLastCharacters(1) + juce::String(octave);
                     }
                 }
-  /*              auto& samplesPtr = std::make_unique<std::map<std::pair<juce::String, juce::String>, std::shared_ptr<Sample>>>();
-                m_scrollableList.setAudioConfig(&noteToSample, refinedNote, std::move(samplesPtr));
-                m_scrollableList.items = { fileNames };
-                m_listBox.setModel(&m_scrollableList);
-                m_listBox.setRowHeight(20);
-                addAndMakeVisible(m_listBox);*/
 
             for (const juce::File& audioFile : v) {
                 fullPath = audioFile.getFullPathName();
@@ -129,28 +122,18 @@ public:
 
                 noteToFile[refinedNote] = std::make_unique<juce::File>(fullPath);
 
-                std::shared_ptr<Sample>& samplePtr = audioProcessor.loadFile(file, refinedNote, "false");
+                // only handle buttons for file-selection-toggle in keyButtonMods
 
-                //auto samplesPtr = std::make_unique<std::map<std::pair<juce::String, juce::String>, std::shared_ptr<Sample>>>();
-     /*           auto key = std::make_pair(refinedNote, refinedName);
-                audioProcessor.samples.emplace(key, samplePtr);*/
+                m_scrollableList.setScrollableList(audioProcessor, refinedNote, file, noteToSample, fileNames);
 
-                m_scrollableList.setAudioConfig(&noteToSample, refinedNote, std::move(samplePtr));
-                m_scrollableList.items = { fileNames };
-                m_listBox.setModel(&m_scrollableList);
-                m_listBox.setRowHeight(20);
-                addAndMakeVisible(m_listBox);
+                buttonPalette.addWaveformButton(refinedName, myKeyName, refinedNote, [](juce::TextButton& waveformButton) {
+                    waveformButton.setToggleState(true, juce::dontSendNotification);
+                    });
 
                 // temporarily disblef
-                //addWaveformButtonCB(refinedName, refinedNote, samplePtr, *button, buttonPalette, waveformDisplay, audioProcessor);
+                addWaveformButtonCB(refinedName, refinedNote, myKeyName, file, *button, buttonPalette, waveformDisplay, audioProcessor);
             }
         }
-    }
-
-    void resized() override
-    {
-        auto area = getLocalBounds();
-        m_listBox.setBounds(area.removeFromLeft(area.getWidth() * 0.07f));
     }
 
 
@@ -160,9 +143,13 @@ private:
         std::unique_ptr<juce::Slider> slider;
     };
 
-    void addWaveformButtonCB(juce::String& refinedName, juce::String& refinedNote, Sample* samplePtr, 
+
+    //  - * button * - the KeyButton
+    void addWaveformButtonCB(juce::String& refinedName, juce::String& refinedNote, const juce::String& refinedKey, juce::File file,
         juce::TextButton& button, ButtonPalette& buttonPalette, WaveformDisplay& waveformDisplay, GranularinfiniteAudioProcessor& audioProcessor) {
+
         juce::String& state = buttonPalette.waveformState;
+
         if (button.getToggleState())
         {
             std::cout << "i doubt it\n";
@@ -175,19 +162,24 @@ private:
             }
             state = refinedName;
             waveformDisplay.setBuffer(audioProcessor.getSampleBuffer(refinedNote, refinedName));
+
+            std::shared_ptr<Sample> samplePtr = nullptr;
+            for (auto& v : audioProcessor.samples) {
+                if (v.second->fileName == file.getFileNameWithoutExtension())
+                    samplePtr = v.second;
+            }
+
             waveformDisplay.setSample(samplePtr);
 
             waveformDisplay.setPlayheadPosition();
             button.setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
         }
         else {
+            std::cout << "no toggle state :( \n";
             state = juce::String();
             waveformDisplay.clear();
         }
     }
-
-    ScrollableList m_scrollableList;
-    juce::ListBox m_listBox;
 
 
 

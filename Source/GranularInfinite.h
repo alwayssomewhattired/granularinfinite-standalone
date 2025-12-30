@@ -17,6 +17,7 @@
 #include "components/WaveformDisplay.h"
 #include "components/KeyButtonMods.h"
 #include "components/CompressorWaveformComponent.h"
+#include "components/ScrollableList.h"
 #include "sourceinfinite/SpotifyBrowser.h"
 #include "sourceinfinite/SpotifyList.h"
 #include "sourceinfinite/SpotifyAPI.h"
@@ -140,6 +141,8 @@ private:
     std::unique_ptr<SliderAttachment> grainMaxLength;
 
     WaveformDisplay m_waveformDisplay;
+    ScrollableList m_scrollableList;
+
 
     GranularinfiniteAudioProcessor& audioProcessor;
 

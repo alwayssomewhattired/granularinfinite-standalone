@@ -27,6 +27,7 @@ public:
 	juce::String getKeyName() const { return m_keyName; }
 
 	juce::String getNoteName() const { return m_noteName; }
+	void setNoteName(juce::String noteName) { m_noteName = noteName; }
 
 	int getPosition() const { return m_position; }
 

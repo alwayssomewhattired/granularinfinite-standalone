@@ -120,11 +120,13 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
 
             // sample-name
             auto* sampleLabel = new SampleLabel("", myNoteName);
+
+
             button->setOnFileDropped([this, myNoteName, sampleLabel, button, myKeyName](std::map<juce::String, juce::Array<juce::File>>& noteToFiles, 
                 const bool& isDir) {
 
-                m_keyButtonMods.fileDropCB(octave, noteToFiles, sampleLabel, myNoteName, button, isDir, audioProcessor, noteToSample, synthNote, 
-                    noteToFile, buttonPalette, m_waveformDisplay);
+                m_keyButtonMods.fileDropCB(octave, noteToFiles, sampleLabel, myNoteName, myKeyName, button, isDir, audioProcessor, noteToSample, synthNote, 
+                    noteToFile, buttonPalette, m_waveformDisplay, m_scrollableList);
                 
                 resized();
                 sampleRefresh(button);
@@ -185,6 +187,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             addAndMakeVisible(buttonPalette.compressor.gainSliderLabel);
             addAndMakeVisible(m_waveformDisplay);
             addAndMakeVisible(m_keyButtonMods);
+            addAndMakeVisible(m_scrollableList);
 
 
 
@@ -464,7 +467,8 @@ void GranularInfinite::octaveUp(juce::TextButton& button)
             auto it = keyToNote.find(order[i]);
             if (it != keyToNote.end())
             {
-                auto* sample = noteToSample.getValue(it->second);
+                const auto& noteName = it->second;
+                auto* sample = noteToSample.getValue(noteName);
                 if (!sample)
                 {
                     sampleLabels[i]->setButtonText("");
@@ -473,7 +477,9 @@ void GranularInfinite::octaveUp(juce::TextButton& button)
                     juce::String raw = *sample;
                     sampleLabels[i]->setButtonText(raw);
                 }
-                noteLabels[i]->setText(it->second, juce::dontSendNotification);
+                noteLabels[i]->setText(noteName, juce::dontSendNotification);
+
+                keyButtons[i]->setNoteName(noteName);
             }
         }
         resized();
@@ -492,7 +498,8 @@ void GranularInfinite::octaveDown(juce::TextButton& button)
             auto it = keyToNote.find(order[i]);
             if (it != keyToNote.end())
             {
-                auto* sample = noteToSample.getValue(it->second);
+                const auto& noteName = it->second;
+                auto* sample = noteToSample.getValue(noteName);
                 if (!sample) {
                     sampleLabels[i]->setButtonText("");
                 }
@@ -500,7 +507,9 @@ void GranularInfinite::octaveDown(juce::TextButton& button)
                     juce::String raw = *sample;
                     sampleLabels[i]->setButtonText(raw);
                 }
-                noteLabels[i]->setText(it->second, juce::dontSendNotification);
+                noteLabels[i]->setText(noteName, juce::dontSendNotification);
+
+                keyButtons[i]->setNoteName(noteName);
             }
         }
         resized();
@@ -680,6 +689,7 @@ void GranularInfinite::resized()
     buttonPalette.setBounds(getLocalBounds());
 
     m_keyButtonMods.setBounds(0, 100, 4000, 300);
+    m_scrollableList.setBounds(1500, 600, 4000, 300);
 
     buttonPalette.componentButton.setBounds(1600, y + 400, 80, 80);
     componentButton.setBounds(1600, y + 400, 80, 80);
@@ -820,7 +830,11 @@ void GranularInfinite::resized()
         }
         sampleLabels[i]->setBounds(keyButtonX, y + buttonHeight, buttonWidth, labelHeight);
         for (auto& [k, v] : buttonPalette.waveformButtons) {
+            std::cout << keyButtons[i]->getNoteName() << "\n";
+            //std::cout << v->noteName << "\n";
             if (keyButtons[i]->getNoteName() == v->noteName) {
+                std::cout << "do we actually run anything? \n";
+
                 const auto& waveformButton = v->waveformButton;
                 addAndMakeVisible(*waveformButton);
                 waveformButton->setBounds(keyButtons[i]->getPosition(), y + buttonHeight + labelHeight + 10, buttonWidth, labelHeight);
