@@ -66,7 +66,7 @@ public:
     }
 
     void fileDropCB(int& octave, std::map<juce::String, juce::Array<juce::File>>& noteToFiles, SampleLabel* sampleLabel, const juce::String& myNoteName,
-        const juce::String& myKeyName, KeyButton* button, const bool& isDir, GranularinfiniteAudioProcessor& audioProcessor, BiMap<juce::String, 
+        const juce::String& myKeyName, KeyButton& button, const bool& isDir, GranularinfiniteAudioProcessor& audioProcessor, BiMap<juce::String, 
         juce::String>& noteToSample, juce::String& synthNote, std::map<juce::String, std::unique_ptr<juce::File>>& noteToFile, ButtonPalette& buttonPalette, 
         WaveformDisplay& waveformDisplay, ScrollableList& m_scrollableList) {
 
@@ -98,7 +98,7 @@ public:
             for (const juce::File& audioFile : v) {
                 fullPath = audioFile.getFullPathName();
                 name = audioFile.getFileNameWithoutExtension();
-                button->setTrimmedFileName(name);
+                //button.setTrimmedFileName(name);
                 if (isDir) {
                     refinedNote = k;
                 }
@@ -128,10 +128,11 @@ public:
 
                 buttonPalette.addWaveformButton(refinedName, myKeyName, refinedNote, [](juce::TextButton& waveformButton) {
                     waveformButton.setToggleState(true, juce::dontSendNotification);
+                    std::cout << "clicked!\n";
                     });
 
                 // temporarily disblef
-                addWaveformButtonCB(refinedName, refinedNote, myKeyName, file, *button, buttonPalette, waveformDisplay, audioProcessor);
+                addWaveformButtonCB(refinedName, refinedNote, myKeyName, file, button, buttonPalette, waveformDisplay, audioProcessor);
             }
         }
     }

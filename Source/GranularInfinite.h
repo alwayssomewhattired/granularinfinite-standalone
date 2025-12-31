@@ -46,7 +46,7 @@ public:
     bool keyPressed(const juce::KeyPress& key, Component* originatingComponent) override;
     bool keyStateChanged(bool isKeyDown, Component* originatingComponent) override;
 
-    void sampleRefresh(KeyButton* button);
+    void sampleRefresh(KeyButton& button);
 
     void octaveUp(juce::TextButton& button);
     void octaveDown(juce::TextButton& button);
@@ -84,8 +84,16 @@ private:
 
     std::map<juce::String, std::unique_ptr<juce::File>> noteToFile;
     std::set<char> currentlyPressedKeys;
-    // i believe these are the keybuttons that are in current octave range
-    juce::OwnedArray<KeyButton> keyButtons;
+
+    // octave-based dynamic array
+    //juce::OwnedArray<KeyButton> m_octaveKeyButtons;
+
+    // all KeyButtons
+    //std::vector<KeyButton> m_keyButtons;
+
+    // keybutton object that holds all keyButtons internally
+    std::unique_ptr<KeyButtons> m_keyButton = nullptr;
+
     juce::OwnedArray<SampleLabel> sampleLabels;
     juce::OwnedArray<NoteLabel> noteLabels;
     std::map<char, juce::String> keyToNote;
@@ -93,7 +101,7 @@ private:
     const std::map<std::string, double>& m_noteToFreq = createNoteToFreq();
 
     juce::MidiBuffer pendingMidi;
-    int octave = 3;
+    int m_octave = 3;
     juce::String currentlyPressedSample = "none";
 
     void timerCallback() override;
