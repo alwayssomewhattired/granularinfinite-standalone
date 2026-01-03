@@ -99,24 +99,31 @@ private:
 	juce::String sampleName;
 };
 
+
+/// 
+/// 
+/// 
+
 class KeyButtons : public juce::Component
 {
 public:
 
-	KeyButtons(const std::vector<juce::String>& keyNameWithOctave, const int& currentOctave)
+	KeyButtons(const std::vector<juce::String>& keyNames, const int& currentOctave)
 	{
 
 		std::array<const std::string_view, 102> notes = allNotes();
 
-		m_keyButtons.reserve(keyNameWithOctave.size());
-
-			for (size_t i = 0; i < keyNameWithOctave.size(); i++) {
-				auto& button = m_keyButtons.emplace_back();
-				button.setButtonText(keyNameWithOctave[i]);
-				button.setColour(juce::TextButton::buttonColourId, juce::Colours::white);
-				button.setColour(juce::TextButton::buttonOnColourId, juce::Colours::lightgrey);
-				button.setColour(juce::TextButton::textColourOffId, juce::Colours::black);
-				button.setNoteName(juce::String(notes[i].data(), notes[i].size()));
+		m_keyButtons.reserve(notes.size());
+		for (size_t i = 0; i < notes.size(); i++) {
+			auto& button = std::make_unique<KeyButton>();
+			button->setButtonText(keyNames[i % keyNames.size()]);
+			button->setColour(juce::TextButton::buttonColourId, juce::Colours::white);
+			button->setColour(juce::TextButton::buttonOnColourId, juce::Colours::lightgrey);
+			button->setColour(juce::TextButton::textColourOffId, juce::Colours::black);
+			button->setNoteName(juce::String(notes[i].data(), notes[i].size()));
+			addAndMakeVisible(*button);
+			button->setVisible(false);
+			m_keyButtons.push_back(std::move(button));
 		}
 	}
 
@@ -129,43 +136,38 @@ public:
 		int buttonWidth = 60;
 		int buttonHeight = 120;
 
-		/*	int x = 0;
-			for (int i = m_currentOctave; i <= MAX_OCTAVE; i++) {
-				m_keyButtons[i].setBounds(x, 0, keyWidth, area.getHeight() / 3);
-				x += keyWidth;
-			}*/
-
-		int octaveStart = m_currentOctave * Constants::DISPLAYED_NOTES_SIZE;
+		// figure out why we have to subtract 18
+		int octaveStart = (m_currentOctave * Constants::DISPLAYED_NOTES_SIZE) - 18;
 		int previousOctaveStart = m_previousOctave * Constants::DISPLAYED_NOTES_SIZE;
 
 		// accesses Past buttons and set visibility to false
 		for (int i = previousOctaveStart; i < previousOctaveStart + Constants::DISPLAYED_NOTES_SIZE; ++i) {
-			auto& keyButton = getKeyButton(i);
-			keyButton.setVisible(false);
+			auto* keyButton = getKeyButton(i);
+			keyButton->setVisible(false);
 		}
 
 		// sets bounds for current notes
 		for (int i = octaveStart; i < octaveStart + Constants::DISPLAYED_NOTES_SIZE; ++i)
 		{
-			auto& keyButton = getKeyButton(i);
+			auto* keyButton = getKeyButton(i);
 			if (i == octaveStart + 1 || i == octaveStart + 3 || i == octaveStart + 6 || i == octaveStart + 8 || i == octaveStart + 10 || 
 				i == octaveStart + 13 || i == octaveStart + 15)
 			{
-				keyButton.setPosition(keyButtonX + 2);
-				keyButton.setBounds(keyButtonX + 2, y - 10, buttonWidth - 5, buttonHeight - 25);
-				keyButton.setColour(juce::TextButton::buttonColourId, juce::Colours::black);
-				keyButton.setColour(juce::TextButton::textColourOnId, juce::Colours::white);
-				keyButton.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
-				keyButton.setColour(juce::ComboBox::outlineColourId, juce::Colours::white);
-				addAndMakeVisible(keyButton);
+				keyButton->setVisible(true);
+				keyButton->setBounds(keyButtonX + 2, y - 10, buttonWidth - 5, buttonHeight - 25);
+				keyButton->setColour(juce::TextButton::buttonColourId, juce::Colours::black);
+				keyButton->setColour(juce::TextButton::textColourOnId, juce::Colours::white);
+				keyButton->setColour(juce::TextButton::textColourOffId, juce::Colours::white);
+				keyButton->setColour(juce::ComboBox::outlineColourId, juce::Colours::white);
 			}
 			else {
-				keyButton.setPosition(keyButtonX);
-				keyButton.setBounds(keyButtonX, y, buttonWidth, buttonHeight);
-				addAndMakeVisible(keyButton);
+				keyButton->setVisible(true);
+				keyButton->setPosition(keyButtonX);
+				keyButton->setBounds(keyButtonX, y, buttonWidth, buttonHeight);
 			}
-
 		}
+
+		keyButtonX += 5;
 	}
 
 	void triggerResized(const int& currentOctave) {
@@ -174,15 +176,15 @@ public:
 		resized();
 	}
 
-	KeyButton& getKeyButton(int i) {
-		return m_keyButtons.at(i);
+	KeyButton* getKeyButton(int i) {
+		return m_keyButtons.at(i).get();
 	}
 
 
 
 private:
 
-	std::vector<KeyButton> m_keyButtons;
+	std::vector<std::unique_ptr<KeyButton>> m_keyButtons;
 	int m_currentOctave = 3;
-	int m_previousOctave;
+	int m_previousOctave = 3;
 };

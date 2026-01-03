@@ -78,22 +78,24 @@ public:
 
         for (const auto& [k, v] : noteToFiles) {
 
-                std::vector<juce::String> fileNames;
-                for (const juce::File& file : v) {
-                    fileNames.push_back(file.getFileNameWithoutExtension());
+            // filenames for scrollable list
+            std::vector<juce::String> fileNames;
+            for (const juce::File& file : v) {
+                fileNames.push_back(file.getFileNameWithoutExtension());
+            }
+            
+            if (isDir) {
+                refinedNote = k;
+            }
+            else {
+                size_t lastUnderscore = name.toStdString().rfind('_');
+                if (lastUnderscore != std::string::npos) {
+                    refinedNote = name.substring(lastUnderscore + 1);
                 }
-                if (isDir) {
-                    refinedNote = k;
+                if (CreateNoteToMidi.find(refinedNote) == CreateNoteToMidi.end()) {
+                    refinedNote = myNoteName.dropLastCharacters(1) + juce::String(octave);
                 }
-                else {
-                    size_t lastUnderscore = name.toStdString().rfind('_');
-                    if (lastUnderscore != std::string::npos) {
-                        refinedNote = name.substring(lastUnderscore + 1);
-                    }
-                    if (CreateNoteToMidi.find(refinedNote) == CreateNoteToMidi.end()) {
-                        refinedNote = myNoteName.dropLastCharacters(1) + juce::String(octave);
-                    }
-                }
+            }
 
             for (const juce::File& audioFile : v) {
                 fullPath = audioFile.getFullPathName();
@@ -147,7 +149,7 @@ private:
 
     //  - * button * - the KeyButton
     void addWaveformButtonCB(juce::String& refinedName, juce::String& refinedNote, const juce::String& refinedKey, juce::File file,
-        juce::TextButton& button, ButtonPalette& buttonPalette, WaveformDisplay& waveformDisplay, GranularinfiniteAudioProcessor& audioProcessor) {
+        KeyButton& button, ButtonPalette& buttonPalette, WaveformDisplay& waveformDisplay, GranularinfiniteAudioProcessor& audioProcessor) {
 
         juce::String& state = buttonPalette.waveformState;
 

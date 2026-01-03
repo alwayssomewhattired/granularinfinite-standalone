@@ -40,12 +40,14 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
     audioProcessor.addChangeListener(this);
 
     keyToNote = CreateKeyToNote(m_octave);
+
     setWantsKeyboardFocus(true);
     addKeyListener(this);
+
     setSize(1900, 1000);
+
     // find out if timer needed
     startTimerHz(60);
-
     // handler lambda initialization
     grainLengthSliderHandler();
     grainAreaSliderHandler();
@@ -67,7 +69,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
         noteToSample.set(noteValue, "");
     }
         // creates frequencyUpwardCompressors
-    //m_keyButtonMods.setInterceptsMouseClicks(false, false);
+
     for (const auto& [k, v] : m_noteToFreq) {
         auto [sliderPtr, labelPtr] = buttonPalette.createFrequencyUpwardCompressor(v);
 
@@ -85,17 +87,15 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
 
     const std::string order = "awsedftgyhujkolp;'";
 
+
     int keyButtonX = 75;
 
-    std::vector<juce::String> keyOctave;
-    for (int i = 0; i <= Constants::MAX_OCTAVE; i++) {
-        for (auto key : order) {
-            keyOctave.emplace_back(juce::String::charToString(juce::CharacterFunctions::toUpperCase(key)) + juce::String(i));
-        }
+    std::vector<juce::String> keys;
+    for (auto key : order) {
+        keys.emplace_back(juce::String::charToString(key));
     }
-    std::cout << keyOctave[0] << "\n";
 
-    m_keyButton = std::make_unique<KeyButtons>(keyOctave, m_octave);
+    m_keyButton = std::make_unique<KeyButtons>(keys, m_octave);
 
     // pass in all keynameswithoctaves and keynames into our keybutton
     // RIGHT HERE RIGHT NOW
@@ -121,13 +121,6 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             // note-name
             auto* noteLabel = new NoteLabel(myNoteName);
 
-            // piano-key
-
-    /*        auto* button = new KeyButton(myKeyName, myNoteName, keyNameWithOctave, keyButtonX);
-            button->setColour(juce::TextButton::buttonColourId, juce::Colours::white);
-            button->setColour(juce::TextButton::buttonOnColourId, juce::Colours::lightgrey);
-            button->setColour(juce::TextButton::textColourOffId, juce::Colours::black);*/
-
             int buttonWidth = 60;
             int buttonHeight = 120;
             int labelHeight = 20;
@@ -138,16 +131,16 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             auto* sampleLabel = new SampleLabel("", myNoteName);
 
             //juce::String refinedKeyOctave = juce::String(key) + (m_octave * Constants::MAX_OCTAVE);
-            auto& button = m_keyButton->getKeyButton((m_octave * Constants::MAX_OCTAVE) + count);
+            auto* button = m_keyButton->getKeyButton((m_octave * Constants::MAX_OCTAVE) + count);
 
-            button.setOnFileDropped([this, myNoteName, sampleLabel, &button, myKeyName](std::map<juce::String, juce::Array<juce::File>>& noteToFiles, 
+            button->setOnFileDropped([this, myNoteName, sampleLabel, &button, myKeyName](std::map<juce::String, juce::Array<juce::File>>& noteToFiles, 
                 const bool& isDir) {
 
-                m_keyButtonMods.fileDropCB(m_octave, noteToFiles, sampleLabel, myNoteName, myKeyName, button, isDir, audioProcessor, noteToSample, synthNote, 
+                m_keyButtonMods.fileDropCB(m_octave, noteToFiles, sampleLabel, myNoteName, myKeyName, *button, isDir, audioProcessor, noteToSample, synthNote, 
                     noteToFile, buttonPalette, m_waveformDisplay, m_scrollableList);
                 
                 resized();
-                sampleRefresh(button);
+                sampleRefresh(*button);
             });
             //------------//
 
@@ -250,11 +243,6 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             noteLabels.add(noteLabel);
 
 
-            //m_octaveKeyButtons.add(button);
-
-            //if (m_keyButtons.size() == 0) {
-            //    m_keyButtons.push_back(button);
-            //}
             sampleLabels.add(sampleLabel);
 
             audioProcessor.onThresholdChanged = [this](float v) {
@@ -327,7 +315,7 @@ bool GranularInfinite::keyPressed(const juce::KeyPress& key,
         size_t index = order.find(char_key);
         if (index != std::string::npos)
         {
-            auto& button = m_keyButton->getKeyButton((int)index * Constants::MAX_OCTAVE);
+            auto* button = m_keyButton->getKeyButton((int)index * Constants::MAX_OCTAVE);
             if (audioProcessor.synthToggle)
             {
                 if (it2 == currentlyPressedKeys.end())
@@ -337,7 +325,7 @@ bool GranularInfinite::keyPressed(const juce::KeyPress& key,
                     audioProcessor.addMidiEvent(m);
                     currentlyPressedKeys.insert(char_key);
 
-                    button.setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
+                    button->setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
 
                     return true;
                 }
@@ -350,10 +338,10 @@ bool GranularInfinite::keyPressed(const juce::KeyPress& key,
 
         if (index != std::string::npos)
         {
-            auto& button = m_keyButton->getKeyButton((int)index * Constants::MAX_OCTAVE);
+            auto* button = m_keyButton->getKeyButton((int)index * Constants::MAX_OCTAVE);
 
-            button.setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
-            button.repaint();
+            button->setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
+            button->repaint();
             if (auto* sampleName = noteToSample.getValue(noteName))
             {
                 juce::String fuck = *sampleName;
@@ -391,18 +379,18 @@ bool GranularInfinite::keyStateChanged(bool isKeyDown,
                 size_t index = order.find(keyChar);
                 if (index != std::string::npos)
                 {
-                    auto& button = m_keyButton->getKeyButton((int)index * Constants::MAX_OCTAVE);
+                    auto* button = m_keyButton->getKeyButton((int)index * Constants::MAX_OCTAVE);
                     if (keyChar == 'w' || keyChar == 'e' || keyChar == 't' || keyChar == 'y'
                         || keyChar == 'u' || keyChar == 'o' || keyChar == 'p')
                     {
-                        button.setColour(juce::TextButton::buttonColourId,
+                        button->setColour(juce::TextButton::buttonColourId,
                             juce::Colours::black);
-                        button.repaint();
+                        button->repaint();
                     }
                     else {
-                        button.setColour(juce::TextButton::buttonColourId,
+                        button->setColour(juce::TextButton::buttonColourId,
                             juce::Colours::white);
-                        button.repaint();
+                        button->repaint();
                     }
                 }
                 juce::String noteName = keyToNote[keyChar];
@@ -505,8 +493,6 @@ void GranularInfinite::octaveUp(juce::TextButton& button)
                 }
                 noteLabels[i]->setText(noteName, juce::dontSendNotification);
 
-                // this is fucked up
-                //m_keyButton->getKeyButton(i).setNoteName(noteName);
             }
         }
         resized();
@@ -841,35 +827,30 @@ void GranularInfinite::resized()
 
     int keyButtonX = 75;
     int octaveStart = m_octave * Constants::DISPLAYED_NOTES_SIZE;
-    for (int i = octaveStart ; i < octaveStart + Constants::DISPLAYED_NOTES_SIZE; ++i)
+
+    if (m_keyButton == nullptr) {
+        return;
+    }
+
+    m_keyButton->triggerResized(m_octave);
+
+    for (int i = octaveStart; i < octaveStart + Constants::DISPLAYED_NOTES_SIZE; ++i)
     {
-    //    auto& keyButton = m_keyButton->getKeyButton(i);
-    //    noteLabels[i]->setBounds(keyButtonX, y - 50, buttonWidth, labelHeight);
-    //    if (i == 1 || i == 3 || i == 6 || i == 8 || i == 10 || i == 13 || i == 15)
-    //    {
-    //        keyButton.setBounds(keyButtonX + 2, y - 10, buttonWidth - 5, buttonHeight - 25);
-    //        keyButton.setColour(juce::TextButton::buttonColourId, juce::Colours::black);
-    //        keyButton.setColour(juce::TextButton::textColourOnId, juce::Colours::white);
-    //        keyButton.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
-    //        keyButton.setColour(juce::ComboBox::outlineColourId, juce::Colours::white);
-    //    }
-    //    else {
-    //        m_octaveKeyButtons[i]->setBounds(keyButtonX, y, buttonWidth, buttonHeight);
-    //    }
+        noteLabels[i % Constants::DISPLAYED_NOTES_SIZE]->setBounds(keyButtonX, y - 50, buttonWidth, labelHeight);
 
-        noteLabels[i]->setBounds(keyButtonX, y - 50, buttonWidth, labelHeight);
-        sampleLabels[i]->setBounds(keyButtonX, y + buttonHeight, buttonWidth, labelHeight);
+        sampleLabels[i % Constants::DISPLAYED_NOTES_SIZE]->setBounds(keyButtonX, y + buttonHeight, buttonWidth, labelHeight);
 
-        m_keyButton->triggerResized(m_octave);
+        /*m_keyButton->triggerResized(m_octave);*/
 
         for (auto& [k, v] : buttonPalette.waveformButtons) {
-            auto& keyButton = m_keyButton->getKeyButton(i);
-            if (keyButton.getNoteName() == v->noteName) {
+            auto* keyButton = m_keyButton->getKeyButton(i);
+
+            if (keyButton != nullptr && keyButton->getNoteName() == v->noteName) {
                 std::cout << "do we actually run anything? \n";
 
                 const auto& waveformButton = v->waveformButton;
                 addAndMakeVisible(*waveformButton);
-                waveformButton->setBounds(keyButton.getPosition(), y + buttonHeight + labelHeight + 10, buttonWidth, labelHeight);
+                waveformButton->setBounds(keyButton->getPosition(), y + buttonHeight + labelHeight + 10, buttonWidth, labelHeight);
             }
             else {
                 std::cout << "falsed: " << v->noteName << "\n";
@@ -879,6 +860,5 @@ void GranularInfinite::resized()
 
         keyButtonX += buttonWidth + spacing + 35;   // move to next key
     }
-
 }
 
