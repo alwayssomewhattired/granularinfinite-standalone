@@ -701,6 +701,9 @@ void GranularInfinite::resized()
 
     buttonPalette.setBounds(getLocalBounds());
 
+    //m_keyButton->triggerResized(m_octave);
+    //m_keyButton->setBounds(0, 100, 4000, 300);
+
     m_keyButtonMods.setBounds(0, 100, 4000, 300);
     m_scrollableList.setBounds(1500, 600, 4000, 300);
 
@@ -831,7 +834,7 @@ void GranularInfinite::resized()
     if (m_keyButton == nullptr) {
         return;
     }
-
+    m_keyButton->setBounds(0, 75, 4000, 135);
     m_keyButton->triggerResized(m_octave);
 
     for (int i = octaveStart; i < octaveStart + Constants::DISPLAYED_NOTES_SIZE; ++i)
@@ -842,23 +845,44 @@ void GranularInfinite::resized()
 
         /*m_keyButton->triggerResized(m_octave);*/
 
-        for (auto& [k, v] : buttonPalette.waveformButtons) {
-            auto* keyButton = m_keyButton->getKeyButton(i);
+        //for (auto& [k, v] : buttonPalette.waveformButtons) {
+        //    auto* keyButton = m_keyButton->getKeyButton(i);
+        //    std::cout << keyButton->getNoteName() << "\n";
+        //    std::cout << v->noteName << "\n";
+        //    if (keyButton != nullptr && keyButton->getNoteName() == v->noteName) {
+        //        std::cout << "do we actually run anything? \n";
 
-            if (keyButton != nullptr && keyButton->getNoteName() == v->noteName) {
-                std::cout << "do we actually run anything? \n";
-
-                const auto& waveformButton = v->waveformButton;
-                addAndMakeVisible(*waveformButton);
-                waveformButton->setBounds(keyButton->getPosition(), y + buttonHeight + labelHeight + 10, buttonWidth, labelHeight);
-            }
-            else {
-                std::cout << "falsed: " << v->noteName << "\n";
-                v->waveformButton->setVisible(false);
-            }
-        }
+        //        const auto& waveformButton = v->waveformButton;
+        //        addAndMakeVisible(*waveformButton);
+        //        waveformButton->setBounds(keyButton->getPosition(), y + buttonHeight + labelHeight + 10, buttonWidth, labelHeight);
+        //    }
+        //    else {
+        //        //std::cout << "falsed: " << v->noteName << "\n";
+        //        v->waveformButton->setVisible(false);
+        //    }
+        //}
 
         keyButtonX += buttonWidth + spacing + 35;   // move to next key
+    }
+
+    for (int i = 0; i < octaveStart; ++i)
+    for (auto& [k, v] : buttonPalette.waveformButtons) {
+        //std::cout << "hi\n";
+        auto* keyButton = m_keyButton->getKeyButton(i);
+        //std::cout << "bye\n";
+     /*   std::cout << keyButton->getNoteName() << "\n";
+        std::cout << v->noteName << "\n";*/
+        if (keyButton != nullptr && keyButton->getNoteName() == v->noteName) {
+            std::cout << "do we actually run anything? \n";
+
+            const auto& waveformButton = v->waveformButton;
+            addAndMakeVisible(*waveformButton);
+            waveformButton->setBounds(keyButton->getPosition(), y + buttonHeight + labelHeight + 10, buttonWidth, labelHeight);
+        }
+        else {
+            //std::cout << "falsed: " << v->noteName << "\n";
+            v->waveformButton->setVisible(false);
+        }
     }
 }
 

@@ -558,7 +558,6 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                 grainCounter = 0;
                 spawnGrain(sample->audioFileLength);
             }
-            std::cout << "pairairair : " << pair.first.second << "\n";
         }
     }
 }

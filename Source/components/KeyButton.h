@@ -110,6 +110,7 @@ public:
 
 	KeyButtons(const std::vector<juce::String>& keyNames, const int& currentOctave)
 	{
+		setInterceptsMouseClicks(false, true);
 
 		std::array<const std::string_view, 102> notes = allNotes();
 
@@ -127,12 +128,16 @@ public:
 		}
 	}
 
+	//void paint(juce::Graphics& g) override {
+	//	g.fillAll(juce::Colours::white);
+	//}
+
 	void resized() override {
 		auto area = getLocalBounds();
 		const int keyWidth = area.getWidth() / 18;
 
 		int keyButtonX = 75;
-		int y = 100;
+		int y = 0;
 		int buttonWidth = 60;
 		int buttonHeight = 120;
 
@@ -162,12 +167,13 @@ public:
 			}
 			else {
 				keyButton->setVisible(true);
-				keyButton->setPosition(keyButtonX);
 				keyButton->setBounds(keyButtonX, y, buttonWidth, buttonHeight);
 			}
+
+			keyButtonX += 100;
 		}
 
-		keyButtonX += 5;
+		//repaint();
 	}
 
 	void triggerResized(const int& currentOctave) {

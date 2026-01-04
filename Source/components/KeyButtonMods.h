@@ -133,8 +133,10 @@ public:
                     std::cout << "clicked!\n";
                     });
 
+    
                 // temporarily disblef
-                addWaveformButtonCB(refinedName, refinedNote, myKeyName, file, button, buttonPalette, waveformDisplay, audioProcessor);
+                //addWaveformButtonCB(refinedName, refinedNote, myKeyName, file, button, buttonPalette, waveformDisplay, audioProcessor);
+
             }
         }
     }
