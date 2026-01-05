@@ -313,31 +313,34 @@ bool GranularInfinite::keyPressed(const juce::KeyPress& key,
         compressorWaveformHandle();
         auto it2 = currentlyPressedKeys.find(char_key);
         size_t index = order.find(char_key);
-        if (index != std::string::npos)
-        {
-            auto* button = m_keyButton->getKeyButton((int)index * Constants::MAX_OCTAVE);
-            if (audioProcessor.synthToggle)
-            {
-                if (it2 == currentlyPressedKeys.end())
-                {
-                    const int midi_note = CreateNoteToMidi[noteName];
-                    juce::MidiMessage m = juce::MidiMessage::noteOn(1, midi_note, (juce::uint8)127);
-                    audioProcessor.addMidiEvent(m);
-                    currentlyPressedKeys.insert(char_key);
 
-                    button->setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
+        //if (index != std::string::npos)
+        //{
 
-                    return true;
-                }
-                else {
-                    return false;
-                }
-            }
-        }
+        //    auto* button = m_keyButton->getKeyButton((int)index * Constants::MAX_OCTAVE);
+        //    if (audioProcessor.synthToggle)
+        //    {
+        //        if (it2 == currentlyPressedKeys.end())
+        //        {
+        //            const int midi_note = CreateNoteToMidi[noteName];
+        //            juce::MidiMessage m = juce::MidiMessage::noteOn(1, midi_note, (juce::uint8)127);
+        //            audioProcessor.addMidiEvent(m);
+        //            currentlyPressedKeys.insert(char_key);
+
+        //            button->setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
+
+        //            return true;
+        //        }
+        //        else {
+        //            return false;
+        //        }
+        //    }
+        //}
         currentlyPressedKeys.insert(char_key);
 
         if (index != std::string::npos)
         {
+
             auto* button = m_keyButton->getKeyButton((int)index * Constants::MAX_OCTAVE);
 
             button->setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
@@ -345,12 +348,11 @@ bool GranularInfinite::keyPressed(const juce::KeyPress& key,
             if (auto* sampleName = noteToSample.getValue(noteName))
             {
                 juce::String fuck = *sampleName;
-                if (sampleName->isNotEmpty() && noteName.isNotEmpty() && audioProcessor.m_grainAll)
+                if (sampleName->isNotEmpty() && noteName.isNotEmpty())
                 {
                     audioProcessor.updateCurrentSamples(noteName, false);
                     audioProcessor.startPlayback(noteName, fuck);
                 }
-                //audioProcessor.startPlayback(noteName);
                 return true;
             }
             else {
@@ -399,11 +401,9 @@ bool GranularInfinite::keyStateChanged(bool isKeyDown,
                 auto sampleNameIt = keyToNote.find(keyChar);
                 if (sampleNameIt != keyToNote.end()) {
                     if (auto* sampleName = noteToSample.getValue(sampleNameIt->second)) {
-                        if (audioProcessor.m_grainAll)
-                        {
-                            audioProcessor.updateCurrentSamples(noteName, true);
-                            audioProcessor.stopPlayback(noteName, *sampleName);
-                        }
+
+                        audioProcessor.updateCurrentSamples(noteName, true);
+                        audioProcessor.stopPlayback(noteName, *sampleName);
 
                     }
                 }

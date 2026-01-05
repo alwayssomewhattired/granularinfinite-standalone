@@ -15,6 +15,8 @@ struct Sample
     juce::String fileName;
     juce::String noteName;
 
+    int readIndex = 0;
+
     bool isChosen = false;
 
     // juce 'synth' mode

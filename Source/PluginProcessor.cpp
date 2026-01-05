@@ -126,7 +126,7 @@ void GranularinfiniteAudioProcessor::changeProgramName (int index, const juce::S
 void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     // prepares samples for juce 'synth' mode
-    if (!m_grainAll) {
+    /*if (!m_grainAll) {
         for (auto& pair : samples)
         {
             if (std::find(currentFiles.begin(), currentFiles.end(), pair.first.second) != currentFiles.end())
@@ -136,7 +136,7 @@ void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int sampl
         }
 
         synth.setCurrentPlaybackSampleRate(sampleRate);
-    }
+    }*/
 
     // do i really need to do this?
     //m_sampleRate = sampleRate;
@@ -205,12 +205,12 @@ void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int sampl
 void GranularinfiniteAudioProcessor::releaseResources()
 {
     // releases resources of juce 'synth' mode
-    for (auto& pair : samples)
+   /* for (auto& pair : samples)
     {
         if (std::find(currentFiles.begin(), currentFiles.end(), pair.first.first) != currentFiles.end())
             pair.second->transportSource.releaseResources();
         break;
-    }
+    }*/
     }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -399,6 +399,7 @@ void GranularinfiniteAudioProcessor::updateMaxFileSize(float const& newMaxFileSi
     }
 }
 
+// this either removes or adds a note to the currentNotes vector
 void GranularinfiniteAudioProcessor::updateCurrentSamples(const juce::String noteName, const bool remove) {
     if (!remove)
         currentNotes.push_back(noteName);
@@ -445,30 +446,68 @@ void GranularinfiniteAudioProcessor::spawnGrain(int64_t fileLength)
 void GranularinfiniteAudioProcessor::processSamplerPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples)
 {
 
-    for (auto& pair : samples)
-    {
-        // we don't have this set up to work with multiple files.
+    //for (auto& pair : samples)
+    //{
+    //    // we don't have this set up to work with multiple files.
 
-        auto& sample = pair.second;
+    //    auto& sample = pair.second;
 
-        tempBuffer.setSize(outCh, numSamples, false, false, true);
-        tempBuffer.clear();
+    //    tempBuffer.setSize(outCh, numSamples, false, false, true);
+    //    tempBuffer.clear();
 
-        juce::AudioSourceChannelInfo info(&tempBuffer, 0, numSamples);
-        sample->transportSource.getNextAudioBlock(info);
+    //    juce::AudioSourceChannelInfo info(&tempBuffer, 0, numSamples);
+    //    sample->transportSource.getNextAudioBlock(info);
 
-        const int srcChans = tempBuffer.getNumChannels();
-        const int chansToMix = std::min(outCh, srcChans);
+    //    const int srcChans = tempBuffer.getNumChannels();
+    //    const int chansToMix = std::min(outCh, srcChans);
 
-        for (int ch = 0; ch < chansToMix; ++ch)
-            buffer.addFrom(ch, 0, tempBuffer, ch, 0, numSamples);
+    //    for (int ch = 0; ch < chansToMix; ++ch)
+    //        buffer.addFrom(ch, 0, tempBuffer, ch, 0, numSamples);
 
-        if (srcChans == 1 && outCh >= 2)
-            buffer.addFrom(1, 0, tempBuffer, 0, 0, numSamples);
+    //    if (srcChans == 1 && outCh >= 2)
+    //        buffer.addFrom(1, 0, tempBuffer, 0, 0, numSamples);
+    //}
+
+    //const float globalGain = apvts.getRawParameterValue("globalGain")->load();
+    //buffer.applyGain(globalGain);
+
+    buffer.clear();
+
+    // current note name
+    for (const juce::String& noteName : currentNotes) {
+        for (auto& pair : samples)
+        {
+            if (pair.first.first != noteName) continue;
+
+      
+            auto& sample = pair.second;
+            if (!sample->isChosen) {
+                continue;
+            }
+
+            auto& sourceBuffer = sample->fullBuffer;
+            int sourceLength = sourceBuffer.getNumSamples();
+            const float globalGain = apvts.getRawParameterValue("globalGain")->load();
+
+            for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
+            {
+                if (sample->readIndex >= sourceLength) {
+                    sample->readIndex = 0;
+                }
+
+                //float processedOut = out * globalGain;
+                float limiterSample = limiter(sourceBuffer.getSample(0, sample->readIndex), 0.8f) * globalGain;
+
+                for (int ch = 0; ch < outCh; ++ch)
+                {
+                    //std::cout << "sample idx: " << sampleIdx << "\n";
+                    buffer.addSample(ch, sampleIdx, limiterSample);
+                }
+
+                sample->readIndex++;
+            }
+        }
     }
-
-    const float globalGain = apvts.getRawParameterValue("globalGain")->load();
-    buffer.applyGain(globalGain);
 }
 
 void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples)
@@ -645,6 +684,7 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
         // setSize is safe here because we only call it when shape changed
         tempBuffer.setSize(outCh, numSamples, false, false, true);
     }
+
     // PARAMETER STUFF
     grainSpacing = static_cast<int>(apvts.getRawParameterValue("grainSpacing")->load());
     grainAmount = static_cast<int>(apvts.getRawParameterValue("grainAmount")->load());
@@ -652,19 +692,19 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
     maxGrainLength = apvts.getRawParameterValue("grainMaxLength")->load();
 
     // SYNTH PATH
-    if (synthToggle)
-    {
-        {
-            const std::lock_guard<std::mutex> lock(midiMutex);
-            midiMessages.addEvents(midiFifo, 0, numSamples, 0);
-            midiFifo.clear();
-        }
+    //if (synthToggle)
+    //{
+    //    {
+    //        const std::lock_guard<std::mutex> lock(midiMutex);
+    //        midiMessages.addEvents(midiFifo, 0, numSamples, 0);
+    //        midiFifo.clear();
+    //    }
 
-        // render synth into cleared buffer
-        buffer.clear();
-        synth.renderNextBlock(buffer, midiMessages, 0, numSamples);
-        return;
-    }
+    //    // render synth into cleared buffer
+    //    buffer.clear();
+    //    synth.renderNextBlock(buffer, midiMessages, 0, numSamples);
+    //    return;
+    //}
 
 
     if (m_grainAll)
@@ -741,12 +781,13 @@ void GranularinfiniteAudioProcessor::startPlayback(const juce::String& note, con
     m_keyPressed = true;
     // todoS
     // make this function take a velocity control
-    if (synthToggle)
-    {
-        const int midi_note = CreateNoteToMidi[note];
-        synth.noteOn(1, midi_note, 127.0f);
-        return;
-    }
+    // 
+    //if (synthToggle)
+    //{
+    //    const int midi_note = CreateNoteToMidi[note];
+    //    synth.noteOn(1, midi_note, 127.0f);
+    //    return;
+    //}
 
     auto it = samples.find({ note, fileName });
 
@@ -754,22 +795,22 @@ void GranularinfiniteAudioProcessor::startPlayback(const juce::String& note, con
     {
         currentFiles.push_back(fileName);
         auto& sample = it->second;
-        if (!m_grainAll) {
-            if (!sample->isPrepared)
-            {
-                sample->transportSource.prepareToPlay(48000.0, 576);
-                sample->isPrepared = true;
-            }
-            if (!sample->transportSource.isPlaying())
-            {
-                prepareToPlay(m_sampleRate, m_blockSize);
-                sample->transportSource.setPosition(0.0);
-                sample->transportSource.start();
-            }
-        }
-        else {
+        //if (!m_grainAll) {
+        //    if (!sample->isPrepared)
+        //    {
+        //        sample->transportSource.prepareToPlay(48000.0, 576);
+        //        sample->isPrepared = true;
+        //    }
+        //    if (!sample->transportSource.isPlaying())
+        //    {
+        //        prepareToPlay(m_sampleRate, m_blockSize);
+        //        sample->transportSource.setPosition(0.0);
+        //        sample->transportSource.start();
+        //    }
+        //}
+        //else {
             prepareToPlay(m_sampleRate, m_blockSize);
-        }
+        //}
 
 
     }
@@ -779,26 +820,26 @@ void GranularinfiniteAudioProcessor::stopPlayback(const juce::String& note, cons
 {
     const int midi_note = CreateNoteToMidi[note];
 
-    if (synthToggle)
+  /*  if (synthToggle)
     {
         synth.noteOff(1, midi_note, 127, false);
-    }
+    }*/
 
     auto it = samples.find({ note, fileName });
     if (it != samples.end())
     {
         m_keyPressed = false;
-
+        //it->second->readIndex = 0;
         currentFiles.push_back(it->first.second);
 
-        if (!m_grainAll) {
+   /*     if (!m_grainAll) {
             auto& sample = it->second;
 
             std::thread([samplePtr = sample.get()] {
                 if (samplePtr)
                     samplePtr->transportSource.stop();
                 }).detach();
-        }
+        }*/
     }
 
 }
