@@ -85,13 +85,10 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
         m_keyButtonMods.addFrequencyUpwardCompressorLabel(k, std::move(labelPtr));
     }
 
-    const std::string order = "awsedftgyhujkolp;'";
-
-
     int keyButtonX = 75;
 
     std::vector<juce::String> keys;
-    for (auto key : order) {
+    for (auto key : Constants::KEY_ORDER) {
         keys.emplace_back(juce::String::charToString(key));
     }
 
@@ -104,7 +101,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
     // IMPORTANT!
     // i have a bunch of stuff in this loop that only needs to be initialized once. get it out of there
     int count = 0;
-    for (auto key : order)
+    for (auto key : Constants::KEY_ORDER)
     {
         if (keyToNote.find(key) != keyToNote.end()) count++;
         auto it = keyToNote.find(key);
@@ -303,7 +300,6 @@ bool GranularInfinite::keyPressed(const juce::KeyPress& key,
     if (currentlyPressedKeys.find(static_cast<char>(key.getTextCharacter())) != currentlyPressedKeys.end()) {
         return false;
     }
-    const std::string order = "awsedftgyhujkolp;'";
     char char_key = static_cast<char>(key.getTextCharacter());
     auto it = keyToNote.find(char_key);
     if (it != keyToNote.end())
@@ -312,53 +308,27 @@ bool GranularInfinite::keyPressed(const juce::KeyPress& key,
         m_isCompressorTimer = true;
         compressorWaveformHandle();
         auto it2 = currentlyPressedKeys.find(char_key);
-        size_t index = order.find(char_key);
+        size_t index = Constants::KEY_ORDER.find(char_key);
 
-        //if (index != std::string::npos)
-        //{
-
-        //    auto* button = m_keyButton->getKeyButton((int)index * Constants::MAX_OCTAVE);
-        //    if (audioProcessor.synthToggle)
-        //    {
-        //        if (it2 == currentlyPressedKeys.end())
-        //        {
-        //            const int midi_note = CreateNoteToMidi[noteName];
-        //            juce::MidiMessage m = juce::MidiMessage::noteOn(1, midi_note, (juce::uint8)127);
-        //            audioProcessor.addMidiEvent(m);
-        //            currentlyPressedKeys.insert(char_key);
-
-        //            button->setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
-
-        //            return true;
-        //        }
-        //        else {
-        //            return false;
-        //        }
-        //    }
-        //}
         currentlyPressedKeys.insert(char_key);
 
-        if (index != std::string::npos)
+        auto* button = m_keyButton->getKeyButtonByNote(noteName);
+
+        button->setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
+        button->repaint();
+        if (auto* sampleName = noteToSample.getValue(noteName))
         {
-
-            auto* button = m_keyButton->getKeyButton((int)index * Constants::MAX_OCTAVE);
-
-            button->setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
-            button->repaint();
-            if (auto* sampleName = noteToSample.getValue(noteName))
+            juce::String fuck = *sampleName;
+            if (sampleName->isNotEmpty() && noteName.isNotEmpty())
             {
-                juce::String fuck = *sampleName;
-                if (sampleName->isNotEmpty() && noteName.isNotEmpty())
-                {
-                    audioProcessor.updateCurrentSamples(noteName, false);
-                    audioProcessor.startPlayback(noteName, fuck);
-                }
-                return true;
+                audioProcessor.updateCurrentSamples(noteName, false);
+                audioProcessor.startPlayback(noteName, fuck);
             }
-            else {
-                std::cout << "didn't find the noteName matching sample \n";
-                return false;
-            }
+            return true;
+        }
+        else {
+            std::cout << "didn't find the noteName matching sample \n";
+            return false;
         }
     }
     return false;
@@ -367,7 +337,6 @@ bool GranularInfinite::keyPressed(const juce::KeyPress& key,
 bool GranularInfinite::keyStateChanged(bool isKeyDown,
     Component* originatingComponent)
 {
-    const std::string order = "awsedftgyhujkolp;'";
 
     if (!isKeyDown)
     {
@@ -378,36 +347,29 @@ bool GranularInfinite::keyStateChanged(bool isKeyDown,
             char keyChar = *it;
             if (!juce::KeyPress::isKeyCurrentlyDown(keyChar))
             {
-                size_t index = order.find(keyChar);
-                if (index != std::string::npos)
-                {
-                    auto* button = m_keyButton->getKeyButton((int)index * Constants::MAX_OCTAVE);
-                    if (keyChar == 'w' || keyChar == 'e' || keyChar == 't' || keyChar == 'y'
-                        || keyChar == 'u' || keyChar == 'o' || keyChar == 'p')
-                    {
-                        button->setColour(juce::TextButton::buttonColourId,
-                            juce::Colours::black);
-                        button->repaint();
-                    }
-                    else {
-                        button->setColour(juce::TextButton::buttonColourId,
-                            juce::Colours::white);
-                        button->repaint();
-                    }
-                }
                 juce::String noteName = keyToNote[keyChar];
+                auto* button = m_keyButton->getKeyButtonByNote(noteName);
+                if (keyChar == 'w' || keyChar == 'e' || keyChar == 't' || keyChar == 'y'
+                    || keyChar == 'u' || keyChar == 'o' || keyChar == 'p')
+                {
+                    button->setColour(juce::TextButton::buttonColourId,
+                        juce::Colours::black);
+                    button->repaint();
+                }
+                else {
+                    button->setColour(juce::TextButton::buttonColourId,
+                        juce::Colours::white);
+                    button->repaint();
+                }
                 it = currentlyPressedKeys.erase(it);
 
                 auto sampleNameIt = keyToNote.find(keyChar);
                 if (sampleNameIt != keyToNote.end()) {
                     if (auto* sampleName = noteToSample.getValue(sampleNameIt->second)) {
-
                         audioProcessor.updateCurrentSamples(noteName, true);
                         audioProcessor.stopPlayback(noteName, *sampleName);
-
                     }
                 }
-                //audioProcessor.stopPlayback(noteName);
             }
             else
             {
@@ -449,11 +411,10 @@ void GranularInfinite::compressorWaveformHandle() {
 void GranularInfinite::sampleRefresh(KeyButton& button) {
 
     auto& keyToNote = CreateKeyToNote(m_octave);
-    const std::string order = "awsedftgyhujkolp;'";
 
-    for (size_t i = 0; i < order.size(); i++)
+    for (size_t i = 0; i < Constants::KEY_ORDER.size(); i++)
     {
-        auto it = keyToNote.find(order[i]);
+        auto it = keyToNote.find(Constants::KEY_ORDER[i]);
         if (it != keyToNote.end())
         {
             auto* sample = noteToSample.getValue(it->second);
@@ -474,11 +435,10 @@ void GranularInfinite::octaveUp(juce::TextButton& button)
     button.onClick = [this] {
         m_octave = std::clamp(m_octave + 1, 0, 8);
         keyToNote = CreateKeyToNote(m_octave);
-        const std::string order = "awsedftgyhujkolp;'";
 
-        for (size_t i = 0; i < order.size(); i++)
+        for (size_t i = 0; i < Constants::KEY_ORDER.size(); i++)
         {
-            auto it = keyToNote.find(order[i]);
+            auto it = keyToNote.find(Constants::KEY_ORDER[i]);
             if (it != keyToNote.end())
             {
                 const auto& noteName = it->second;
@@ -505,10 +465,9 @@ void GranularInfinite::octaveDown(juce::TextButton& button)
     button.onClick = [this] {
         m_octave = std::clamp(m_octave - 1, 0, 8);
         keyToNote = CreateKeyToNote(m_octave);
-        const std::string order = "awsedftgyhujkolp;'";
-        for (size_t i = 0; i < order.size(); i++)
+        for (size_t i = 0; i < Constants::KEY_ORDER.size(); i++)
         {
-            auto it = keyToNote.find(order[i]);
+            auto it = keyToNote.find(Constants::KEY_ORDER[i]);
             if (it != keyToNote.end())
             {
                 const auto& noteName = it->second;
@@ -829,7 +788,8 @@ void GranularInfinite::resized()
 
 
     int keyButtonX = 75;
-    int octaveStart = m_octave * Constants::DISPLAYED_NOTES_SIZE;
+    int octaveStart = m_octave * 12;
+    //int octaveStart = m_octave * Constants::DISPLAYED_NOTES_SIZE;
 
     if (m_keyButton == nullptr) {
         return;
@@ -837,11 +797,12 @@ void GranularInfinite::resized()
     m_keyButton->setBounds(0, 75, 4000, 135);
     m_keyButton->triggerResized(m_octave);
 
+    int count = 0;
     for (int i = octaveStart; i < octaveStart + Constants::DISPLAYED_NOTES_SIZE; ++i)
     {
-        noteLabels[i % Constants::DISPLAYED_NOTES_SIZE]->setBounds(keyButtonX, y - 50, buttonWidth, labelHeight);
+        noteLabels[count]->setBounds(keyButtonX, y - 50, buttonWidth, labelHeight);
 
-        sampleLabels[i % Constants::DISPLAYED_NOTES_SIZE]->setBounds(keyButtonX, y + buttonHeight, buttonWidth, labelHeight);
+        sampleLabels[count]->setBounds(keyButtonX, y + buttonHeight, buttonWidth, labelHeight);
 
         /*m_keyButton->triggerResized(m_octave);*/
 
@@ -861,7 +822,7 @@ void GranularInfinite::resized()
         //        v->waveformButton->setVisible(false);
         //    }
         //}
-
+        count++;
         keyButtonX += buttonWidth + spacing + 35;   // move to next key
     }
 

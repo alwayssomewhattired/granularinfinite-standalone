@@ -142,8 +142,10 @@ public:
 		int buttonHeight = 120;
 
 		// figure out why we have to subtract 18
-		int octaveStart = (m_currentOctave * Constants::DISPLAYED_NOTES_SIZE) - 18;
-		int previousOctaveStart = m_previousOctave * Constants::DISPLAYED_NOTES_SIZE;
+		int octaveStart = (m_currentOctave * 12);
+		int previousOctaveStart = m_previousOctave * 12;
+		/*int octaveStart = (m_currentOctave * Constants::DISPLAYED_NOTES_SIZE) - 18;
+		int previousOctaveStart = m_previousOctave * Constants::DISPLAYED_NOTES_SIZE;*/
 
 		// accesses Past buttons and set visibility to false
 		for (int i = previousOctaveStart; i < previousOctaveStart + Constants::DISPLAYED_NOTES_SIZE; ++i) {
@@ -159,6 +161,7 @@ public:
 				i == octaveStart + 13 || i == octaveStart + 15)
 			{
 				keyButton->setVisible(true);
+				keyButton->setButtonText(juce::String::charToString(Constants::KEY_ORDER[i - octaveStart]));
 				keyButton->setBounds(keyButtonX + 2, y - 10, buttonWidth - 5, buttonHeight - 25);
 				keyButton->setColour(juce::TextButton::buttonColourId, juce::Colours::black);
 				keyButton->setColour(juce::TextButton::textColourOnId, juce::Colours::white);
@@ -167,6 +170,7 @@ public:
 			}
 			else {
 				keyButton->setVisible(true);
+				keyButton->setButtonText(juce::String::charToString(Constants::KEY_ORDER[i - octaveStart]));
 				keyButton->setBounds(keyButtonX, y, buttonWidth, buttonHeight);
 			}
 
@@ -186,6 +190,16 @@ public:
 		return m_keyButtons.at(i).get();
 	}
 
+	// returns nullptr if not found
+	KeyButton* getKeyButtonByNote(const juce::String& note) {
+		for (auto& kb : m_keyButtons) {
+			if (kb->getNoteName() == note) {
+				return kb.get();
+			}
+		}
+
+		return nullptr;
+	}
 
 
 private:
