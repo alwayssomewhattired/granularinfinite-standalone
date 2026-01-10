@@ -6,7 +6,8 @@
 class ButtonPalette : public juce::Component
 {
 public:
-	ButtonPalette() : waveformState()
+	ButtonPalette()
+	//ButtonPalette() : waveformState()
 	{
 		componentButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
 		componentButton.setButtonText("switch");
@@ -156,32 +157,34 @@ public:
 
 	}
 
-	std::function<void()> onWaveformButtonAdded;
+	//std::function<void()> onWaveformButtonAdded;
 
-	void addWaveformButton(const juce::String& fileName, const juce::String& keyName, const juce::String& noteName, 
-		std::function<void(juce::TextButton&)> onClick)
-	{
+	//void addWaveformButton(const juce::String& fileName, const juce::String& keyName, const juce::String& noteName, 
+	//	std::function<void(juce::TextButton&)> onClick)
+	//{
 
-		auto waveformButton = std::make_unique<WaveformButton>();
-		waveformButton->fileName = fileName;
-		waveformButton->keyName = keyName;
-		waveformButton->noteName = noteName;
+	//	auto waveformButton = std::make_unique<WaveformButton>();
+	//	waveformButton->fileName = fileName;
+	//	waveformButton->keyName = keyName;
+	//	waveformButton->noteName = noteName;
 
-		waveformButton->waveformButton = std::make_unique<juce::TextButton>();
-		auto* btnptr = waveformButton->waveformButton.get();
-		waveformButton->waveformButton->setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
-		waveformButton->waveformButton->setButtonText("waveform");
-		waveformButton->waveformButton->setClickingTogglesState(true);
+	//	waveformButton->waveformButton = std::make_unique<juce::TextButton>();
+	//	auto* btnptr = waveformButton->waveformButton.get();
+	//	waveformButton->waveformButton->setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+	//	waveformButton->waveformButton->setButtonText("waveform");
+	//	waveformButton->waveformButton->setClickingTogglesState(true);
 
-		waveformButton->waveformButton->onClick = [onClick, btnptr]() {
-			onClick(*btnptr);
-			};
-		addAndMakeVisible(*waveformButton->waveformButton);
-		waveformButtons[fileName] = std::move(waveformButton);
-		if (onWaveformButtonAdded) {
-			onWaveformButtonAdded();
-		}
-	}
+	//	waveformButton->waveformButton->onClick = [onClick, btnptr]() {
+	//		onClick(*btnptr);
+	//		};
+	//	addAndMakeVisible(*waveformButton->waveformButton);
+	//	//waveformButton->waveformButton->toFront(true);
+	//	waveformButton->waveformButton->setVisible(false);
+	//	waveformButtons[fileName] = std::move(waveformButton);
+	//	if (onWaveformButtonAdded) {
+	//		onWaveformButtonAdded();
+	//	}
+	//}
 
 	std::pair<std::unique_ptr<juce::Slider>, std::unique_ptr<juce::Label>> createFrequencyUpwardCompressor(double freq) {
 		auto slider = std::make_unique<juce::Slider>();
@@ -202,7 +205,7 @@ public:
 
 
 	// file-name of current waveform button pressed. (warning: not a reference. be careful)
-	juce::String waveformState;
+	//juce::String waveformState;
 
 	juce::TextButton componentButton;
 
@@ -217,15 +220,15 @@ public:
 	juce::Label globalGainSliderLabel;
 	juce::Slider globalGainSlider;
 
-	struct WaveformButton {
-		juce::String keyName;
-		juce::String noteName;
-		juce::String fileName;
-		std::unique_ptr<juce::TextButton> waveformButton;
-	};
+	//struct WaveformButton {
+	//	juce::String keyName;
+	//	juce::String noteName;
+	//	juce::String fileName;
+	//	std::unique_ptr<juce::TextButton> waveformButton;
+	//};
 
 	// file-name to waveformButton
-	std::map<juce::String, std::unique_ptr<WaveformButton>> waveformButtons;
+	//std::map<juce::String, std::unique_ptr<WaveformButton>> waveformButtons;
 
 	juce::Label sampleCompressorLabel;
 	struct MySampleCompressor {

@@ -27,8 +27,8 @@ public:
 	}
 
 	void resized() override {
-		m_compressorMixSlider.setBounds(1290, 1000, 100, 100);
-		m_compressorMixSliderLabel.setBounds(1220, 1000, 50, 100);
+		m_compressorMixSlider.setBounds(1390, 1000, 100, 100);
+		m_compressorMixSliderLabel.setBounds(1320, 1000, 50, 100);
 	}
 
 private:

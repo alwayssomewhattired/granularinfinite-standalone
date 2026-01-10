@@ -163,6 +163,7 @@ public:
 				keyButton->setVisible(true);
 				keyButton->setButtonText(juce::String::charToString(Constants::KEY_ORDER[i - octaveStart]));
 				keyButton->setBounds(keyButtonX + 2, y - 10, buttonWidth - 5, buttonHeight - 25);
+				keyButton->setPosition(keyButtonX + 2);
 				keyButton->setColour(juce::TextButton::buttonColourId, juce::Colours::black);
 				keyButton->setColour(juce::TextButton::textColourOnId, juce::Colours::white);
 				keyButton->setColour(juce::TextButton::textColourOffId, juce::Colours::white);
@@ -172,12 +173,12 @@ public:
 				keyButton->setVisible(true);
 				keyButton->setButtonText(juce::String::charToString(Constants::KEY_ORDER[i - octaveStart]));
 				keyButton->setBounds(keyButtonX, y, buttonWidth, buttonHeight);
+				keyButton->setPosition(keyButtonX);
 			}
 
 			keyButtonX += 100;
 		}
 
-		//repaint();
 	}
 
 	void triggerResized(const int& currentOctave) {

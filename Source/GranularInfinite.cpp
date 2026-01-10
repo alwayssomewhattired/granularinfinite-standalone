@@ -94,26 +94,12 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
 
     m_keyButton = std::make_unique<KeyButtons>(keys, m_octave);
 
-    // pass in all keynameswithoctaves and keynames into our keybutton
-    // RIGHT HERE RIGHT NOW
-
-
-    // IMPORTANT!
-    // i have a bunch of stuff in this loop that only needs to be initialized once. get it out of there
-    int count = 0;
-    for (auto key : Constants::KEY_ORDER)
-    {
-        if (keyToNote.find(key) != keyToNote.end()) count++;
-        auto it = keyToNote.find(key);
-        if (it != keyToNote.end())
-        {
-
+    int firstCount = 0;
+    for (const auto note : allNotes()) {
 
             //-------keyboard------//
-            char myChar = it->first;
-            juce::String myKeyName = juce::String::charToString(myChar);
-            juce::String keyNameWithOctave = myKeyName + juce::String(count);
-            juce::String myNoteName = it->second;
+            juce::String myKeyName = juce::String::charToString(Constants::KEY_ORDER[firstCount % Constants::KEY_ORDER.size()]);
+            juce::String myNoteName (note.data(), note.size());
 
             // note-name
             auto* noteLabel = new NoteLabel(myNoteName);
@@ -128,18 +114,51 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             auto* sampleLabel = new SampleLabel("", myNoteName);
 
             //juce::String refinedKeyOctave = juce::String(key) + (m_octave * Constants::MAX_OCTAVE);
-            auto* button = m_keyButton->getKeyButton((m_octave * Constants::MAX_OCTAVE) + count);
-
-            button->setOnFileDropped([this, myNoteName, sampleLabel, &button, myKeyName](std::map<juce::String, juce::Array<juce::File>>& noteToFiles, 
+            auto* button = m_keyButton->getKeyButton(firstCount);
+            juce::Component::SafePointer<KeyButton> safeButton(button);
+            button->setOnFileDropped([this, myNoteName, sampleLabel, safeButton, myKeyName](std::map<juce::String, juce::Array<juce::File>>& noteToFiles,
                 const bool& isDir) {
 
-                m_keyButtonMods.fileDropCB(m_octave, noteToFiles, sampleLabel, myNoteName, myKeyName, *button, isDir, audioProcessor, noteToSample, synthNote, 
-                    noteToFile, buttonPalette, m_waveformDisplay, m_scrollableList);
-                
-                resized();
-                sampleRefresh(*button);
-            });
-            //------------//
+                    m_keyButtonMods.fileDropCB(m_octave, noteToFiles, sampleLabel, myNoteName, myKeyName, safeButton, isDir, audioProcessor, noteToSample, synthNote,
+                        noteToFile, buttonPalette, m_waveformDisplay, m_scrollableList);
+
+                    resized();
+                    sampleRefresh(*safeButton);
+                });
+
+        firstCount++;
+    }
+
+
+
+
+    // IMPORTANT!
+    // i have a bunch of stuff in this loop that only needs to be initialized once. get it out of there
+    int count = 0;
+    int currentOctave = m_octave;
+    for (auto key : Constants::KEY_ORDER)
+    {
+
+        if (keyToNote.find(key) != keyToNote.end()) count++;
+        auto it = keyToNote.find(key);
+        if (it != keyToNote.end())
+        {
+            //-------keyboard------//
+            char myChar = it->first;
+            juce::String myKeyName = juce::String::charToString(myChar);
+            juce::String myNoteName = it->second;
+
+            // note-name
+            auto* noteLabel = new NoteLabel(myNoteName);
+
+            int buttonWidth = 60;
+            int buttonHeight = 120;
+            int labelHeight = 20;
+            int spacing = 5;
+            keyButtonX += buttonWidth + spacing + 35;
+
+            // sample-name
+            auto* sampleLabel = new SampleLabel("", myNoteName);
 
             // control-buttons
 
@@ -174,7 +193,6 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             addAndMakeVisible(grainAreaLabel);
             addAndMakeVisible(grainAreaSlider);
             addAndMakeVisible(noteLabel);
-            //addAndMakeVisible(button);
             addAndMakeVisible(*m_keyButton);
             addAndMakeVisible(sampleLabel);
             addAndMakeVisible(buttonPalette.synthToggleButton);
@@ -200,9 +218,12 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
 
 
 
-            buttonPalette.onWaveformButtonAdded = [this]() {
+            m_keyButtonMods.onWaveformButtonAdded = [this]() {
                 resized();
                 };
+    /*        buttonPalette.onWaveformButtonAdded = [this]() {
+                resized();
+                };*/
             
             componentButton.onClick = [this]() {
                     // (basically means 'if set'...)
@@ -307,8 +328,9 @@ bool GranularInfinite::keyPressed(const juce::KeyPress& key,
         const juce::String& noteName = it->second;
         m_isCompressorTimer = true;
         compressorWaveformHandle();
-        auto it2 = currentlyPressedKeys.find(char_key);
-        size_t index = Constants::KEY_ORDER.find(char_key);
+        m_isPlayhead = true;
+        //auto it2 = currentlyPressedKeys.find(char_key);
+        //size_t index = Constants::KEY_ORDER.find(char_key);
 
         currentlyPressedKeys.insert(char_key);
 
@@ -664,24 +686,24 @@ void GranularInfinite::resized()
     //m_keyButton->setBounds(0, 100, 4000, 300);
 
     m_keyButtonMods.setBounds(0, 100, 4000, 300);
-    m_scrollableList.setBounds(1500, 600, 4000, 300);
+    m_scrollableList.setBounds(1600, 600, 4000, 300);
 
     buttonPalette.componentButton.setBounds(1600, y + 400, 80, 80);
     componentButton.setBounds(1600, y + 400, 80, 80);
 
-    buttonPalette.sampleCompressorLabel.setBounds(1300, y + 300, 80, 100);
-    buttonPalette.compressor.thresholdStruct.thresholdSlider.setBounds(1300, y + 400, 80, 100);
-    buttonPalette.compressor.thresholdStruct.inc.setBounds(1375, y + 440, 20, 20);
-    buttonPalette.compressor.thresholdStruct.dec.setBounds(1375, y + 460, 20, 20);
-    buttonPalette.compressor.ratioSlider.setBounds(1300, y + 500, 80, 100);
-    buttonPalette.compressor.attackCoeffSlider.setBounds(1300, y + 600, 80, 100);
-    buttonPalette.compressor.releaseCoeffSlider.setBounds(1300, y + 700, 80, 100);
-    buttonPalette.compressor.gainSlider.setBounds(1300, y + 800, 80, 100);
-    buttonPalette.compressor.thresholdStruct.thresholdSliderLabel.setBounds(1200, y + 400, 80, 100);
-    buttonPalette.compressor.ratioSliderLabel.setBounds(1200, y + 500, 80, 100);
-    buttonPalette.compressor.attackCoeffSliderLabel.setBounds(1200, y + 600, 80, 100);
-    buttonPalette.compressor.releaseCoeffSliderLabel.setBounds(1200, y + 700, 80, 100);
-    buttonPalette.compressor.gainSliderLabel.setBounds(1200, y + 800, 80, 100);
+    buttonPalette.sampleCompressorLabel.setBounds(1400, y + 300, 80, 100);
+    buttonPalette.compressor.thresholdStruct.thresholdSlider.setBounds(1400, y + 400, 80, 100);
+    buttonPalette.compressor.thresholdStruct.inc.setBounds(1475, y + 440, 20, 20);
+    buttonPalette.compressor.thresholdStruct.dec.setBounds(1475, y + 460, 20, 20);
+    buttonPalette.compressor.ratioSlider.setBounds(1400, y + 500, 80, 100);
+    buttonPalette.compressor.attackCoeffSlider.setBounds(1400, y + 600, 80, 100);
+    buttonPalette.compressor.releaseCoeffSlider.setBounds(1400, y + 700, 80, 100);
+    buttonPalette.compressor.gainSlider.setBounds(1400, y + 800, 80, 100);
+    buttonPalette.compressor.thresholdStruct.thresholdSliderLabel.setBounds(1300, y + 400, 80, 100);
+    buttonPalette.compressor.ratioSliderLabel.setBounds(1300, y + 500, 80, 100);
+    buttonPalette.compressor.attackCoeffSliderLabel.setBounds(1300, y + 600, 80, 100);
+    buttonPalette.compressor.releaseCoeffSliderLabel.setBounds(1300, y + 700, 80, 100);
+    buttonPalette.compressor.gainSliderLabel.setBounds(1300, y + 800, 80, 100);
 
     buttonPalette.decrementButton.setBounds(x - 200, y + 350, buttonWidth, buttonHeight);
     buttonPalette.incrementButton.setBounds(x - 100, y + 350, buttonWidth, buttonHeight);
@@ -789,11 +811,11 @@ void GranularInfinite::resized()
 
     int keyButtonX = 75;
     int octaveStart = m_octave * 12;
-    //int octaveStart = m_octave * Constants::DISPLAYED_NOTES_SIZE;
 
     if (m_keyButton == nullptr) {
         return;
     }
+
     m_keyButton->setBounds(0, 75, 4000, 135);
     m_keyButton->triggerResized(m_octave);
 
@@ -804,46 +826,38 @@ void GranularInfinite::resized()
 
         sampleLabels[count]->setBounds(keyButtonX, y + buttonHeight, buttonWidth, labelHeight);
 
-        /*m_keyButton->triggerResized(m_octave);*/
-
-        //for (auto& [k, v] : buttonPalette.waveformButtons) {
-        //    auto* keyButton = m_keyButton->getKeyButton(i);
-        //    std::cout << keyButton->getNoteName() << "\n";
-        //    std::cout << v->noteName << "\n";
-        //    if (keyButton != nullptr && keyButton->getNoteName() == v->noteName) {
-        //        std::cout << "do we actually run anything? \n";
-
-        //        const auto& waveformButton = v->waveformButton;
-        //        addAndMakeVisible(*waveformButton);
-        //        waveformButton->setBounds(keyButton->getPosition(), y + buttonHeight + labelHeight + 10, buttonWidth, labelHeight);
-        //    }
-        //    else {
-        //        //std::cout << "falsed: " << v->noteName << "\n";
-        //        v->waveformButton->setVisible(false);
-        //    }
-        //}
         count++;
         keyButtonX += buttonWidth + spacing + 35;   // move to next key
     }
 
-    for (int i = 0; i < octaveStart; ++i)
-    for (auto& [k, v] : buttonPalette.waveformButtons) {
-        //std::cout << "hi\n";
-        auto* keyButton = m_keyButton->getKeyButton(i);
-        //std::cout << "bye\n";
-     /*   std::cout << keyButton->getNoteName() << "\n";
-        std::cout << v->noteName << "\n";*/
-        if (keyButton != nullptr && keyButton->getNoteName() == v->noteName) {
-            std::cout << "do we actually run anything? \n";
+    for (auto& [k, v] : m_keyButtonMods.waveformButtons)
+    {
+        bool matched = false;
 
-            const auto& waveformButton = v->waveformButton;
-            addAndMakeVisible(*waveformButton);
-            waveformButton->setBounds(keyButton->getPosition(), y + buttonHeight + labelHeight + 10, buttonWidth, labelHeight);
+        for (int i = octaveStart; i < octaveStart + Constants::DISPLAYED_NOTES_SIZE; ++i)
+        {
+            if (auto* keyButton = m_keyButton->getKeyButton(i))
+            {
+
+                if (keyButton->getNoteName() == v->noteName)
+                {
+                    v->waveformButton->setBounds(
+                        keyButton->getPosition(),
+                        y,
+                        buttonWidth,
+                        labelHeight
+                    );
+      
+                    v->waveformButton->setVisible(true);
+
+                    matched = true;
+                    break;
+                }
+            }
         }
-        else {
-            //std::cout << "falsed: " << v->noteName << "\n";
-            v->waveformButton->setVisible(false);
-        }
+
+        v->waveformButton->setVisible(matched);
     }
+
 }
 

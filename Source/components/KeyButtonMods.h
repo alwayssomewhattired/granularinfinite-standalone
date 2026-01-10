@@ -66,9 +66,11 @@ public:
     }
 
     void fileDropCB(int& octave, std::map<juce::String, juce::Array<juce::File>>& noteToFiles, SampleLabel* sampleLabel, const juce::String& myNoteName,
-        const juce::String& myKeyName, KeyButton& button, const bool& isDir, GranularinfiniteAudioProcessor& audioProcessor, BiMap<juce::String, 
+        const juce::String& myKeyName, KeyButton* button, const bool& isDir, GranularinfiniteAudioProcessor& audioProcessor, BiMap<juce::String, 
         juce::String>& noteToSample, juce::String& synthNote, std::map<juce::String, std::unique_ptr<juce::File>>& noteToFile, ButtonPalette& buttonPalette, 
         WaveformDisplay& waveformDisplay, ScrollableList& m_scrollableList) {
+
+        std::cout << "link zelda\n";
 
         const std::map<char, juce::String>& keyToNote = CreateKeyToNote(octave);
 
@@ -113,7 +115,6 @@ public:
                         refinedNote = myNoteName.dropLastCharacters(1) + juce::String(octave);
                     }
                 }
-
                 SampleLabel* matchingSampleLabel = sampleLabel;
                 matchingSampleLabel->setButtonText(name);
                 noteToSample.set(refinedNote, name);
@@ -127,20 +128,47 @@ public:
                 // only handle buttons for file-selection-toggle in keyButtonMods
 
                 m_scrollableList.setScrollableList(audioProcessor, refinedNote, file, noteToSample, fileNames);
+ 
+                WaveformButton* waveformButtonPtr = nullptr;
+                for (auto& [k, v] : waveformButtons) {
+                    if (k == refinedName) {
+                        waveformButtonPtr = v.get();
+                    }
+                }
 
-                buttonPalette.addWaveformButton(refinedName, myKeyName, refinedNote, [](juce::TextButton& waveformButton) {
-                    waveformButton.setToggleState(true, juce::dontSendNotification);
-                    std::cout << "clicked!\n";
+                addWaveformButton(refinedName, myKeyName, refinedNote, 
+                    [this, refinedName, refinedNote, myKeyName, file, &buttonPalette, &waveformDisplay, &audioProcessor]
+                    (juce::TextButton& waveformButton) {
+
+                    // button-click callback body
+
+                    addWaveformButtonCB(refinedName, refinedNote, myKeyName, file, &waveformButton, buttonPalette, waveformDisplay, audioProcessor);
+                    std::cout << "clicked2222!\n";
                     });
 
-    
-                // temporarily disblef
-                //addWaveformButtonCB(refinedName, refinedNote, myKeyName, file, button, buttonPalette, waveformDisplay, audioProcessor);
+                for (auto& [k, v] : waveformButtons) {
+                    if (k == refinedName) {
+                        waveformButtonPtr = v.get();
+                    }
+                }
+                addWaveformButtonCB(refinedName, refinedNote, myKeyName, file, waveformButtonPtr->waveformButton.get(), buttonPalette, waveformDisplay, audioProcessor);
 
             }
         }
     }
+    std::function<void()> onWaveformButtonAdded;
+    juce::String waveformState;
 
+    // this is so stupid. should have just made this struct inherit from juce::TextButton!!!
+    struct WaveformButton {
+        juce::String keyName;
+        juce::String noteName;
+        juce::String fileName;
+        std::unique_ptr<juce::TextButton> waveformButton;
+    };
+
+    // fileName to WaveformButton
+    std::map<juce::String, std::unique_ptr<WaveformButton>> waveformButtons;
 
 private:
     struct FrequencyUpwardCompressor {
@@ -149,43 +177,91 @@ private:
     };
 
 
-    //  - * button * - the KeyButton
-    void addWaveformButtonCB(juce::String& refinedName, juce::String& refinedNote, const juce::String& refinedKey, juce::File file,
-        KeyButton& button, ButtonPalette& buttonPalette, WaveformDisplay& waveformDisplay, GranularinfiniteAudioProcessor& audioProcessor) {
-
-        juce::String& state = buttonPalette.waveformState;
-
-        if (button.getToggleState())
+    // callback for waveformDisplay
+    void addWaveformButtonCB(juce::String refinedName, juce::String refinedNote, const juce::String refinedKey, juce::File file,
+        juce::TextButton* button, ButtonPalette& buttonPalette, WaveformDisplay& waveformDisplay, GranularinfiniteAudioProcessor& audioProcessor) {
+        juce::String& state = waveformState;
+        if (button->getToggleState())
         {
             std::cout << "i doubt it\n";
             if (state.isNotEmpty())
             {
-                if (auto it = buttonPalette.waveformButtons.find(state); it != buttonPalette.waveformButtons.end())
+                if (auto it = waveformButtons.find(state); it != waveformButtons.end())
                 {
                     it->second->waveformButton->setToggleState(false, juce::dontSendNotification);
                 }
             }
+            std::cout << "i fought it\n";
+            std::cout << "refined Name: " << refinedName << "\n";
+            std::cout << "state Name: " << state << "\n";
             state = refinedName;
+            std::cout << "i might be it\n";
+
             waveformDisplay.setBuffer(audioProcessor.getSampleBuffer(refinedNote, refinedName));
+            std::cout << "i cancel it\n";
 
             std::shared_ptr<Sample> samplePtr = nullptr;
             for (auto& v : audioProcessor.samples) {
+                std::cout << "i am it\n";
+
                 if (v.second->fileName == file.getFileNameWithoutExtension())
                     samplePtr = v.second;
             }
+            std::cout << "i exceed it\n";
 
             waveformDisplay.setSample(samplePtr);
 
             waveformDisplay.setPlayheadPosition();
-            button.setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
+            button->setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
         }
         else {
             std::cout << "no toggle state :( \n";
+            button->setToggleState(false, juce::dontSendNotification);
             state = juce::String();
             waveformDisplay.clear();
         }
     }
 
+    //juce::String waveformState;
+    //
+    //struct WaveformButton {
+    //    juce::String keyName;
+    //    juce::String noteName;
+    //    juce::String fileName;
+    //    std::unique_ptr<juce::TextButton> waveformButton;
+    //};
+
+   /* std::map<juce::String, std::unique_ptr<WaveformButton>> waveformButtons;*/
+
+
+    /*std::function<void()> onWaveformButtonAdded;*/
+
+    // waveformbutton creator
+    void addWaveformButton(const juce::String& fileName, const juce::String& keyName, const juce::String& noteName,
+        std::function<void(juce::TextButton&)> onClick)
+    {
+        auto waveformButton = std::make_unique<WaveformButton>();
+        waveformButton->fileName = fileName;
+        waveformButton->keyName = keyName;
+        waveformButton->noteName = noteName;
+
+        waveformButton->waveformButton = std::make_unique<juce::TextButton>();
+        auto* btnptr = waveformButton->waveformButton.get();
+        waveformButton->waveformButton->setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+        waveformButton->waveformButton->setButtonText("waveform");
+        waveformButton->waveformButton->setClickingTogglesState(true);
+
+        waveformButton->waveformButton->onClick = [onClick, btnptr]() {
+            onClick(*btnptr);
+            };
+        addAndMakeVisible(*waveformButton->waveformButton);
+        //waveformButton->waveformButton->toFront(true);
+        waveformButton->waveformButton->setVisible(false);
+        waveformButtons[fileName] = std::move(waveformButton);
+        if (onWaveformButtonAdded) {
+            onWaveformButtonAdded();
+        }
+    }
 
 
     // note to struct
