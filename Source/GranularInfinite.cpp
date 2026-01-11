@@ -94,6 +94,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
 
     m_keyButton = std::make_unique<KeyButtons>(keys, m_octave);
 
+    // this is a loop for all keybuttons
     int firstCount = 0;
     for (const auto note : allNotes()) {
 
@@ -116,9 +117,8 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             //juce::String refinedKeyOctave = juce::String(key) + (m_octave * Constants::MAX_OCTAVE);
             auto* button = m_keyButton->getKeyButton(firstCount);
             juce::Component::SafePointer<KeyButton> safeButton(button);
-            button->setOnFileDropped([this, myNoteName, sampleLabel, safeButton, myKeyName](std::map<juce::String, juce::Array<juce::File>>& noteToFiles,
+            button->setOnFileDropped([this, myNoteName, sampleLabel, safeButton, myKeyName](std::map<juce::String, std::map<juce::File, bool>>& noteToFiles,
                 const bool& isDir) {
-
                     m_keyButtonMods.fileDropCB(m_octave, noteToFiles, sampleLabel, myNoteName, myKeyName, safeButton, isDir, audioProcessor, noteToSample, synthNote,
                         noteToFile, buttonPalette, m_waveformDisplay, m_scrollableList);
 
@@ -129,9 +129,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
         firstCount++;
     }
 
-
-
-
+    // this is a loop for current octave key buttons
     // IMPORTANT!
     // i have a bunch of stuff in this loop that only needs to be initialized once. get it out of there
     int count = 0;

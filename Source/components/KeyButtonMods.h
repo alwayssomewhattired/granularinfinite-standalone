@@ -65,12 +65,10 @@ public:
         }
     }
 
-    void fileDropCB(int& octave, std::map<juce::String, juce::Array<juce::File>>& noteToFiles, SampleLabel* sampleLabel, const juce::String& myNoteName,
+    void fileDropCB(int& octave, std::map<juce::String, std::map<juce::File, bool>>& noteToFiles, SampleLabel* sampleLabel, const juce::String& myNoteName,
         const juce::String& myKeyName, KeyButton* button, const bool& isDir, GranularinfiniteAudioProcessor& audioProcessor, BiMap<juce::String, 
         juce::String>& noteToSample, juce::String& synthNote, std::map<juce::String, std::unique_ptr<juce::File>>& noteToFile, ButtonPalette& buttonPalette, 
         WaveformDisplay& waveformDisplay, ScrollableList& m_scrollableList) {
-
-        std::cout << "link zelda\n";
 
         const std::map<char, juce::String>& keyToNote = CreateKeyToNote(octave);
 
@@ -78,12 +76,15 @@ public:
         juce::String name;
         juce::String refinedNote;
 
-        for (const auto& [k, v] : noteToFiles) {
+        for (auto& it : noteToFiles)
+        {
+            auto& k = it.first;
+            auto& v = it.second;
 
             // filenames for scrollable list
             std::vector<juce::String> fileNames;
-            for (const juce::File& file : v) {
-                fileNames.push_back(file.getFileNameWithoutExtension());
+            for (auto& [file, isLoaded] : v) {
+                if (!isLoaded) fileNames.push_back(file.getFileNameWithoutExtension());
             }
             
             if (isDir) {
@@ -99,9 +100,12 @@ public:
                 }
             }
 
-            for (const juce::File& audioFile : v) {
-                fullPath = audioFile.getFullPathName();
-                name = audioFile.getFileNameWithoutExtension();
+            for (auto& [file, isLoaded] : v) {
+
+                if (isLoaded) continue;
+
+                fullPath = file.getFullPathName();
+                name = file.getFileNameWithoutExtension();
                 //button.setTrimmedFileName(name);
                 if (isDir) {
                     refinedNote = k;
@@ -128,13 +132,6 @@ public:
                 // only handle buttons for file-selection-toggle in keyButtonMods
 
                 m_scrollableList.setScrollableList(audioProcessor, refinedNote, file, noteToSample, fileNames);
- 
-                WaveformButton* waveformButtonPtr = nullptr;
-                for (auto& [k, v] : waveformButtons) {
-                    if (k == refinedName) {
-                        waveformButtonPtr = v.get();
-                    }
-                }
 
                 addWaveformButton(refinedName, myKeyName, refinedNote, 
                     [this, refinedName, refinedNote, myKeyName, file, &buttonPalette, &waveformDisplay, &audioProcessor]
@@ -146,18 +143,23 @@ public:
                     std::cout << "clicked2222!\n";
                     });
 
+                WaveformButton* waveformButtonPtr = nullptr;
                 for (auto& [k, v] : waveformButtons) {
                     if (k == refinedName) {
                         waveformButtonPtr = v.get();
                     }
                 }
-                addWaveformButtonCB(refinedName, refinedNote, myKeyName, file, waveformButtonPtr->waveformButton.get(), buttonPalette, waveformDisplay, audioProcessor);
 
+                addWaveformButtonCB(refinedName, refinedNote, myKeyName, file, waveformButtonPtr->waveformButton.get(), buttonPalette, waveformDisplay, audioProcessor);
+                isLoaded = true;
             }
         }
     }
     std::function<void()> onWaveformButtonAdded;
     juce::String waveformState;
+
+
+
 
     // this is so stupid. should have just made this struct inherit from juce::TextButton!!!
     struct WaveformButton {

@@ -8,7 +8,7 @@
 #include "Constants.h"
 
 struct KeyButton : public juce::TextButton, public juce::FileDragAndDropTarget {
-	using FileDroppedCallback = std::function<void(std::map<juce::String, juce::Array<juce::File>>& noteToFiles, const bool& isDir)>;
+	using FileDroppedCallback = std::function<void(std::map<juce::String, std::map<juce::File, bool>>& noteToFiles, const bool& isDir)>;
 
 	KeyButton() {
 		setRepaintsOnMouseActivity(true);
@@ -38,7 +38,7 @@ struct KeyButton : public juce::TextButton, public juce::FileDragAndDropTarget {
 		}
 		else {
 			if (file.hasFileExtension("wav;mp3;aiff;flac;ogg")) {
-				m_noteToFiles[currentFreq].add(file);
+				m_noteToFiles[currentFreq].emplace(file, false);
 			}
 		}
 	}
@@ -86,8 +86,8 @@ private:
 	bool m_isDir;
 
 	// Key: frequency
-	// Value: folder of audio files
-	std::map<juce::String, juce::Array<juce::File>> m_noteToFiles;
+	// Value: unordered map of audio file to 'isLoaded' boolean
+	std::map<juce::String, std::map<juce::File, bool>> m_noteToFiles;
 	juce::String m_keyName;
 	juce::String m_noteName;
 	juce::String m_keyNameWithOctave;

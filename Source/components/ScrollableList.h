@@ -19,6 +19,7 @@ public:
 			g.fillAll(juce::Colours::darkblue);
 
 		g.setColour(juce::Colours::white);
+
 		g.drawText(items[rowNumber], 10, 0, width, height, juce::Justification::centredLeft);
 	}
 
@@ -71,9 +72,18 @@ public:
 		BiMap<juce::String, juce::String>& noteToSample, std::vector<juce::String>& fileNames) {
 
 		std::shared_ptr<Sample>& samplePtr = audioProcessor.loadFile(file, refinedNote, "false");
-
+		std::vector<juce::String>& items = m_scrollableList.items;
+		if (samplePtr == nullptr) std::cout << "this is null ptr\n";
 		m_scrollableList.setAudioConfig(&noteToSample, refinedNote, std::move(samplePtr));
-		m_scrollableList.items = { fileNames };
+		for (auto k : fileNames) {
+			std::cout << k << "\n";
+			items.push_back(k);
+		}
+
+		// erase-remove idiom
+		std::sort(items.begin(), items.end());
+		items.erase(std::unique(items.begin(), items.end()), items.end());
+
 		m_listBox.setModel(&m_scrollableList);
 		m_listBox.setRowHeight(20);
 		addAndMakeVisible(m_listBox);
