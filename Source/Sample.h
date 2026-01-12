@@ -10,6 +10,8 @@ struct Sample
     juce::AudioTransportSource transportSource;
 
     std::int64_t audioFileLength = 0;
+
+    // audio buffer of entire audio file
     juce::AudioBuffer<float> fullBuffer;
 
     juce::String fileName;

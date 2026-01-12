@@ -219,10 +219,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             m_keyButtonMods.onWaveformButtonAdded = [this]() {
                 resized();
                 };
-    /*        buttonPalette.onWaveformButtonAdded = [this]() {
-                resized();
-                };*/
-            
+
             componentButton.onClick = [this]() {
                     // (basically means 'if set'...)
                     if (onComponentButtonClicked)

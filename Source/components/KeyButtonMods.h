@@ -131,7 +131,7 @@ public:
 
                 // only handle buttons for file-selection-toggle in keyButtonMods
 
-                m_scrollableList.setScrollableList(audioProcessor, refinedNote, file, noteToSample, fileNames);
+                m_scrollableList.setScrollableList(audioProcessor, refinedNote, file, noteToSample, fileNames, &waveformDisplay);
 
                 addWaveformButton(refinedName, myKeyName, refinedNote, 
                     [this, refinedName, refinedNote, myKeyName, file, &buttonPalette, &waveformDisplay, &audioProcessor]
@@ -158,9 +158,6 @@ public:
     std::function<void()> onWaveformButtonAdded;
     juce::String waveformState;
 
-
-
-
     // this is so stupid. should have just made this struct inherit from juce::TextButton!!!
     struct WaveformButton {
         juce::String keyName;
@@ -185,7 +182,6 @@ private:
         juce::String& state = waveformState;
         if (button->getToggleState())
         {
-            std::cout << "i doubt it\n";
             if (state.isNotEmpty())
             {
                 if (auto it = waveformButtons.find(state); it != waveformButtons.end())
@@ -193,23 +189,17 @@ private:
                     it->second->waveformButton->setToggleState(false, juce::dontSendNotification);
                 }
             }
-            std::cout << "i fought it\n";
-            std::cout << "refined Name: " << refinedName << "\n";
-            std::cout << "state Name: " << state << "\n";
+
             state = refinedName;
-            std::cout << "i might be it\n";
 
             waveformDisplay.setBuffer(audioProcessor.getSampleBuffer(refinedNote, refinedName));
-            std::cout << "i cancel it\n";
 
             std::shared_ptr<Sample> samplePtr = nullptr;
             for (auto& v : audioProcessor.samples) {
-                std::cout << "i am it\n";
 
                 if (v.second->fileName == file.getFileNameWithoutExtension())
                     samplePtr = v.second;
             }
-            std::cout << "i exceed it\n";
 
             waveformDisplay.setSample(samplePtr);
 
@@ -223,20 +213,6 @@ private:
             waveformDisplay.clear();
         }
     }
-
-    //juce::String waveformState;
-    //
-    //struct WaveformButton {
-    //    juce::String keyName;
-    //    juce::String noteName;
-    //    juce::String fileName;
-    //    std::unique_ptr<juce::TextButton> waveformButton;
-    //};
-
-   /* std::map<juce::String, std::unique_ptr<WaveformButton>> waveformButtons;*/
-
-
-    /*std::function<void()> onWaveformButtonAdded;*/
 
     // waveformbutton creator
     void addWaveformButton(const juce::String& fileName, const juce::String& keyName, const juce::String& noteName,
@@ -270,4 +246,5 @@ private:
     std::unordered_map<std::string, FrequencyUpwardCompressor> m_frequencyUpwardCompressors;
     // note to label
     std::unordered_map<std::string, std::unique_ptr<juce::Label>> m_frequencyUpwardCompressorLabels;
+
 };

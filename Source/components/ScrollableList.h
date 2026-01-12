@@ -40,6 +40,7 @@ public:
 			if (v->noteName == m_key && v->fileName == chosenFileName) {
 				m_currentNoteToSample->set(m_key, items[row]);
 				v->isChosen = true;
+				m_waveformDisplay->setBuffer(v->fullBuffer);
 			}
 			else {
 				v->isChosen = false;
@@ -47,6 +48,9 @@ public:
 			}
 		}
 
+		// get waveformdisplay object in here
+		// pass audio buffer into waveformdisplay method.
+		
 	}
 
 
@@ -61,6 +65,7 @@ public:
 	juce::String m_key;
 	std::vector<juce::String> items;
 	std::vector<std::shared_ptr<Sample>> m_samples;
+	WaveformDisplay* m_waveformDisplay;
 };
 
 
@@ -69,8 +74,9 @@ class ScrollableList : public juce::Component
 public:
 
 	void setScrollableList(GranularinfiniteAudioProcessor& audioProcessor, const juce::String& refinedNote, const juce::File& file,
-		BiMap<juce::String, juce::String>& noteToSample, std::vector<juce::String>& fileNames) {
+		BiMap<juce::String, juce::String>& noteToSample, std::vector<juce::String>& fileNames, WaveformDisplay* waveformDisplay) {
 
+		m_scrollableList.m_waveformDisplay = waveformDisplay;
 		std::shared_ptr<Sample>& samplePtr = audioProcessor.loadFile(file, refinedNote, "false");
 		std::vector<juce::String>& items = m_scrollableList.items;
 		if (samplePtr == nullptr) std::cout << "this is null ptr\n";
