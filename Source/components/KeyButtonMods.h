@@ -131,16 +131,21 @@ public:
 
                 // only handle buttons for file-selection-toggle in keyButtonMods
 
-                m_scrollableList.setScrollableList(audioProcessor, refinedNote, file, noteToSample, fileNames, &waveformDisplay);
+                m_scrollableList.setScrollableList(audioProcessor, refinedNote, file, noteToSample, fileNames, &waveformDisplay);                
 
                 addWaveformButton(refinedName, myKeyName, refinedNote, 
-                    [this, refinedName, refinedNote, myKeyName, file, &buttonPalette, &waveformDisplay, &audioProcessor]
+                    [this, refinedName, refinedNote, myKeyName, file, &buttonPalette, &waveformDisplay, &audioProcessor, &m_scrollableList]
                     (juce::TextButton& waveformButton) {
 
                     // button-click callback body
+  /*                  std::cout << "ka\n";
+                    juce::String* selectedFileName = m_scrollableList.m_scrollableList.m_currentNoteToSample->getValue(myKeyName);
+                    std::cout << "la\n";*/
 
+                    //if (selectedFileName == nullptr) std::cout << "this is null\n";
+                        std::cout << "toggle state: " << waveformButton.getToggleState() << "\n";
+                    waveformDisplay.setToggled(waveformButton.getToggleState());
                     addWaveformButtonCB(refinedName, refinedNote, myKeyName, file, &waveformButton, buttonPalette, waveformDisplay, audioProcessor);
-                    std::cout << "clicked2222!\n";
                     });
 
                 WaveformButton* waveformButtonPtr = nullptr;
@@ -192,16 +197,16 @@ private:
 
             state = refinedName;
 
-            waveformDisplay.setBuffer(audioProcessor.getSampleBuffer(refinedNote, refinedName));
+            //waveformDisplay.setBuffer(audioProcessor.getSampleBuffer(refinedNote, refinedName));
 
-            std::shared_ptr<Sample> samplePtr = nullptr;
+   /*         std::shared_ptr<Sample> samplePtr = nullptr;
             for (auto& v : audioProcessor.samples) {
 
                 if (v.second->fileName == file.getFileNameWithoutExtension())
                     samplePtr = v.second;
             }
 
-            waveformDisplay.setSample(samplePtr);
+            waveformDisplay.setSample(samplePtr);*/
 
             waveformDisplay.setPlayheadPosition();
             button->setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);

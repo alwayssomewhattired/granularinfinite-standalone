@@ -65,12 +65,16 @@ public:
 
     void clear()
     {
-        buffer.setSize(0, 0, false, false, false);
+        m_isToggled = false;
         repaint();
     }
 
 	void paint(juce::Graphics& g) override
 	{
+        if (m_isToggled == false) {
+            g.fillAll(juce::Colours::black);
+            return;
+        }
 
         if (buffer.getNumSamples() == 0) {
             return;
@@ -116,7 +120,15 @@ public:
 
 	}
 
+    void setToggled(const bool& toggleState) {
+        m_isToggled = toggleState;
+        repaint();
+    }
+
 private:
+
+    bool m_isToggled = false;
+
     // possibly might not need this. replacing with 'sample' instead...
     juce::AudioBuffer<float> buffer;
 
