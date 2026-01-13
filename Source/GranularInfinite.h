@@ -92,7 +92,7 @@ private:
     //std::vector<KeyButton> m_keyButtons;
 
     // keybutton object that holds all keyButtons internally
-    std::unique_ptr<KeyButtons> m_keyButton = nullptr;
+    std::shared_ptr<KeyButtons> m_keyButton = nullptr;
 
     juce::OwnedArray<SampleLabel> sampleLabels;
     juce::OwnedArray<NoteLabel> noteLabels;
@@ -101,7 +101,7 @@ private:
     const std::map<std::string, double>& m_noteToFreq = createNoteToFreq();
 
     juce::MidiBuffer pendingMidi;
-    int m_octave = 3;
+    std::shared_ptr<int> m_octave = std::make_shared<int>(3);
     juce::String currentlyPressedSample = "none";
 
     void timerCallback() override;

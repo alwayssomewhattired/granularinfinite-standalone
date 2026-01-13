@@ -37,14 +37,16 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
     grainLengthLabel(buttonPalette.grainLengthLabel),
     hanningToggleButton(&buttonPalette.hanningToggleButton)
 {
+
     audioProcessor.addChangeListener(this);
 
-    keyToNote = CreateKeyToNote(m_octave);
+    keyToNote = CreateKeyToNote(*m_octave);
 
     setWantsKeyboardFocus(true);
     addKeyListener(this);
-
-    setSize(1900, 1000);
+    //std::cout << "1\n";
+    //setSize(1900, 1000);
+    //std::cout << "2\n";
 
     // find out if timer needed
     startTimerHz(60);
@@ -70,6 +72,15 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
     }
         // creates frequencyUpwardCompressors
 
+
+    int keyButtonX = 75;
+
+    std::vector<juce::String> keys;
+    for (auto key : Constants::KEY_ORDER) {
+        keys.emplace_back(juce::String::charToString(key));
+    }
+    m_keyButton = std::make_shared<KeyButtons>(keys, *m_octave);
+
     for (const auto& [k, v] : m_noteToFreq) {
         auto [sliderPtr, labelPtr] = buttonPalette.createFrequencyUpwardCompressor(v);
 
@@ -83,16 +94,11 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
 
         m_keyButtonMods.addFrequencyUpwardCompressor(k, v, std::move(sliderPtr));
         m_keyButtonMods.addFrequencyUpwardCompressorLabel(k, std::move(labelPtr));
+        auto octavePtr = m_octave;
+        m_keyButtonMods.setOctave(std::move(octavePtr));
+        std::shared_ptr<KeyButtons> m_keyButtonPtr = m_keyButton;
+        m_keyButtonMods.setKeyButtons(m_keyButtonPtr);
     }
-
-    int keyButtonX = 75;
-
-    std::vector<juce::String> keys;
-    for (auto key : Constants::KEY_ORDER) {
-        keys.emplace_back(juce::String::charToString(key));
-    }
-
-    m_keyButton = std::make_unique<KeyButtons>(keys, m_octave);
 
     // this is a loop for all keybuttons
     int firstCount = 0;
@@ -119,10 +125,11 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             juce::Component::SafePointer<KeyButton> safeButton(button);
             button->setOnFileDropped([this, myNoteName, sampleLabel, safeButton, myKeyName](std::map<juce::String, std::map<juce::File, bool>>& noteToFiles,
                 const bool& isDir) {
-                    m_keyButtonMods.fileDropCB(m_octave, noteToFiles, sampleLabel, myNoteName, myKeyName, safeButton, isDir, audioProcessor, noteToSample, synthNote,
+                    m_keyButtonMods.fileDropCB(*m_octave, noteToFiles, sampleLabel, myNoteName, myKeyName, safeButton, isDir, audioProcessor, noteToSample, synthNote,
                         noteToFile, buttonPalette, m_waveformDisplay, m_scrollableList);
 
                     resized();
+                    m_keyButtonMods.resized();
                     sampleRefresh(*safeButton);
                 });
 
@@ -133,7 +140,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
     // IMPORTANT!
     // i have a bunch of stuff in this loop that only needs to be initialized once. get it out of there
     int count = 0;
-    int currentOctave = m_octave;
+    int currentOctave = *m_octave;
     for (auto key : Constants::KEY_ORDER)
     {
 
@@ -427,7 +434,7 @@ void GranularInfinite::compressorWaveformHandle() {
 // - lazily fixes SampleLabel issue.
 void GranularInfinite::sampleRefresh(KeyButton& button) {
 
-    auto& keyToNote = CreateKeyToNote(m_octave);
+    auto& keyToNote = CreateKeyToNote(*m_octave);
 
     for (size_t i = 0; i < Constants::KEY_ORDER.size(); i++)
     {
@@ -450,8 +457,8 @@ void GranularInfinite::sampleRefresh(KeyButton& button) {
 void GranularInfinite::octaveUp(juce::TextButton& button)
 {
     button.onClick = [this] {
-        m_octave = std::clamp(m_octave + 1, 0, 8);
-        keyToNote = CreateKeyToNote(m_octave);
+        *m_octave = std::clamp(*m_octave + 1, 0, 8);
+        keyToNote = CreateKeyToNote(*m_octave);
 
         for (size_t i = 0; i < Constants::KEY_ORDER.size(); i++)
         {
@@ -473,6 +480,7 @@ void GranularInfinite::octaveUp(juce::TextButton& button)
             }
         }
         resized();
+        m_keyButtonMods.resized();
         };
 
 }
@@ -480,8 +488,8 @@ void GranularInfinite::octaveUp(juce::TextButton& button)
 void GranularInfinite::octaveDown(juce::TextButton& button)
 {
     button.onClick = [this] {
-        m_octave = std::clamp(m_octave - 1, 0, 8);
-        keyToNote = CreateKeyToNote(m_octave);
+        *m_octave = std::clamp(*m_octave - 1, 0, 8);
+        keyToNote = CreateKeyToNote(*m_octave);
         for (size_t i = 0; i < Constants::KEY_ORDER.size(); i++)
         {
             auto it = keyToNote.find(Constants::KEY_ORDER[i]);
@@ -502,7 +510,7 @@ void GranularInfinite::octaveDown(juce::TextButton& button)
             }
         }
         resized();
-
+        m_keyButtonMods.resized();
         };
 
 }
@@ -801,18 +809,18 @@ void GranularInfinite::resized()
     inner2.performLayout(inner2Area.toFloat());
 
     int keyControlX = 75;
-    m_keyButtonMods.drawUpwardCompressors(noteRange, m_octave, keyControlX, y, buttonWidth, buttonHeight, spacing, buttonPalette);
+    m_keyButtonMods.drawUpwardCompressors(noteRange, *m_octave, keyControlX, y, buttonWidth, buttonHeight, spacing, buttonPalette);
 
 
     int keyButtonX = 75;
-    int octaveStart = m_octave * 12;
+    int octaveStart = *m_octave * 12;
 
     if (m_keyButton == nullptr) {
         return;
     }
 
     m_keyButton->setBounds(0, 75, 4000, 135);
-    m_keyButton->triggerResized(m_octave);
+    m_keyButton->triggerResized(*m_octave);
 
     int count = 0;
     for (int i = octaveStart; i < octaveStart + Constants::DISPLAYED_NOTES_SIZE; ++i)
@@ -825,34 +833,5 @@ void GranularInfinite::resized()
         keyButtonX += buttonWidth + spacing + 35;   // move to next key
     }
 
-    for (auto& [k, v] : m_keyButtonMods.waveformButtons)
-    {
-        bool matched = false;
-
-        for (int i = octaveStart; i < octaveStart + Constants::DISPLAYED_NOTES_SIZE; ++i)
-        {
-            if (auto* keyButton = m_keyButton->getKeyButton(i))
-            {
-
-                if (keyButton->getNoteName() == v->noteName)
-                {
-                    v->waveformButton->setBounds(
-                        keyButton->getPosition(),
-                        y,
-                        buttonWidth,
-                        labelHeight
-                    );
-      
-                    v->waveformButton->setVisible(true);
-
-                    matched = true;
-                    break;
-                }
-            }
-        }
-
-        v->waveformButton->setVisible(matched);
-    }
-
 }
-
+ 

@@ -59,11 +59,6 @@ public:
         m_frequencyUpwardCompressorLabels[note] = std::move(label);
     }
 
-    void cleanUp() {
-        for (auto& [k, v] : m_frequencyUpwardCompressors) {
-            v.slider->setLookAndFeel(nullptr);
-        }
-    }
 
     void fileDropCB(int& octave, std::map<juce::String, std::map<juce::File, bool>>& noteToFiles, SampleLabel* sampleLabel, const juce::String& myNoteName,
         const juce::String& myKeyName, KeyButton* button, const bool& isDir, GranularinfiniteAudioProcessor& audioProcessor, BiMap<juce::String, 
@@ -145,6 +140,7 @@ public:
                     //if (selectedFileName == nullptr) std::cout << "this is null\n";
                         std::cout << "toggle state: " << waveformButton.getToggleState() << "\n";
                     waveformDisplay.setToggled(waveformButton.getToggleState());
+                    addFileButton(myKeyName, refinedNote);
                     addWaveformButtonCB(refinedName, refinedNote, myKeyName, file, &waveformButton, buttonPalette, waveformDisplay, audioProcessor);
                     });
 
@@ -160,6 +156,13 @@ public:
             }
         }
     }
+
+    void cleanUp() {
+        for (auto& [k, v] : m_frequencyUpwardCompressors) {
+            v.slider->setLookAndFeel(nullptr);
+        }
+    }
+
     std::function<void()> onWaveformButtonAdded;
     juce::String waveformState;
 
@@ -173,8 +176,91 @@ public:
 
     // fileName to WaveformButton
     std::map<juce::String, std::unique_ptr<WaveformButton>> waveformButtons;
+    
+    struct FileButton : juce::TextButton {
+        FileButton(juce::String keyName, juce::String noteName) : m_keyName(keyName), m_noteName(noteName) {};
+        juce::String m_keyName;
+        juce::String m_noteName;
+    };
+    std::vector<std::shared_ptr<FileButton>> m_fileButtons;
+    std::shared_ptr<FileButton> m_currentToggledButton = nullptr;
+
+    FileButton* getFileButton(const juce::String& noteName) {
+        for (auto& button : m_fileButtons) {
+            if (button->m_noteName == noteName) return button.get();
+        }
+
+        return nullptr;
+    }
+
+    void setOctave(std::shared_ptr<int> octave) {
+        m_octave = octave;
+    }
+
+    void setKeyButtons(std::shared_ptr<KeyButtons> keyButtons) {
+        m_keyButtons = std::move(keyButtons);
+    }
+
+    void resized() override {
+        int octaveStart = *m_octave * 12;
+        int y = 100;
+        int buttonWidth = 60;
+        int labelHeight = 20;
+
+        for (const auto& button : m_fileButtons) {
+            if (button->isVisible()) {
+                button->setVisible(false);
+            }
+        }
+
+        for (auto& [k, v] : waveformButtons)
+        {
+            bool matched = false;
+
+            for (int i = octaveStart; i < octaveStart + Constants::DISPLAYED_NOTES_SIZE; ++i)
+            {
+                if (auto* keyButton = m_keyButtons->getKeyButton(i))
+                {
+
+                    if (keyButton->getNoteName() == v->noteName)
+                    {
+                        const auto& keyButtonPosition = keyButton->getPosition();
+                        v->waveformButton->setBounds(
+                            keyButtonPosition,
+                            y,
+                            buttonWidth,
+                            labelHeight
+                        );
+
+                        v->waveformButton->setVisible(true);
+
+                        matched = true;
+
+                        if (const auto& fileButton = getFileButton(v->noteName)) {
+                            fileButton->setBounds(
+                                keyButtonPosition,
+                                y + 10,
+                                buttonWidth,
+                                labelHeight
+                            );
+                            fileButton->setVisible(true);
+                        }
+
+                        break;
+                    }
+                }
+            }
+
+            v->waveformButton->setVisible(matched);
+            }
+    }
+
 
 private:
+
+    std::shared_ptr<int> m_octave = nullptr;
+    std::shared_ptr<KeyButtons> m_keyButtons = nullptr;
+
     struct FrequencyUpwardCompressor {
         double frequency;
         std::unique_ptr<juce::Slider> slider;
@@ -244,6 +330,29 @@ private:
         if (onWaveformButtonAdded) {
             onWaveformButtonAdded();
         }
+    }
+
+
+    void addFileButton(const juce::String& keyName, const juce::String& noteName) {
+        auto button = std::make_shared<FileButton>(keyName, noteName);
+        button->setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+        button->setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
+        button->setButtonText("");
+        button->setClickingTogglesState(true);
+        addAndMakeVisible(*button);
+        button->setVisible(false);
+        button->onClick = [this, button, keyName, noteName]() {
+            if (m_currentToggledButton && m_currentToggledButton->m_noteName != noteName) {
+                m_currentToggledButton->setToggleState(false, juce::dontSendNotification);
+            }
+
+            m_currentToggledButton = button;
+            // change scrollable list to reveal this buttons files
+
+        };
+
+        m_fileButtons.push_back(std::move(button));
+        resized();
     }
 
 
