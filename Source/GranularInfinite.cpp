@@ -35,7 +35,8 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
     grainAreaSlider(std::tuple<double, double, double>(0.0, 600.0, 1.0)),
     grainAreaLabel(buttonPalette.grainPositionLabel),
     grainLengthLabel(buttonPalette.grainLengthLabel),
-    hanningToggleButton(&buttonPalette.hanningToggleButton)
+    hanningToggleButton(&buttonPalette.hanningToggleButton),
+    m_keyButtonMods(m_waveformDisplay, m_scrollableList)
 {
 
     audioProcessor.addChangeListener(this);
@@ -126,7 +127,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             button->setOnFileDropped([this, myNoteName, sampleLabel, safeButton, myKeyName](std::map<juce::String, std::map<juce::File, bool>>& noteToFiles,
                 const bool& isDir) {
                     m_keyButtonMods.fileDropCB(*m_octave, noteToFiles, sampleLabel, myNoteName, myKeyName, safeButton, isDir, audioProcessor, noteToSample, synthNote,
-                        noteToFile, buttonPalette, m_waveformDisplay, m_scrollableList);
+                        noteToFile, buttonPalette);
 
                     resized();
                     m_keyButtonMods.resized();

@@ -17,6 +17,8 @@ class KeyButtonMods : public juce::Component {
 
 public:
 
+    KeyButtonMods(WaveformDisplay& waveformDisplay, ScrollableList& scrollableList) : m_waveformDisplay(waveformDisplay), m_scrollableList(scrollableList) {}
+
     int drawUpwardCompressors(const std::vector<std::string>& noteRange, const int& octave,
   int& keyControlX, const int& y,
         const int& buttonWidth, const int& buttonHeight, const int& spacing, ButtonPalette& bp) {
@@ -62,8 +64,7 @@ public:
 
     void fileDropCB(int& octave, std::map<juce::String, std::map<juce::File, bool>>& noteToFiles, SampleLabel* sampleLabel, const juce::String& myNoteName,
         const juce::String& myKeyName, KeyButton* button, const bool& isDir, GranularinfiniteAudioProcessor& audioProcessor, BiMap<juce::String, 
-        juce::String>& noteToSample, juce::String& synthNote, std::map<juce::String, std::unique_ptr<juce::File>>& noteToFile, ButtonPalette& buttonPalette, 
-        WaveformDisplay& waveformDisplay, ScrollableList& m_scrollableList) {
+        juce::String>& noteToSample, juce::String& synthNote, std::map<juce::String, std::unique_ptr<juce::File>>& noteToFile, ButtonPalette& buttonPalette) {
 
         const std::map<char, juce::String>& keyToNote = CreateKeyToNote(octave);
 
@@ -126,22 +127,21 @@ public:
 
                 // only handle buttons for file-selection-toggle in keyButtonMods
 
-                m_scrollableList.setScrollableList(audioProcessor, refinedNote, file, noteToSample, fileNames, &waveformDisplay);                
+                //m_scrollableList.setScrollableList(audioProcessor, refinedNote, file, noteToSample, fileNames, &waveformDisplay);                
 
                 addWaveformButton(refinedName, myKeyName, refinedNote, 
-                    [this, refinedName, refinedNote, myKeyName, file, &buttonPalette, &waveformDisplay, &audioProcessor, &m_scrollableList]
+                    [this, refinedName, refinedNote, myKeyName, file, &buttonPalette, &audioProcessor, fileNames]
                     (juce::TextButton& waveformButton) {
 
-                    // button-click callback body
-  /*                  std::cout << "ka\n";
-                    juce::String* selectedFileName = m_scrollableList.m_scrollableList.m_currentNoteToSample->getValue(myKeyName);
-                    std::cout << "la\n";*/
+                        // waveform-button-click callback body
 
-                    //if (selectedFileName == nullptr) std::cout << "this is null\n";
+                        // find out when and where and why filenames is a piece of shit
+                            
                         std::cout << "toggle state: " << waveformButton.getToggleState() << "\n";
-                    waveformDisplay.setToggled(waveformButton.getToggleState());
-                    addFileButton(myKeyName, refinedNote);
-                    addWaveformButtonCB(refinedName, refinedNote, myKeyName, file, &waveformButton, buttonPalette, waveformDisplay, audioProcessor);
+                        m_waveformDisplay.setToggled(waveformButton.getToggleState());
+                        addFileButton(myKeyName, refinedNote, audioProcessor, file, fileNames);
+
+                        addWaveformButtonCB(refinedName, refinedNote, myKeyName, file, &waveformButton, buttonPalette, m_waveformDisplay, audioProcessor);
                     });
 
                 WaveformButton* waveformButtonPtr = nullptr;
@@ -151,7 +151,7 @@ public:
                     }
                 }
 
-                addWaveformButtonCB(refinedName, refinedNote, myKeyName, file, waveformButtonPtr->waveformButton.get(), buttonPalette, waveformDisplay, audioProcessor);
+                addWaveformButtonCB(refinedName, refinedNote, myKeyName, file, waveformButtonPtr->waveformButton.get(), buttonPalette, m_waveformDisplay, audioProcessor);
                 isLoaded = true;
             }
         }
@@ -162,6 +162,8 @@ public:
             v.slider->setLookAndFeel(nullptr);
         }
     }
+
+    ScrollableList& m_scrollableList;
 
     std::function<void()> onWaveformButtonAdded;
     juce::String waveformState;
@@ -258,6 +260,8 @@ public:
 
 private:
 
+    WaveformDisplay& m_waveformDisplay;
+
     std::shared_ptr<int> m_octave = nullptr;
     std::shared_ptr<KeyButtons> m_keyButtons = nullptr;
 
@@ -333,7 +337,8 @@ private:
     }
 
 
-    void addFileButton(const juce::String& keyName, const juce::String& noteName) {
+    void addFileButton(const juce::String& keyName, const juce::String& noteName, GranularinfiniteAudioProcessor& audioProcessor, juce::File file, 
+        std::vector<juce::String> fileNames) {
         auto button = std::make_shared<FileButton>(keyName, noteName);
         button->setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
         button->setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
@@ -341,14 +346,14 @@ private:
         button->setClickingTogglesState(true);
         addAndMakeVisible(*button);
         button->setVisible(false);
-        button->onClick = [this, button, keyName, noteName]() {
+        button->onClick = [this, button, keyName, noteName, &audioProcessor, file, fileNames]() {
             if (m_currentToggledButton && m_currentToggledButton->m_noteName != noteName) {
                 m_currentToggledButton->setToggleState(false, juce::dontSendNotification);
             }
 
             m_currentToggledButton = button;
             // change scrollable list to reveal this buttons files
-
+            m_scrollableList.setScrollableList(audioProcessor, noteName, file, fileNames, m_waveformDisplay);
         };
 
         m_fileButtons.push_back(std::move(button));

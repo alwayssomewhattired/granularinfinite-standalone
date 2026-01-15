@@ -125,6 +125,8 @@ public:
         repaint();
     }
 
+    juce::String fuckyou = "fuckyou";
+
 private:
 
     bool m_isToggled = false;

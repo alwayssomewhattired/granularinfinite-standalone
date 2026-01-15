@@ -749,11 +749,9 @@ std::shared_ptr<Sample>& GranularinfiniteAudioProcessor::loadFile(const juce::Fi
     std::optional<juce::String> fileName)
 {
     std::string realStr = noteName.toStdString();
-
     if (auto* reader = formatManager.createReaderFor(file))
     {
         synth.clearSounds();
-
         int rootNote = CreateNoteToMidi.at(noteName);
         juce::BigInteger allNotes;
         allNotes.setRange(0, 128, true);
@@ -765,10 +763,9 @@ std::shared_ptr<Sample>& GranularinfiniteAudioProcessor::loadFile(const juce::Fi
         auto sample = std::make_shared<Sample>();
         sample->setSourceFromReader(reader);
         updateMaxFileSize(sample->audioFileLength);
-        std::cout << "fuck you bitch: " << file.getFileNameWithoutExtension() << "\n";
         sample->fileName = file.getFileNameWithoutExtension();
         sample->noteName = noteName;
-
+        
         samples[{ noteName, file.getFileNameWithoutExtension() }] = sample;
         fileNameToSample[file.getFileNameWithoutExtension()] = sample;
         prepareToPlay(m_sampleRate, m_blockSize);
