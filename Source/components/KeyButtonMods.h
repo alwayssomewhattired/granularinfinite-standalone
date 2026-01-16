@@ -125,21 +125,13 @@ public:
 
                 noteToFile[refinedNote] = std::make_unique<juce::File>(fullPath);
 
-                // only handle buttons for file-selection-toggle in keyButtonMods
-
-                //m_scrollableList.setScrollableList(audioProcessor, refinedNote, file, noteToSample, fileNames, &waveformDisplay);                
-
                 addWaveformButton(refinedName, myKeyName, refinedNote, 
                     [this, refinedName, refinedNote, myKeyName, file, &buttonPalette, &audioProcessor, fileNames]
                     (juce::TextButton& waveformButton) {
 
                         // waveform-button-click callback body
-
-                        // find out when and where and why filenames is a piece of shit
                             
-                        std::cout << "toggle state: " << waveformButton.getToggleState() << "\n";
                         m_waveformDisplay.setToggled(waveformButton.getToggleState());
-                        addFileButton(myKeyName, refinedNote, audioProcessor, file, fileNames);
 
                         addWaveformButtonCB(refinedName, refinedNote, myKeyName, file, &waveformButton, buttonPalette, m_waveformDisplay, audioProcessor);
                     });
@@ -153,6 +145,9 @@ public:
 
                 addWaveformButtonCB(refinedName, refinedNote, myKeyName, file, waveformButtonPtr->waveformButton.get(), buttonPalette, m_waveformDisplay, audioProcessor);
                 isLoaded = true;
+
+                addFileButton(myKeyName, refinedNote, audioProcessor, file, fileNames);
+
             }
         }
     }
@@ -346,17 +341,25 @@ private:
         button->setClickingTogglesState(true);
         addAndMakeVisible(*button);
         button->setVisible(false);
+
         button->onClick = [this, button, keyName, noteName, &audioProcessor, file, fileNames]() {
             if (m_currentToggledButton && m_currentToggledButton->m_noteName != noteName) {
                 m_currentToggledButton->setToggleState(false, juce::dontSendNotification);
             }
 
             m_currentToggledButton = button;
-            // change scrollable list to reveal this buttons files
+
             m_scrollableList.setScrollableList(audioProcessor, noteName, file, fileNames, m_waveformDisplay);
         };
 
+        if (!m_scrollableList.m_scrollableListModel.isSet) {
+            m_scrollableList.setScrollableList(audioProcessor, noteName, file, fileNames, m_waveformDisplay);
+            button->setToggleState(true, juce::dontSendNotification);
+            m_currentToggledButton = button;
+        }
+
         m_fileButtons.push_back(std::move(button));
+
         resized();
     }
 

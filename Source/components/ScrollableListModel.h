@@ -14,7 +14,7 @@ public:
 
 	int getNumRows() override
 	{
-		return m_noteToFileNames.size();
+		return m_noteToFileNames[m_currentNote].size();
 	}
 
 	void paintListBoxItem(int rowNumber, juce::Graphics& g, int width, int height, bool isRowSelected) override
@@ -23,7 +23,7 @@ public:
 			g.fillAll(juce::Colours::darkblue);
 
 		g.setColour(juce::Colours::white);
-
+		std::cout << m_noteToFileNames[m_currentNote][rowNumber] << "\n";
 		g.drawText(m_noteToFileNames[m_currentNote][rowNumber], 10, 0, width, height, juce::Justification::centredLeft);
 	}
 

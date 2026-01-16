@@ -25,8 +25,8 @@ public:
 		}
 
 		// erase-remove idiom *temporarily removed
-		//std::sort(items.begin(), items.end());
-		//items.erase(std::unique(items.begin(), items.end()), items.end());
+		std::sort(items[refinedNote].begin(), items[refinedNote].end());
+		items[refinedNote].erase(std::unique(items[refinedNote].begin(), items[refinedNote].end()), items[refinedNote].end());
 
 		if (m_scrollableListModel.isSet == false) {
 			m_listBox.setModel(&m_scrollableListModel);
@@ -34,12 +34,15 @@ public:
 			addAndMakeVisible(m_listBox);
 			m_scrollableListModel.isSet = true;
 		}
+		resized();
 	}
 
 	void resized() override
 	{
 		auto area = getLocalBounds();
 		m_listBox.setBounds(area.removeFromLeft(area.getWidth() * 0.07f));
+		m_listBox.updateContent();
+		m_listBox.repaint();
 	}
 
 	ScrollableListModel m_scrollableListModel;
