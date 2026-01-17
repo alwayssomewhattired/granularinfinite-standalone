@@ -122,6 +122,9 @@ private:
     juce::Label& grainAmountLabel;
     juce::Slider& grainAmountSlider;
 
+    juce::Label& chunkCrossfadeLabel;
+    juce::Slider& chunkCrossfadeSlider;
+
     juce::Label& grainLengthLabel;
     DualThumbSlider grainLengthSlider;
 
@@ -135,6 +138,7 @@ private:
 
     std::unique_ptr<SliderAttachment> grainSpacingAttachment;
     std::unique_ptr<SliderAttachment> grainAmountAttachment;
+    std::unique_ptr<SliderAttachment> chunkCrossfadeAttachment;
     std::vector<std::unique_ptr<SliderAttachment>> frequencyUpwardCompressorAttachments;
 
     std::unique_ptr<ButtonAttachment> hanningToggleAttachment;

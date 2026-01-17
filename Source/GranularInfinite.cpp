@@ -32,6 +32,8 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
     grainSpacingSlider(buttonPalette.grainSpacingSlider),
     grainAmountLabel(buttonPalette.grainAmountLabel),
     grainAmountSlider(buttonPalette.grainAmountSlider),
+    chunkCrossfadeLabel(buttonPalette.chunkCrossfadeLabel),
+    chunkCrossfadeSlider(buttonPalette.chunkCrossfadeSlider),
     grainAreaSlider(std::tuple<double, double, double>(0.0, 600.0, 1.0)),
     grainAreaLabel(buttonPalette.grainPositionLabel),
     grainLengthLabel(buttonPalette.grainLengthLabel),
@@ -198,6 +200,8 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             addAndMakeVisible(grainLengthSlider);
             addAndMakeVisible(grainAreaLabel);
             addAndMakeVisible(grainAreaSlider);
+            addAndMakeVisible(chunkCrossfadeLabel);
+            addAndMakeVisible(chunkCrossfadeSlider);
             addAndMakeVisible(noteLabel);
             addAndMakeVisible(*m_keyButton);
             addAndMakeVisible(sampleLabel);
@@ -239,7 +243,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
 
             grainSpacingAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainSpacing", grainSpacingSlider);
             grainAmountAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainAmount", grainAmountSlider);
-            //grainAreaAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainArea", grainAreaSlider);
+            chunkCrossfadeAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "chunkCrossfade", chunkCrossfadeSlider);
 
             hanningToggleAttachment = std::make_unique<ButtonAttachment>(audioProcessor.apvts, "hanningToggle", *hanningToggleButton);
             compressorThresholdAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "globalGain",
@@ -762,6 +766,20 @@ void GranularInfinite::resized()
     juce::FlexItem f_grainAmountSlider(grainAmountSlider);
     inner1.items.add(
         f_grainAmountSlider
+        .withHeight(100.0f)
+        .withWidth(200.0f)
+    );
+
+    juce::FlexItem f_chunkCrossfadeLabel(chunkCrossfadeLabel);
+    inner1.items.add(
+        f_chunkCrossfadeLabel
+        .withHeight(30.0f)
+        .withWidth(controlBounds.getWidth())
+    );
+
+    juce::FlexItem f_chunkCrossfadeSlider(chunkCrossfadeSlider);
+    inner1.items.add(
+        f_chunkCrossfadeSlider
         .withHeight(100.0f)
         .withWidth(200.0f)
     );

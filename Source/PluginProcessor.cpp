@@ -253,6 +253,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
         juce::NormalisableRange<float> (1.0f, 256.0f, 1.0f),
         1.0f
     ));
+    
+    params.push_back(std::make_unique<juce::AudioParameterInt>(
+        "chunkCrossfade",
+        "ChunkCrossfade",
+        0,
+        576,
+        0
+    ));
 
     params.push_back(std::make_unique<juce::AudioParameterInt>(
         "grainMaxLength",
@@ -510,7 +518,7 @@ void GranularinfiniteAudioProcessor::processSamplerPath(juce::AudioBuffer<float>
     }
 }
 
-void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples)
+void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& chunkSize)
 {
     buffer.clear();
     minGrainLength = *minGrainLengthPtr;
@@ -534,7 +542,7 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
 
             auto& m_fullBuffer = sample->fullBuffer;
 
-            for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
+            for (int sampleIdx = 0; sampleIdx < chunkSize; ++sampleIdx)
             {
                 float out = 0.0f;
 
@@ -550,6 +558,15 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                             continue;
                         }
 
+                        float currentSample = m_fullBuffer.getSample(0, readIndex);
+
+                        // chunk crossfade block
+                        if (int chunkCrossfadeAmount = apvts.getRawParameterValue("chunkCrossfade")->load()) {
+                            float futureSample = m_fullBuffer.getSample(0, readIndex + chunkSize);
+
+                            currentSample = chunkCrossFade(chunkSize, currentSample, futureSample, readIndex, chunkCrossfadeAmount);
+                        }
+
                         int idx;
                         const bool hanningToggle = apvts.getRawParameterValue("hanningToggle")->load();
                         const float globalGain = apvts.getRawParameterValue("globalGain")->load();
@@ -557,13 +574,13 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                         if (hanningToggle) {
                             idx = (g.position * hannWindow.size()) / g.length;
                             float env = hannWindow[idx];
-                            float limiterSamples = limiter(m_fullBuffer.getSample(0, readIndex) * env, 0.8f);
+                            float limiterSamples = limiter(currentSample * env, 0.8f);
 
                             out += (upwardCompressor(limiterSamples, noteName.toStdString()) * globalGain);
                         }
                         else {
                             updateCompressor();
-                            float limiterSample = limiter(m_fullBuffer.getSample(0, readIndex), 0.8f);
+                            float limiterSample = limiter(currentSample, 0.8f);
 
                            float upwardCompressed = upwardCompressor(limiterSample, noteName.toStdString());
 
@@ -579,6 +596,7 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
 
                         ++g.position;
                         ++it;
+
                     }
                     else {
                         it = grains.erase(it);
@@ -586,12 +604,11 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                 }
                 for (int ch = 0; ch < outCh; ++ch)
                 {
-                    //std::cout << "sample idx: " << sampleIdx << "\n";
                     buffer.addSample(ch, sampleIdx, out);
                 }
             }
 
-            grainCounter += numSamples;
+            grainCounter += chunkSize;
             if (grainCounter >= grainSpacing)
             {
                 grainCounter = 0;
@@ -599,6 +616,21 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
             }
         }
     }
+}
+
+float GranularinfiniteAudioProcessor::chunkCrossFade(const int& chunkSize, float& currentSample, float& futureSample, int currentIndex, int& chunkCrossfadeAmount) {
+    //constexpr int fadeLength = 256;
+
+    int fadeStart = chunkSize - chunkCrossfadeAmount;
+
+    if (currentIndex < fadeStart) return currentSample;
+
+    float t = float(currentIndex - fadeStart) / float(chunkCrossfadeAmount);
+
+    float fadeIn = std::sin(0.5f * juce::MathConstants<float>::pi * t);
+    float fadeOut = std::cos(0.5f * juce::MathConstants<float>::pi * t);
+
+    return fadeOut * currentSample + fadeIn * futureSample;
 }
 
 float GranularinfiniteAudioProcessor::upwardCompressor(float x, const std::string& noteName)
@@ -670,19 +702,20 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
     juce::ScopedNoDenormals noDenormals;
 
     const int outCh = buffer.getNumChannels();
-    const int numSamples = buffer.getNumSamples();
+
+    const int chunkSize = buffer.getNumSamples();
 
     // clear anything in extra output channels (host could provide input channels)
     auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
     for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear(i, 0, numSamples);
+        buffer.clear(i, 0, chunkSize);
 
     // make sure tempBuffer matches current block in case host block size changed
-    if (tempBuffer.getNumChannels() != outCh || tempBuffer.getNumSamples() != numSamples)
+    if (tempBuffer.getNumChannels() != outCh || tempBuffer.getNumSamples() != chunkSize)
     {
         // setSize is safe here because we only call it when shape changed
-        tempBuffer.setSize(outCh, numSamples, false, false, true);
+        tempBuffer.setSize(outCh, chunkSize, false, false, true);
     }
 
     // PARAMETER STUFF
@@ -711,13 +744,13 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
     {
         if (currentFiles.size() > 0) {
 
-            processGranularPath(buffer, outCh, numSamples);
+            processGranularPath(buffer, outCh, chunkSize);
         }
         return;
     }
     else {
         if (m_keyPressed)
-            processSamplerPath(buffer, outCh, numSamples);
+            processSamplerPath(buffer, outCh, chunkSize);
         return;
     }
 }

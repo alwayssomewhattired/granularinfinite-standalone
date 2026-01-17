@@ -32,6 +32,7 @@ public:
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
     void processSamplerPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples);
     void processGranularPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples);
+    float chunkCrossFade(const int& chunkSize, float& currentSample, float& futureSample, int currentIndex, int& chunkCrossfadeAmount);
     void spawnGrain(int64_t fileLength);
 
     //==============================================================================
