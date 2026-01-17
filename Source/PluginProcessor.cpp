@@ -542,7 +542,7 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
 
             auto& m_fullBuffer = sample->fullBuffer;
 
-            for (int sampleIdx = 0; sampleIdx < chunkSize; ++sampleIdx)
+            for (int chunkIdx = 0; chunkIdx < chunkSize; ++chunkIdx)
             {
                 float out = 0.0f;
 
@@ -551,28 +551,26 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                     Grain& g = *it;
                     if (g.position < g.length)
                     {
-                        int readIndex = (g.startSample + (int)(g.position * g.pitchRatio));
-                        if (readIndex >= m_fullBuffer.getNumSamples())
+                        int fullBufferIdx = (g.startSample + (int)(g.position * g.pitchRatio));
+                        if (fullBufferIdx >= m_fullBuffer.getNumSamples())
                         {
                             it = grains.erase(it);
                             continue;
                         }
 
-                        float currentSample = m_fullBuffer.getSample(0, readIndex);
+                        float currentSample = m_fullBuffer.getSample(0, fullBufferIdx);
 
                         // chunk crossfade block
                         if (int chunkCrossfadeAmount = apvts.getRawParameterValue("chunkCrossfade")->load()) {
-                            float futureSample = m_fullBuffer.getSample(0, readIndex + chunkSize);
+                            float futureSample = m_fullBuffer.getSample(0, g.startSample + int((g.position + (chunkSize - chunkCrossfadeAmount)) * g.pitchRatio));
 
-                            currentSample = chunkCrossFade(chunkSize, currentSample, futureSample, readIndex, chunkCrossfadeAmount);
+                            currentSample = chunkCrossFade(chunkSize, currentSample, futureSample, chunkIdx, chunkCrossfadeAmount);
                         }
-
-                        int idx;
-                        const bool hanningToggle = apvts.getRawParameterValue("hanningToggle")->load();
+                        
                         const float globalGain = apvts.getRawParameterValue("globalGain")->load();
 
-                        if (hanningToggle) {
-                            idx = (g.position * hannWindow.size()) / g.length;
+                        if (const bool hanningToggle = apvts.getRawParameterValue("hanningToggle")->load()) {
+                            int idx = (g.position * hannWindow.size()) / g.length;
                             float env = hannWindow[idx];
                             float limiterSamples = limiter(currentSample * env, 0.8f);
 
@@ -604,7 +602,7 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                 }
                 for (int ch = 0; ch < outCh; ++ch)
                 {
-                    buffer.addSample(ch, sampleIdx, out);
+                    buffer.addSample(ch, chunkIdx, out);
                 }
             }
 
@@ -619,7 +617,6 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
 }
 
 float GranularinfiniteAudioProcessor::chunkCrossFade(const int& chunkSize, float& currentSample, float& futureSample, int currentIndex, int& chunkCrossfadeAmount) {
-    //constexpr int fadeLength = 256;
 
     int fadeStart = chunkSize - chunkCrossfadeAmount;
 
