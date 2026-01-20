@@ -116,8 +116,8 @@ private:
 
     juce::TextButton componentButton;
 
-    juce::Label& grainSpacingLabel;
-    juce::Slider& grainSpacingSlider;
+    juce::Label& grainDensityLabel;
+    juce::Slider& grainDensitySlider;
 
     juce::Label& grainAmountLabel;
     juce::Slider& grainAmountSlider;
@@ -136,7 +136,8 @@ private:
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
     using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
 
-    std::unique_ptr<SliderAttachment> grainSpacingAttachment;
+    std::unique_ptr<ButtonAttachment> serialScheduleAttachment;
+    std::unique_ptr<SliderAttachment> grainDensityAttachment;
     std::unique_ptr<SliderAttachment> grainAmountAttachment;
     std::unique_ptr<SliderAttachment> chunkCrossfadeAttachment;
     std::vector<std::unique_ptr<SliderAttachment>> frequencyUpwardCompressorAttachments;

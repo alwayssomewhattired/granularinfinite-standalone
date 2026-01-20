@@ -125,6 +125,8 @@ private:
     // flag for if key pressed
     bool m_keyPressed = false;
 
+    bool m_isSerialSchedule = false;
+
     juce::MidiBuffer midiFifo;
     std::mutex midiMutex;
     juce::Synthesiser synth;
@@ -160,16 +162,19 @@ private:
     int grainCounter = 0;
 
     // controls
-    int grainSpacing = 1;
+    int m_grainDensity = 1;
     int grainAmount = 1;
     int minGrainLength = 512;
     std::atomic<float>* minGrainLengthPtr = nullptr;
-    int maxGrainLength = 3600; 
+    int m_maxGrainLength = 3600; 
     std::atomic<float>* maxGrainLengthPtr = nullptr;
     int maxCircularSize = 24000; // half second
     juce::NormalisableRange<float> m_dynamicRange;
 
-    std::vector<float> hannWindow;
+    std::vector<float> m_hannWindowExperiment;
+
+    // | Used for overlap control
+    std::vector<float> m_hannWindowOverlap;
 
     struct MySampleCompressor {
         float envelope = 0.0f; // leave at 0.0f;
@@ -206,6 +211,8 @@ private:
     MySampleCompressor m_compressor;
 
     void updateCompressor();
+
+    void initHann(int maxGrainSize);
 
     // dunno if i need this circular anymore
     juce::AudioBuffer<float> circularBuffer;

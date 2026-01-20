@@ -153,10 +153,10 @@ void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int sampl
     circularBuffer.clear();
 
     // make control for hann window
-    hannWindow.resize(maxGrainLength);
+    m_hannWindowExperiment.resize(m_maxGrainLength);
     juce::dsp::WindowingFunction<float>::fillWindowingTables(
-        hannWindow.data(),
-        hannWindow.size(),
+        m_hannWindowExperiment.data(),
+        m_hannWindowExperiment.size(),
         juce::dsp::WindowingFunction<float>::hann
     );
 
@@ -241,10 +241,16 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
 
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
 
+    params.push_back(std::make_unique<juce::AudioParameterBool>(
+        "serialSchedule",
+        "SerialSchedule",
+        false
+    ));
+
     params.push_back(std::make_unique<juce::AudioParameterFloat>(
-        "grainSpacing",
-        "GrainSpacing",
-        juce::NormalisableRange<float> (0.1f, 1092.0, 0.1f),
+        "grainDensity",
+        "GrainDensity",
+        juce::NormalisableRange<float> (1.0f, 100.0f, 1.0f),
         1.0f
     ));
 
@@ -433,17 +439,17 @@ void GranularinfiniteAudioProcessor::spawnGrain(int64_t fileLength, const bool& 
     const size_t maxGrains =
         chunkCrossfade ? grainAmount + 1 : grainAmount;
 
-    if (grains.size() >= maxGrains)
+    if (grains.size() >= maxGrains && m_isSerialSchedule)
     {
-        return; // or continue; depending on context
+        return;
     }
 
 
     Grain g;
 
-    g.length = juce::Random::getSystemRandom().nextInt(maxGrainLength - minGrainLength + 1) + minGrainLength;
+    g.length = juce::Random::getSystemRandom().nextInt(m_maxGrainLength - minGrainLength + 1) + minGrainLength;
     // start sample plays a random sample
-    maxGrainLength = apvts.getRawParameterValue("grainMaxLength")->load();
+    m_maxGrainLength = apvts.getRawParameterValue("grainMaxLength")->load();
     //const float grainArea = (apvts.getRawParameterValue("grainArea")->load() / 600.0f) * m_maxFileSize;
     const float grainAreaMax = (apvts.getRawParameterValue("grainMaxArea")->load() / 600.0f) * m_maxFileSize;
     // be carefule:::: grainAreaMin might break on different file sizes
@@ -456,12 +462,12 @@ void GranularinfiniteAudioProcessor::spawnGrain(int64_t fileLength, const bool& 
 
     g.position = 0;
 
+    // | if future grain, move future grain to current grain 
     if (isFuture) {
-        // - if future grain, move future grain to current grain 
         m_futureGrains.push_back(std::move(g));
     }
     else {
-    // insert pitch stuff here...
+    // - insert pitch stuff here...
     grains.push_back(std::move(g));
 
     }
@@ -512,7 +518,8 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
 {
     buffer.clear();
     minGrainLength = *minGrainLengthPtr;
-    maxGrainLength = *maxGrainLengthPtr;
+    m_maxGrainLength = *maxGrainLengthPtr;
+    initHann(m_maxGrainLength);
 
     // ** current note name
     for (const juce::String& noteName : currentNotes) {
@@ -528,9 +535,19 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
             auto& m_fullBuffer = sample->fullBuffer;
 
             // | begin sample processing
-            for (int chunkIdx = 0; chunkIdx < chunkSize; ++chunkIdx)
+            for (int sampleIdx = 0; sampleIdx < chunkSize; ++sampleIdx)
             {
                 float out = 0.0f;
+
+                // | overlapping schedule block
+                if (!m_isSerialSchedule) {
+                    grainCounter++;
+                    if (grainCounter >= m_grainDensity) {
+                        grainCounter = 0;
+                        spawnGrain(sample->audioFileLength, false);
+                    }
+                }
+                // | end overlapping schedule block
 
                 for (size_t i = 0; i < grains.size(); )
                 {
@@ -538,17 +555,32 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                     if (g.position < g.length)
                     {
                         int fullBufferIdx = (g.startSample + (int)(g.position * g.pitchRatio));
-                        if (fullBufferIdx >= m_fullBuffer.getNumSamples())
+                        if (fullBufferIdx >= m_fullBuffer.getNumSamples() || fullBufferIdx < 0)
                         {
                             grains.erase(grains.begin() + i);
                             continue;
                         }
 
                         float currentSample = m_fullBuffer.getSample(0, fullBufferIdx);
-                        int chunkCrossfadeAmount = apvts.getRawParameterValue("chunkCrossfade")->load();
-                        int fadeStartPos = g.position - (chunkSize - chunkCrossfadeAmount);
+
+                        // | window-overlap block
+                        if (const bool hanningToggle = apvts.getRawParameterValue("hanningToggle")->load()) {
+                            if (fullBufferIdx < 0 || fullBufferIdx >= m_fullBuffer.getNumSamples()) {
+                                grains.erase(grains.begin() + i);
+                                continue;
+                            }
+
+                            float phase = g.position / float(g.length);
+                            int windowIdx = int(phase * (m_hannWindowOverlap.size() - 1));
+                            windowIdx = juce::jlimit(0, (int)m_hannWindowOverlap.size() - 1, windowIdx);
+                            currentSample *= m_hannWindowOverlap[windowIdx];
+                        }
+                        // | end window overlap block
+
 
                         // | chunk crossfade block
+                        int chunkCrossfadeAmount = apvts.getRawParameterValue("chunkCrossfade")->load();
+                        int fadeStartPos = g.position - (chunkSize - chunkCrossfadeAmount);
                         if (chunkCrossfadeAmount > 0 && fadeStartPos >= 0 && i < grains.size() && m_futureGrains.size() > i ) {
                             Grain& futureGrain = m_futureGrains[i];
 
@@ -562,30 +594,23 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                             }
                             currentSample = chunkCrossFade(g.position, chunkSize, currentSample, futureSample, chunkCrossfadeAmount);
                         }
+                        // | end chunk crossfade block
+
                         const float globalGain = apvts.getRawParameterValue("globalGain")->load();
 
-                        if (const bool hanningToggle = apvts.getRawParameterValue("hanningToggle")->load()) {
-                            int idx = (g.position * hannWindow.size()) / g.length;
-                            float env = hannWindow[idx];
-                            float limiterSamples = limiter(currentSample * env, 0.8f);
+                        updateCompressor();
+                        float limiterSample = limiter(currentSample, 0.8f);
 
-                            out += (upwardCompressor(limiterSamples, noteName.toStdString()) * globalGain);
-                        }
-                        else {
-                            updateCompressor();
-                            float limiterSample = limiter(currentSample, 0.8f);
+                        float upwardCompressed = upwardCompressor(limiterSample, noteName.toStdString());
 
-                           float upwardCompressed = upwardCompressor(limiterSample, noteName.toStdString());
+                        int pos = writePos.load(std::memory_order_relaxed);
 
-                           int pos = writePos.load(std::memory_order_relaxed);
+                        outputBuffer.setSample(0, pos, limiterSample);
 
-                           outputBuffer.setSample(0, pos, limiterSample);
+                        pos = (pos + 1) % 1024;
+                        writePos.store(pos, std::memory_order_release);
 
-                           pos = (pos + 1) % 1024;
-                           writePos.store(pos, std::memory_order_release);
-
-                           out += (m_compressor.process(upwardCompressed)) * globalGain;
-                        }
+                        out += (m_compressor.process(upwardCompressed)) * globalGain;
 
                         ++g.position;
                         ++i;
@@ -600,31 +625,46 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                 }
                 for (int ch = 0; ch < outCh; ++ch)
                 {
-                    buffer.addSample(ch, chunkIdx, out);
+                    buffer.addSample(ch, sampleIdx, out);
                 }
             }
             // | end sample processing
 
-            grainCounter += chunkSize;
-            if (grainCounter >= grainSpacing)
-            {
-                grainCounter = 0;
-                if (apvts.getRawParameterValue("chunkCrossfade")->load()) {
-                    if (m_futureGrains.size() > 0) {
-                        grains.push_back(std::move(m_futureGrains[0]));
-                        m_futureGrains.erase(m_futureGrains.begin());
-                        grains.erase(grains.begin());
-                        spawnGrain(sample->audioFileLength, true);
-                        continue;
+            // | serial scheduler block
+            // - expose control for this
+            if (m_isSerialSchedule) {
+                grainCounter += chunkSize;
+                if (grainCounter >= m_grainDensity)
+                {
+                    grainCounter = 0;
+
+                    if (apvts.getRawParameterValue("chunkCrossfade")->load()) {
+                        if (m_futureGrains.size() > 0) {
+                            grains.push_back(std::move(m_futureGrains[0]));
+                            m_futureGrains.erase(m_futureGrains.begin());
+                            grains.erase(grains.begin());
+                            spawnGrain(sample->audioFileLength, true);
+                            continue;
+                        }
+                        else {
+                            spawnGrain(sample->audioFileLength, true);
+                            continue;
+                        }
                     }
-                    else {
-                        spawnGrain(sample->audioFileLength, true);
-                        continue;
-                    }
+
+                    spawnGrain(sample->audioFileLength, false);
                 }
-                spawnGrain(sample->audioFileLength, false);
             }
+            // | end serial scheduler block
         }
+    }
+}
+
+// | Hann window for overlap
+void GranularinfiniteAudioProcessor::initHann(int maxGrainSize) {
+    m_hannWindowOverlap.resize(maxGrainSize);
+    for (int i = 0; i < maxGrainSize; ++i) {
+        m_hannWindowOverlap[i] = 0.5f * (1.0f - std::cos(2.0f * juce::MathConstants<float>::pi * i / (maxGrainSize - 1)));
     }
 }
 
@@ -646,8 +686,7 @@ float GranularinfiniteAudioProcessor::chunkCrossFade(
         return currentSample;
     }
 
-    float t =
-        float(grainPos - fadeStart) / float(chunkCrossfadeAmount);
+    float t = float(grainPos - fadeStart) / float(chunkCrossfadeAmount);
 
     t = juce::jlimit(0.0f, 1.0f, t);
 
@@ -744,10 +783,15 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
     }
 
     // PARAMETER STUFF
-    grainSpacing = static_cast<int>(apvts.getRawParameterValue("grainSpacing")->load());
+    m_isSerialSchedule = (int)apvts.getRawParameterValue("serialSchedule")->load();
+
+    m_grainDensity = static_cast<int>(apvts.getRawParameterValue("grainDensity")->load());
+    m_grainDensity = int(std::round(m_sampleRate / m_grainDensity));
+    m_grainDensity = juce::jlimit(1, (2 * m_grainDensity), m_grainDensity);
+
     grainAmount = static_cast<int>(apvts.getRawParameterValue("grainAmount")->load());
     minGrainLength = apvts.getRawParameterValue("grainMinLength")->load();
-    maxGrainLength = apvts.getRawParameterValue("grainMaxLength")->load();
+    m_maxGrainLength = apvts.getRawParameterValue("grainMaxLength")->load();
 
     // SYNTH PATH
     //if (synthToggle)
@@ -930,3 +974,4 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new GranularinfiniteAudioProcessor();
 }
+

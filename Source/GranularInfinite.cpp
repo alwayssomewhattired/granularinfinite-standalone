@@ -28,8 +28,8 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
     buttonPalette(bp),
     m_apvts(p.apvts),
     grainLengthSlider(std::tuple<double, double, double>(512.0, 36000.0, 1.0)),
-    grainSpacingLabel(buttonPalette.grainSpacingLabel),
-    grainSpacingSlider(buttonPalette.grainSpacingSlider),
+    grainDensityLabel(buttonPalette.grainDensityLabel),
+    grainDensitySlider(buttonPalette.grainDensitySlider),
     grainAmountLabel(buttonPalette.grainAmountLabel),
     grainAmountSlider(buttonPalette.grainAmountSlider),
     chunkCrossfadeLabel(buttonPalette.chunkCrossfadeLabel),
@@ -182,7 +182,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
 
 
             // custom looknfeel
-            grainSpacingSlider.setLookAndFeel(&customLook);
+            grainDensitySlider.setLookAndFeel(&customLook);
             grainAmountSlider.setLookAndFeel(&customLook);
             grainLengthSlider.setLookAndFeel(&diySlider);
             grainAreaSlider.setLookAndFeel(&diySlider);
@@ -190,10 +190,11 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
 
             addAndMakeVisible(buttonPalette);
             addAndMakeVisible(componentButton);
+            addAndMakeVisible(buttonPalette.serialScheduleButton);
             addAndMakeVisible(octaveIncrement);
             addAndMakeVisible(octaveDecrement);
-            addAndMakeVisible(grainSpacingLabel);
-            addAndMakeVisible(grainSpacingSlider);
+            addAndMakeVisible(grainDensityLabel);
+            addAndMakeVisible(grainDensitySlider);
             addAndMakeVisible(grainAmountLabel);
             addAndMakeVisible(grainAmountSlider);
             addAndMakeVisible(grainLengthLabel);
@@ -241,7 +242,8 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
             octaveUp(octaveIncrement);
             octaveDown(octaveDecrement);
 
-            grainSpacingAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainSpacing", grainSpacingSlider);
+            serialScheduleAttachment = std::make_unique<ButtonAttachment>(audioProcessor.apvts, "serialSchedule", buttonPalette.serialScheduleButton);
+            grainDensityAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainDensity", grainDensitySlider);
             grainAmountAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "grainAmount", grainAmountSlider);
             chunkCrossfadeAttachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, "chunkCrossfade", chunkCrossfadeSlider);
 
@@ -285,7 +287,7 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
 
 GranularInfinite::~GranularInfinite()
 {
-    grainSpacingSlider.setLookAndFeel(nullptr);
+    grainDensitySlider.setLookAndFeel(nullptr);
     grainAmountSlider.setLookAndFeel(nullptr);
     grainLengthSlider.setLookAndFeel(nullptr);
     grainAreaSlider.setLookAndFeel(nullptr);
@@ -649,6 +651,7 @@ void GranularInfinite::sampleLabelHandler(SampleLabel& button)
         };
 }
 
+// | i dont think we are doing anything with this one
 void GranularInfinite::synthToggleHandler(juce::TextButton& button)
 {
     button.onClick = [this, &button] {
@@ -713,6 +716,7 @@ void GranularInfinite::resized()
     buttonPalette.compressor.releaseCoeffSliderLabel.setBounds(1300, y + 700, 80, 100);
     buttonPalette.compressor.gainSliderLabel.setBounds(1300, y + 800, 80, 100);
 
+    buttonPalette.serialScheduleButton.setBounds(x - 275, y + 450, buttonWidth, buttonHeight);
     buttonPalette.decrementButton.setBounds(x - 200, y + 350, buttonWidth, buttonHeight);
     buttonPalette.incrementButton.setBounds(x - 100, y + 350, buttonWidth, buttonHeight);
 
@@ -742,16 +746,16 @@ void GranularInfinite::resized()
     juce::Rectangle<int> controlBounds2(300, 520, 400, 600);
 
 
-    juce::FlexItem f_grainSpacingLabel(grainSpacingLabel);
+    juce::FlexItem f_grainDensityLabel(grainDensityLabel);
     inner1.items.add(
-        f_grainSpacingLabel
+        f_grainDensityLabel
         .withHeight(30.0f)
         .withWidth(controlBounds.getWidth())
     );
 
-    juce::FlexItem f_grainSpacingSlider(grainSpacingSlider);
+    juce::FlexItem f_grainDensitySlider(grainDensitySlider);
     inner1.items.add(
-        f_grainSpacingSlider
+        f_grainDensitySlider
         .withHeight(100.0f)
         .withWidth(200.0f)
     );

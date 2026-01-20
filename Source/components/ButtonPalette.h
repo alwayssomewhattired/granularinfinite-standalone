@@ -13,6 +13,11 @@ public:
 		componentButton.setButtonText("switch");
 		componentButton.setClickingTogglesState(true);
 
+		serialScheduleButton.setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
+		serialScheduleButton.setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
+		serialScheduleButton.setButtonText("serial schedule");
+		serialScheduleButton.setClickingTogglesState(true);
+
 		incrementButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
 		incrementButton.setButtonText("+");
 
@@ -23,7 +28,8 @@ public:
 		synthToggleButton.setButtonText("granular");
 		synthToggleButton.setClickingTogglesState(true);
 
-		hanningToggleButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
+		hanningToggleButton.setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
+		hanningToggleButton.setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
 		hanningToggleButton.setButtonText("hanning");
 		hanningToggleButton.setClickingTogglesState(true);
 
@@ -37,15 +43,16 @@ public:
 		globalGainSlider.setRange(0.0, 1.0, 0.01);
 		globalGainSlider.setValue(0.1);
 
-		grainSpacingLabel.setText("grain spacing", juce::dontSendNotification);
-		grainSpacingLabel.setFont(juce::Font(16.0f, juce::Font::bold));
-		grainSpacingLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
-		grainSpacingLabel.setJustificationType(juce::Justification::centred);
+		grainDensityLabel.setText("grain density", juce::dontSendNotification);
+		grainDensityLabel.setFont(juce::Font(16.0f, juce::Font::bold));
+		grainDensityLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
+		grainDensityLabel.setJustificationType(juce::Justification::centred);
 
-		grainSpacingSlider.setSliderStyle(juce::Slider::LinearHorizontal);
-		grainSpacingSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
-		grainSpacingSlider.setRange(0.1, 1092.0, 0.1);
-		grainSpacingSlider.setValue(1.0);
+		// - scale logarithmically
+		grainDensitySlider.setSliderStyle(juce::Slider::LinearHorizontal);
+		grainDensitySlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
+		grainDensitySlider.setRange(1.0, 100.0, 1.0);
+		grainDensitySlider.setValue(1.0);
 
 		grainAmountLabel.setText("grain amount", juce::dontSendNotification);
 		grainAmountLabel.setFont(juce::Font(16.0f, juce::Font::bold));
@@ -219,6 +226,7 @@ public:
 
 	juce::TextButton componentButton;
 
+	juce::TextButton serialScheduleButton;
 	juce::TextButton incrementButton;
 	juce::TextButton decrementButton;
 	juce::TextButton synthToggleButton;
@@ -262,11 +270,11 @@ public:
 
 	MySampleCompressor compressor;
 
-	juce::Slider grainSpacingSlider;
+	juce::Slider grainDensitySlider;
 	juce::Slider grainAmountSlider;
 	juce::Slider chunkCrossfadeSlider;
 
-	juce::Label grainSpacingLabel;
+	juce::Label grainDensityLabel;
 	juce::Label grainAmountLabel;
 	juce::Label chunkCrossfadeLabel;
 	juce::Label grainLengthLabel;
