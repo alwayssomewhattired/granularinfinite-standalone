@@ -32,8 +32,13 @@ public:
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
     void processSamplerPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples);
     void processGranularPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples);
-    float chunkCrossFade(const int& chunkSize, float& currentSample, float& futureSample, int currentIndex, int& chunkCrossfadeAmount);
-    void spawnGrain(int64_t fileLength);
+    float chunkCrossFade(
+        int grainPos,
+        int grainLength,
+        float currentSample,
+        float futureSample,
+        int chunkCrossfadeAmount);
+    void spawnGrain(int64_t fileLength, const bool& isFuture);
 
     //==============================================================================
     juce::AudioProcessorEditor* createEditor() override;
@@ -151,6 +156,7 @@ private:
         const float* envelope = nullptr;
     };
     std::vector<Grain> grains;
+    std::vector<Grain> m_futureGrains;
     int grainCounter = 0;
 
     // controls

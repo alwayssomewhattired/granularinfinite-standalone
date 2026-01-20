@@ -11,6 +11,7 @@
 #include <juce_dsp/juce_dsp.h>
 #include <juce_events/juce_events.h>
 #include <algorithm>
+#include <iterator>
 
 
 
@@ -243,7 +244,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
     params.push_back(std::make_unique<juce::AudioParameterFloat>(
         "grainSpacing",
         "GrainSpacing",
-        juce::NormalisableRange<float> (0.1f, 48000.0f, 0.1f),
+        juce::NormalisableRange<float> (0.1f, 1092.0, 0.1f),
         1.0f
     ));
 
@@ -423,11 +424,19 @@ void GranularinfiniteAudioProcessor::addMidiEvent(const juce::MidiMessage& m)
 }
 
 
-void GranularinfiniteAudioProcessor::spawnGrain(int64_t fileLength)
+void GranularinfiniteAudioProcessor::spawnGrain(int64_t fileLength, const bool& isFuture)
 {
 
-    if ((int)grains.size() >= grainAmount)
-        return;
+    const bool chunkCrossfade =
+        apvts.getRawParameterValue("chunkCrossfade")->load();
+
+    const size_t maxGrains =
+        chunkCrossfade ? grainAmount + 1 : grainAmount;
+
+    if (grains.size() >= maxGrains)
+    {
+        return; // or continue; depending on context
+    }
 
 
     Grain g;
@@ -446,42 +455,25 @@ void GranularinfiniteAudioProcessor::spawnGrain(int64_t fileLength)
     g.startSample = grainAreaMin + juce::Random::getSystemRandom().nextInt(range);
 
     g.position = 0;
+
+    if (isFuture) {
+        // - if future grain, move future grain to current grain 
+        m_futureGrains.push_back(std::move(g));
+    }
+    else {
     // insert pitch stuff here...
     grains.push_back(std::move(g));
+
+    }
 }
 
 
 void GranularinfiniteAudioProcessor::processSamplerPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples)
 {
 
-    //for (auto& pair : samples)
-    //{
-    //    // we don't have this set up to work with multiple files.
-
-    //    auto& sample = pair.second;
-
-    //    tempBuffer.setSize(outCh, numSamples, false, false, true);
-    //    tempBuffer.clear();
-
-    //    juce::AudioSourceChannelInfo info(&tempBuffer, 0, numSamples);
-    //    sample->transportSource.getNextAudioBlock(info);
-
-    //    const int srcChans = tempBuffer.getNumChannels();
-    //    const int chansToMix = std::min(outCh, srcChans);
-
-    //    for (int ch = 0; ch < chansToMix; ++ch)
-    //        buffer.addFrom(ch, 0, tempBuffer, ch, 0, numSamples);
-
-    //    if (srcChans == 1 && outCh >= 2)
-    //        buffer.addFrom(1, 0, tempBuffer, 0, 0, numSamples);
-    //}
-
-    //const float globalGain = apvts.getRawParameterValue("globalGain")->load();
-    //buffer.applyGain(globalGain);
-
     buffer.clear();
 
-    // current note name
+    // ** current note name
     for (const juce::String& noteName : currentNotes) {
         for (auto& pair : samples)
         {
@@ -503,12 +495,10 @@ void GranularinfiniteAudioProcessor::processSamplerPath(juce::AudioBuffer<float>
                     sample->readIndex = 0;
                 }
 
-                //float processedOut = out * globalGain;
                 float limiterSample = limiter(sourceBuffer.getSample(0, sample->readIndex), 0.8f) * globalGain;
 
                 for (int ch = 0; ch < outCh; ++ch)
                 {
-                    //std::cout << "sample idx: " << sampleIdx << "\n";
                     buffer.addSample(ch, sampleIdx, limiterSample);
                 }
 
@@ -524,16 +514,11 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
     minGrainLength = *minGrainLengthPtr;
     maxGrainLength = *maxGrainLengthPtr;
 
-    // current note name
+    // ** current note name
     for (const juce::String& noteName : currentNotes) {
         for (auto& pair : samples)
         {
             if (pair.first.first != noteName) continue;
-
-            // we need to find out how to play the correct sample.
-            // when audio file is clicked, prepare that sample and unprepare the other one. we do this in the scrollable list file.
-            // start playback and endplayback refer to synth mode. don't make synth mode run when synth mode isn't active.
-            // after this, we should have the ability to choose between files in realtime.
 
             auto& sample = pair.second;
             if (!sample->isChosen) {
@@ -542,31 +527,41 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
 
             auto& m_fullBuffer = sample->fullBuffer;
 
+            // | begin sample processing
             for (int chunkIdx = 0; chunkIdx < chunkSize; ++chunkIdx)
             {
                 float out = 0.0f;
 
-                for (auto it = grains.begin(); it != grains.end(); )
+                for (size_t i = 0; i < grains.size(); )
                 {
-                    Grain& g = *it;
+                    Grain& g = grains[i];
                     if (g.position < g.length)
                     {
                         int fullBufferIdx = (g.startSample + (int)(g.position * g.pitchRatio));
                         if (fullBufferIdx >= m_fullBuffer.getNumSamples())
                         {
-                            it = grains.erase(it);
+                            grains.erase(grains.begin() + i);
                             continue;
                         }
 
                         float currentSample = m_fullBuffer.getSample(0, fullBufferIdx);
+                        int chunkCrossfadeAmount = apvts.getRawParameterValue("chunkCrossfade")->load();
+                        int fadeStartPos = g.position - (chunkSize - chunkCrossfadeAmount);
 
-                        // chunk crossfade block
-                        if (int chunkCrossfadeAmount = apvts.getRawParameterValue("chunkCrossfade")->load()) {
-                            float futureSample = m_fullBuffer.getSample(0, g.startSample + int((g.position + (chunkSize - chunkCrossfadeAmount)) * g.pitchRatio));
+                        // | chunk crossfade block
+                        if (chunkCrossfadeAmount > 0 && fadeStartPos >= 0 && i < grains.size() && m_futureGrains.size() > i ) {
+                            Grain& futureGrain = m_futureGrains[i];
 
-                            currentSample = chunkCrossFade(chunkSize, currentSample, futureSample, chunkIdx, chunkCrossfadeAmount);
+                            int futureReadPos = futureGrain.startSample + int(fadeStartPos * futureGrain.pitchRatio);
+
+                            float futureSample = m_fullBuffer.getSample(0, futureReadPos);
+
+                            if (futureReadPos < 0 || futureReadPos >= m_fullBuffer.getNumSamples()) {
+                                std::cout << "oh no thats not good\n";
+                                futureSample = currentSample;  // safe fallback
+                            }
+                            currentSample = chunkCrossFade(g.position, chunkSize, currentSample, futureSample, chunkCrossfadeAmount);
                         }
-                        
                         const float globalGain = apvts.getRawParameterValue("globalGain")->load();
 
                         if (const bool hanningToggle = apvts.getRawParameterValue("hanningToggle")->load()) {
@@ -593,42 +588,75 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                         }
 
                         ++g.position;
-                        ++it;
+                        ++i;
 
                     }
+                    // | erases current grain from grain vector when finitshed with grain
                     else {
-                        it = grains.erase(it);
+
+                        grains.erase(grains.begin() + i);
                     }
+
                 }
                 for (int ch = 0; ch < outCh; ++ch)
                 {
                     buffer.addSample(ch, chunkIdx, out);
                 }
             }
+            // | end sample processing
 
             grainCounter += chunkSize;
             if (grainCounter >= grainSpacing)
             {
                 grainCounter = 0;
-                spawnGrain(sample->audioFileLength);
+                if (apvts.getRawParameterValue("chunkCrossfade")->load()) {
+                    if (m_futureGrains.size() > 0) {
+                        grains.push_back(std::move(m_futureGrains[0]));
+                        m_futureGrains.erase(m_futureGrains.begin());
+                        grains.erase(grains.begin());
+                        spawnGrain(sample->audioFileLength, true);
+                        continue;
+                    }
+                    else {
+                        spawnGrain(sample->audioFileLength, true);
+                        continue;
+                    }
+                }
+                spawnGrain(sample->audioFileLength, false);
             }
         }
     }
 }
 
-float GranularinfiniteAudioProcessor::chunkCrossFade(const int& chunkSize, float& currentSample, float& futureSample, int currentIndex, int& chunkCrossfadeAmount) {
+float GranularinfiniteAudioProcessor::chunkCrossFade(
+    int grainPos,
+    int grainLength,
+    float currentSample,
+    float futureSample,
+    int chunkCrossfadeAmount)
+{
 
-    int fadeStart = chunkSize - chunkCrossfadeAmount;
+    if (chunkCrossfadeAmount <= 0 || chunkCrossfadeAmount > grainLength) {
+        return currentSample;  // nothing to crossfade
+    }
 
-    if (currentIndex < fadeStart) return currentSample;
+    int fadeStart = grainLength - chunkCrossfadeAmount;
 
-    float t = float(currentIndex - fadeStart) / float(chunkCrossfadeAmount);
+    if (grainPos < fadeStart) {
+        return currentSample;
+    }
 
-    float fadeIn = std::sin(0.5f * juce::MathConstants<float>::pi * t);
+    float t =
+        float(grainPos - fadeStart) / float(chunkCrossfadeAmount);
+
+    t = juce::jlimit(0.0f, 1.0f, t);
+
+    float fadeIn  = std::sin(0.5f * juce::MathConstants<float>::pi * t);
     float fadeOut = std::cos(0.5f * juce::MathConstants<float>::pi * t);
 
     return fadeOut * currentSample + fadeIn * futureSample;
 }
+
 
 float GranularinfiniteAudioProcessor::upwardCompressor(float x, const std::string& noteName)
 {

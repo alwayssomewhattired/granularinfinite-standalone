@@ -44,7 +44,7 @@ public:
 
 		grainSpacingSlider.setSliderStyle(juce::Slider::LinearHorizontal);
 		grainSpacingSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 80, 20);
-		grainSpacingSlider.setRange(0.1, 48000.0, 0.1);
+		grainSpacingSlider.setRange(0.1, 1092.0, 0.1);
 		grainSpacingSlider.setValue(1.0);
 
 		grainAmountLabel.setText("grain amount", juce::dontSendNotification);
