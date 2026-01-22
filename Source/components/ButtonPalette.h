@@ -74,10 +74,10 @@ public:
 		chunkCrossfadeSlider.setRange(0.0, 576.0, 1.0);
 		chunkCrossfadeSlider.setValue(0.0);
 
-		grainPositionLabel.setText("grain area", juce::dontSendNotification);
-		grainPositionLabel.setFont(juce::Font(16.0f, juce::Font::bold));
-		grainPositionLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
-		grainPositionLabel.setJustificationType(juce::Justification::centred);
+		grainAreaLabel.setText("grain area", juce::dontSendNotification);
+		grainAreaLabel.setFont(juce::Font(16.0f, juce::Font::bold));
+		grainAreaLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
+		grainAreaLabel.setJustificationType(juce::Justification::centred);
 
 		grainLengthLabel.setText("grain length", juce::dontSendNotification);
 		grainLengthLabel.setFont(juce::Font(16.0f, juce::Font::bold));
@@ -278,5 +278,5 @@ public:
 	juce::Label grainAmountLabel;
 	juce::Label chunkCrossfadeLabel;
 	juce::Label grainLengthLabel;
-	juce::Label grainPositionLabel;
+	juce::Label grainAreaLabel;
 };

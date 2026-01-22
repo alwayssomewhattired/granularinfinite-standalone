@@ -1,4 +1,4 @@
-
+/*
 #pragma once
 
 #include <JuceHeader.h>
@@ -14,8 +14,7 @@
 
 
 //==============================================================================
-/**
-*/
+
 class SamplerInfinite : public juce::Component
 {
 public:
@@ -91,3 +90,4 @@ private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SamplerInfinite)
 };
+*/

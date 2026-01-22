@@ -140,7 +140,8 @@ private:
     juce::AudioFormatManager formatManager;
     juce::AudioBuffer<float> tempBuffer;
 
-    double m_sampleRate = 48000.0;
+    // - when audio files don't match this sampleRate, the audio file needs to be converted to match
+    double m_sampleRate = 44100.0;
     int m_blockSize = 576;
 
     // make this dynamically hold the largest sample size

@@ -1,4 +1,4 @@
-
+/*
 #define _USE_MATH_DEFINES
 #pragma once
 #include "AudioFileParse.h"
@@ -68,3 +68,4 @@ void AudioFileParse::applyHanningWindow()
 		m_audioData[i] *= hannValue;
 	}
 }
+*/

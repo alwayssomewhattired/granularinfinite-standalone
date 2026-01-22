@@ -34,8 +34,8 @@ GranularInfinite::GranularInfinite(GranularinfiniteAudioProcessor& p, ButtonPale
     grainAmountSlider(buttonPalette.grainAmountSlider),
     chunkCrossfadeLabel(buttonPalette.chunkCrossfadeLabel),
     chunkCrossfadeSlider(buttonPalette.chunkCrossfadeSlider),
-    grainAreaSlider(std::tuple<double, double, double>(0.0, 600.0, 1.0)),
-    grainAreaLabel(buttonPalette.grainPositionLabel),
+    grainAreaSlider(std::tuple<double, double, double>(0.0, 100.0, 100.0)),
+    grainAreaLabel(buttonPalette.grainAreaLabel),
     grainLengthLabel(buttonPalette.grainLengthLabel),
     hanningToggleButton(&buttonPalette.hanningToggleButton),
     m_keyButtonMods(m_waveformDisplay, m_scrollableList)
@@ -547,6 +547,8 @@ void GranularInfinite::grainAreaSliderHandler()
 {
     grainAreaSlider.onRangeChange = [this]()
         {
+
+
             float grainArea = grainAreaSlider.getValue();
             m_waveformDisplay.setGrainArea(grainArea);
             

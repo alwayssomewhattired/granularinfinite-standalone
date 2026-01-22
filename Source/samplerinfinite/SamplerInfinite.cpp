@@ -1,3 +1,4 @@
+/*
 #pragma once
 
 #include "SamplerInfinite.h"
@@ -202,3 +203,4 @@ void SamplerInfinite::resized()
     m_frequencyBox.setBounds(1500, 200, 500, 300);
     m_directoryBox.setBounds(1500, 700, 500, 300);
 }
+*/

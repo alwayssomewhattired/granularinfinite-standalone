@@ -17,27 +17,27 @@ GranularinfiniteAudioProcessorEditor::GranularinfiniteAudioProcessorEditor
 {
     openConsole();
     granularPage = std::make_unique<GranularInfinite>(audioProcessor, buttonPalette);
-    samplerPage = std::make_unique<SamplerInfinite>(audioProcessor, buttonPalette);
+    //samplerPage = std::make_unique<SamplerInfinite>(audioProcessor, buttonPalette);
     setSize(1900, 1000);
 
     addAndMakeVisible(viewport);
     outOfBounds.addAndMakeVisible(*granularPage);
-    outOfBounds.addAndMakeVisible(*samplerPage);
+    //outOfBounds.addAndMakeVisible(*samplerPage);
 
     viewport.setViewedComponent(&outOfBounds, false);
     viewport.getVerticalScrollBar().setColour(juce::ScrollBar::thumbColourId, juce::Colours::green);
 
-    samplerPage->setVisible(false);
+    //samplerPage->setVisible(false);
 
     granularPage->onComponentButtonClicked = [this]() {
         granularPage->setVisible(false);
-        samplerPage->setVisible(true);
+        //samplerPage->setVisible(true);
         };
 
-    samplerPage->onSamplerComponentButtonClicked = [this]() {
-        samplerPage->setVisible(false);
-        granularPage->setVisible(true);
-        };
+    //samplerPage->onSamplerComponentButtonClicked = [this]() {
+    //    samplerPage->setVisible(false);
+    //    granularPage->setVisible(true);
+    //    };
 
 }
 
@@ -79,6 +79,6 @@ void GranularinfiniteAudioProcessorEditor::resized()
     if (granularPage == nullptr)
         std::cout << "your null!!!\n";
     granularPage->setBounds(getLocalBounds());
-    samplerPage->setBounds(getLocalBounds());
+    //samplerPage->setBounds(getLocalBounds());
 }
 

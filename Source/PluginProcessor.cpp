@@ -287,7 +287,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout GranularinfiniteAudioProcess
 
     auto dynamicRange = juce::NormalisableRange<float>(
         0.0f,
-        600.0f
+        100.0f
     );
 
     params.push_back(std::make_unique<juce::AudioParameterFloat>(
@@ -408,7 +408,7 @@ void GranularinfiniteAudioProcessor::parameterChanged(const juce::String& parame
 
 void GranularinfiniteAudioProcessor::updateMaxFileSize(float const& newMaxFileSize)
 {
-
+    std::cout << newMaxFileSize << "\n";
     if (m_maxFileSize < newMaxFileSize) {
         m_maxFileSize = newMaxFileSize;
     }
@@ -444,20 +444,24 @@ void GranularinfiniteAudioProcessor::spawnGrain(int64_t fileLength, const bool& 
         return;
     }
 
-
     Grain g;
-
     g.length = juce::Random::getSystemRandom().nextInt(m_maxGrainLength - minGrainLength + 1) + minGrainLength;
-    // start sample plays a random sample
+    
+    // - this isn't great. we should be getting our normalized values from apvts... not normalizing them here
     m_maxGrainLength = apvts.getRawParameterValue("grainMaxLength")->load();
-    //const float grainArea = (apvts.getRawParameterValue("grainArea")->load() / 600.0f) * m_maxFileSize;
-    const float grainAreaMax = (apvts.getRawParameterValue("grainMaxArea")->load() / 600.0f) * m_maxFileSize;
-    // be carefule:::: grainAreaMin might break on different file sizes
-    const float grainAreaMin = (apvts.getRawParameterValue("grainMinArea")->load() / 600.0f) * m_maxFileSize;
+    const int64_t grainAreaMax =
+        static_cast<int64_t>(
+            (apvts.getRawParameterValue("grainMaxArea")->load() / 100)
+            * static_cast<double>(fileLength)
+            );
+    const int64_t grainAreaMin =
+        static_cast<int64_t>(
+            (apvts.getRawParameterValue("grainMinArea")->load() / 100)
+            * static_cast<double>(fileLength)
+            );
 
-
-    //g.startSample = juce::Random::getSystemRandom().nextInt(std::abs(grainArea - g.length));
     const int range = std::max(1, (int)(grainAreaMax - grainAreaMin - g.length));
+
     g.startSample = grainAreaMin + juce::Random::getSystemRandom().nextInt(range);
 
     g.position = 0;

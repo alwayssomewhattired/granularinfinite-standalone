@@ -1,4 +1,4 @@
-
+/*
 #pragma once
 #include <vector>
 #include <string>
@@ -17,3 +17,4 @@ public:
 private:
 	std::vector<double> m_audioData;
 };
+*/

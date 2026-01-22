@@ -1,3 +1,4 @@
+/*
 #pragma once
 
 #include <vector>
@@ -10,9 +11,7 @@ public:
 
 	~FFTProcessor();
 
-	/**
-	 * @param resetSamples clears the m_sampleStorage 
-	*/
+	 // @param resetSamples clears the m_sampleStorage 
 	void compute(const std::vector<double>& audioData, std::vector<double> targetFrequency, const int productLength, 
 		bool resetSamples = true);
 
@@ -21,9 +20,8 @@ public:
 	std::unordered_map<int, std::vector<double>>& getSampleStorage();
 
 private:
-	/**
-	* @param ratio ***NEEDS CONTROL***
-	*/
+	
+	//* @param ratio ***NEEDS CONTROL***
 	bool isProminentPeak(const std::vector<double>& vec, double targetFrequency, double ratio = 0.8);
 	void storeChunkIfProminent(const std::vector<double>& samples, int counter, double magnitude, double targetFrequency, const int productLength);
 
@@ -39,3 +37,4 @@ private:
 	std::vector<std::vector<double>> m_magnitudeChunks;
 	std::unordered_map<int, std::vector<double>> m_sampleStorage;
 };
+*/
