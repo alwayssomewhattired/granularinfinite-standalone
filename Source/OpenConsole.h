@@ -26,7 +26,6 @@ inline void openConsole()
 }
 #endif
 
-
 //#pragma once
 //#include <JuceHeader.h>
 //#if JUCE_WINDOWS

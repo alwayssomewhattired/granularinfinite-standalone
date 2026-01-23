@@ -17,7 +17,7 @@ struct Sample
     juce::String fileName;
     juce::String noteName;
 
-    int readIndex = 0;
+    float readIndex = 0;
 
     bool isChosen = false;
 
@@ -27,6 +27,7 @@ struct Sample
     void setSourceFromReader(juce::AudioFormatReader* reader)
     {
         readerSource.reset(new juce::AudioFormatReaderSource(reader, true));
+        std::cout << "reader stream: " << reader->sampleRate << "\n";
         transportSource.setSource(readerSource.get(), 0, nullptr, reader->sampleRate);
 
         audioFileLength = reader->lengthInSamples;

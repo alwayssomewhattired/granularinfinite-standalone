@@ -30,8 +30,8 @@ public:
    #endif
 
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
-    void processSamplerPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples);
-    void processGranularPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples);
+    void processSamplerPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples, const float& pitchRatio);
+    void processGranularPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples, const float& pitchRatio);
     float chunkCrossFade(
         int grainPos,
         int grainLength,
@@ -121,6 +121,9 @@ private:
     //// samplerinfinite
     //std::unique_ptr<SamplerInfinite> spotifyFetcher;
 
+    // | "what a logicalDevice in Vulkan is to here"
+    juce::AudioDeviceManager deviceManager;
+
     
     // flag for if key pressed
     bool m_keyPressed = false;
@@ -154,7 +157,8 @@ private:
         int startSample;
         int position = 0;
         int length;
-        float pitchRatio = 1.0f;
+        // - had to change default because otherwise it's pitched up.
+        float pitchRatio = 0.9f;
 
         const float* envelope = nullptr;
     };
@@ -172,7 +176,7 @@ private:
     int maxCircularSize = 24000; // half second
     juce::NormalisableRange<float> m_dynamicRange;
 
-    std::vector<float> m_hannWindowExperiment;
+    std::vector<float> m_phaserExperiment;
 
     // | Used for overlap control
     std::vector<float> m_hannWindowOverlap;

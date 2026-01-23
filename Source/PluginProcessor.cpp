@@ -16,6 +16,7 @@
 
 
 
+
 //==============================================================================
 GranularinfiniteAudioProcessor::GranularinfiniteAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -32,6 +33,8 @@ GranularinfiniteAudioProcessor::GranularinfiniteAudioProcessor()
     //spotifyAuthToken()
 #endif
 {
+    deviceManager.initialise(0, 2, nullptr, true);
+
     minGrainLengthPtr = apvts.getRawParameterValue("grainMinLength");
     jassert(minGrainLengthPtr != nullptr);
     maxGrainLengthPtr = apvts.getRawParameterValue("grainMaxLength");
@@ -144,6 +147,7 @@ void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int sampl
     //m_blockSize = samplesPerBlock;
     
     //synth.setCurrentPlaybackSampleRate(sampleRate);
+    
 
     // i beleive temp buffer and circular buffer can GTFO
     tempBuffer.setSize(getTotalNumOutputChannels(), samplesPerBlock, false, false, true);
@@ -153,10 +157,10 @@ void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int sampl
     circularBuffer.clear();
 
     // make control for hann window
-    m_hannWindowExperiment.resize(m_maxGrainLength);
+    m_phaserExperiment.resize(m_maxGrainLength);
     juce::dsp::WindowingFunction<float>::fillWindowingTables(
-        m_hannWindowExperiment.data(),
-        m_hannWindowExperiment.size(),
+        m_phaserExperiment.data(),
+        m_phaserExperiment.size(),
         juce::dsp::WindowingFunction<float>::hann
     );
 
@@ -178,7 +182,8 @@ void GranularinfiniteAudioProcessor::prepareToPlay (double sampleRate, int sampl
 
     updateFilter(sampleRate);
 
-
+    std::cout << "the new king" << sampleRate << "\n";
+    std::cout << "the new king" << samplesPerBlock << "\n";
 
     //
     // //
@@ -478,11 +483,13 @@ void GranularinfiniteAudioProcessor::spawnGrain(int64_t fileLength, const bool& 
 }
 
 
-void GranularinfiniteAudioProcessor::processSamplerPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples)
+void GranularinfiniteAudioProcessor::processSamplerPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& numSamples, const float& pitchRatio)
 {
 
-    buffer.clear();
-
+    //buffer.clear();
+    //static int brutal = 0;
+    //brutal++;
+    //std::cout << brutal << "\n";
     // ** current note name
     for (const juce::String& noteName : currentNotes) {
         for (auto& pair : samples)
@@ -501,26 +508,35 @@ void GranularinfiniteAudioProcessor::processSamplerPath(juce::AudioBuffer<float>
 
             for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
             {
+
                 if (sample->readIndex >= sourceLength) {
                     sample->readIndex = 0;
                 }
 
-                float limiterSample = limiter(sourceBuffer.getSample(0, sample->readIndex), 0.8f) * globalGain;
+                // | start pitch-shift band-aid block
+                int idx = (int)sample->readIndex;
+                float frac = sample->readIndex - idx;
+                float s0 = sourceBuffer.getSample(0, idx);
+                float s1 = sourceBuffer.getSample(0, idx + 1);
+                float sampleOut = s0 + frac * (s1 - s0);
+                // | end pitch-shift band-aid block
+
+                sampleOut = limiter(sourceBuffer.getSample(0, sample->readIndex), 0.8f)* globalGain;
 
                 for (int ch = 0; ch < outCh; ++ch)
                 {
-                    buffer.addSample(ch, sampleIdx, limiterSample);
+                    buffer.addSample(ch, sampleIdx, sampleOut);
                 }
 
-                sample->readIndex++;
+                sample->readIndex += pitchRatio;
             }
         }
     }
 }
 
-void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& chunkSize)
+void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& chunkSize, const float& pitchRatio)
 {
-    buffer.clear();
+    //buffer.clear();
     minGrainLength = *minGrainLengthPtr;
     m_maxGrainLength = *maxGrainLengthPtr;
     initHann(m_maxGrainLength);
@@ -558,7 +574,8 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                     Grain& g = grains[i];
                     if (g.position < g.length)
                     {
-                        int fullBufferIdx = (g.startSample + (int)(g.position * g.pitchRatio));
+                        int fullBufferIdx = (g.startSample + (int)(g.position));
+                        //int fullBufferIdx = (g.startSample + (int)(g.position * g.pitchRatio));
                         if (fullBufferIdx >= m_fullBuffer.getNumSamples() || fullBufferIdx < 0)
                         {
                             grains.erase(grains.begin() + i);
@@ -588,7 +605,8 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                         if (chunkCrossfadeAmount > 0 && fadeStartPos >= 0 && i < grains.size() && m_futureGrains.size() > i ) {
                             Grain& futureGrain = m_futureGrains[i];
 
-                            int futureReadPos = futureGrain.startSample + int(fadeStartPos * futureGrain.pitchRatio);
+                            int futureReadPos = futureGrain.startSample + int(fadeStartPos);
+                            //int futureReadPos = futureGrain.startSample + int(fadeStartPos * futureGrain.pitchRatio);
 
                             float futureSample = m_fullBuffer.getSample(0, futureReadPos);
 
@@ -635,7 +653,6 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
             // | end sample processing
 
             // | serial scheduler block
-            // - expose control for this
             if (m_isSerialSchedule) {
                 grainCounter += chunkSize;
                 if (grainCounter >= m_grainDensity)
@@ -767,6 +784,7 @@ void GranularinfiniteAudioProcessor::updateCompressor() {
 void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     juce::MidiBuffer& midiMessages)
 {
+    buffer.clear();
     juce::ScopedNoDenormals noDenormals;
 
     const int outCh = buffer.getNumChannels();
@@ -797,33 +815,20 @@ void GranularinfiniteAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
     minGrainLength = apvts.getRawParameterValue("grainMinLength")->load();
     m_maxGrainLength = apvts.getRawParameterValue("grainMaxLength")->load();
 
-    // SYNTH PATH
-    //if (synthToggle)
-    //{
-    //    {
-    //        const std::lock_guard<std::mutex> lock(midiMutex);
-    //        midiMessages.addEvents(midiFifo, 0, numSamples, 0);
-    //        midiFifo.clear();
-    //    }
-
-    //    // render synth into cleared buffer
-    //    buffer.clear();
-    //    synth.renderNextBlock(buffer, midiMessages, 0, numSamples);
-    //    return;
-    //}
-
+    static auto* device = deviceManager.getCurrentAudioDevice();
+    static float pitchRatio = 44100.0 / device->getCurrentSampleRate();
 
     if (m_grainAll)
     {
         if (currentFiles.size() > 0) {
 
-            processGranularPath(buffer, outCh, chunkSize);
+            processGranularPath(buffer, outCh, chunkSize, pitchRatio);
         }
         return;
     }
     else {
         if (m_keyPressed)
-            processSamplerPath(buffer, outCh, chunkSize);
+            processSamplerPath(buffer, outCh, chunkSize, pitchRatio);
         return;
     }
 }
