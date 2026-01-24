@@ -155,10 +155,10 @@ private:
     struct Grain
     {
         int startSample;
-        int position = 0;
+        float position = 0.0;
         int length;
-        // - had to change default because otherwise it's pitched up.
-        float pitchRatio = 0.9f;
+        // | to be continued. made for pitch shifter. NOT SAMPLERATE ADJUST PITCH SHIFTER
+        float pitchRatio = 1.0f;
 
         const float* envelope = nullptr;
     };

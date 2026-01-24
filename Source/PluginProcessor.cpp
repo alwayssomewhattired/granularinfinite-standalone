@@ -536,7 +536,7 @@ void GranularinfiniteAudioProcessor::processSamplerPath(juce::AudioBuffer<float>
 
 void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float>& buffer, const int& outCh, const int& chunkSize, const float& pitchRatio)
 {
-    //buffer.clear();
+
     minGrainLength = *minGrainLengthPtr;
     m_maxGrainLength = *maxGrainLengthPtr;
     initHann(m_maxGrainLength);
@@ -574,15 +574,23 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
                     Grain& g = grains[i];
                     if (g.position < g.length)
                     {
-                        int fullBufferIdx = (g.startSample + (int)(g.position));
-                        //int fullBufferIdx = (g.startSample + (int)(g.position * g.pitchRatio));
-                        if (fullBufferIdx >= m_fullBuffer.getNumSamples() || fullBufferIdx < 0)
-                        {
-                            grains.erase(grains.begin() + i);
-                            continue;
-                        }
 
-                        float currentSample = m_fullBuffer.getSample(0, fullBufferIdx);
+                        float fullBufferIdx = g.startSample + g.position;
+                        int idx = (int)fullBufferIdx;
+                        float frac = fullBufferIdx - idx;
+
+                        // clamp to avoid overflow
+                        idx = juce::jlimit(0, m_fullBuffer.getNumSamples() - 2, idx);
+
+                        float s0 = m_fullBuffer.getSample(0, idx);
+                        float s1 = m_fullBuffer.getSample(0, idx + 1);
+
+                        float currentSample = s0 + frac * (s1 - s0);
+
+                        if (fullBufferIdx >= m_fullBuffer.getNumSamples())
+                        {
+                            g.position = 0; 
+                        }
 
                         // | window-overlap block
                         if (const bool hanningToggle = apvts.getRawParameterValue("hanningToggle")->load()) {
@@ -634,7 +642,8 @@ void GranularinfiniteAudioProcessor::processGranularPath(juce::AudioBuffer<float
 
                         out += (m_compressor.process(upwardCompressed)) * globalGain;
 
-                        ++g.position;
+                        //++g.position;
+                        g.position += pitchRatio;
                         ++i;
 
                     }
